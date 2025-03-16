@@ -1,0 +1,135 @@
+#register-page-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 100px;
+    padding-bottom: 100px;
+    width: 100%;
+}
+
+#register-page-logo{
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color:#5558FF;
+    border-radius: 5px;
+    margin-bottom: 150px;
+
+}
+
+#register-page-logo-text{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 42px;
+    color: #FFF;
+}
+
+#register-page-register-form{
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding:20px;
+    border-radius: 12px;
+    border-width: 0.7px;
+    border-color: #B3B3B3;
+    border-style: solid;
+    width: 30%;
+
+
+}
+
+#register-page-register-form-email-field-title{
+    font-family: "Ruberoid Medium";
+    font-size: 16px;
+    color: black;
+}
+
+#register-page-register-form-email-field-container{
+
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-radius: 15px;
+    border-width: 0.7px;
+    border-color: #B3B3B3;
+    border-style: solid;
+
+}
+
+#register-page-register-form-email-field-icon{
+    margin: 8px;
+}
+
+#register-page-register-form-email-field-container-input{
+
+    border: none;
+    outline: none;
+    text-align: right;
+    margin: 8px;
+    width: 100%;
+
+}
+
+#register-page-register-form-password-field-title{
+
+    font-family: "Ruberoid Medium";
+    font-size: 16px;
+    color: black;
+
+}
+
+
+#register-page-register-form-password-field-container{
+
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    border-radius: 15px;
+    border-width: 0.7px;
+    border-color: #B3B3B3;
+    border-style: solid;
+
+
+}
+
+
+#register-page-register-form-password-field-icon{
+    margin: 8px;
+}
+
+#register-page-register-form-password-field-container-input{
+
+    border: none;
+    outline: none;
+    text-align: right;
+    margin: 8px;
+    width: 100%;
+
+}
+
+#register-page-register-form-submit-button{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    background-color: #5558FF;
+    padding: 15px 35px;
+    border-radius: 15px;
+    margin-top: 20px;
+}
+
+#register-page-register-form-submit-button-text{
+    font-family: "Ruberoid Medium";
+    font-size: 18px;
+    color: white;
+
+}
+
+

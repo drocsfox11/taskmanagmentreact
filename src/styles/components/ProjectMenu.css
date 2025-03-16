@@ -1,0 +1,295 @@
+#project-menu-container{
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 30px 0px;
+    width: 250px;
+    height: calc(100% - 60px);
+    justify-content: space-between;
+    border-width: 0.7px;
+    border-color: #DBDBDB;
+    border-style: solid;
+    border-top:none;
+    border-left:none;
+    border-bottom: none;
+
+}
+
+#project-menu-project-list-container{
+
+    display: flex;
+    flex-direction: column;
+    padding: 0px 15px;
+    gap: 25px;
+}
+
+
+/*----------------------------------------------------------*/
+
+#project-menu-project-list-label{
+
+    font-family: "Ruberoid Semi Bold";
+    font-size: 22px;
+    color: black;
+
+}
+
+#project-menu-project-list{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+
+}
+
+#project-menu-project-list-item-active{
+
+    background-color: #5558FF;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 8px;
+
+}
+
+#project-menu-project-list-item-label-group{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+
+}
+
+#project-menu-project-list-item-label-group-icon{
+    background-color: #FFFFFF;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+
+#project-menu-project-list-item-label-group-label{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 14px;
+    color: white;
+}
+
+#project-menu-project-list-item-passive{
+
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 8px;
+    border-width: 0.7px;
+    border-color: #DBDBDB;
+    border-style: solid;
+
+}
+
+#project-menu-project-list-item-label-group-icon-passive{
+    background-color: #D9EDFE;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+
+#project-menu-project-list-item-label-group-label-passive{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 14px;
+    color: black;
+}
+
+/*----------------------------------------------------------*/
+
+
+#project-menu-people-list-container{
+    display: flex;
+    flex-direction: column;
+    padding: 0px 15px;
+    gap: 25px;
+}
+
+#project-menu-people-list-label{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 22px;
+    color: black;
+}
+
+#project-menu-people-list{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+}
+
+#project-menu-people-list-item{
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 8px;
+    border-width: 0.7px;
+    border-color: #DBDBDB;
+    border-style: solid;
+}
+
+#project-menu-people-list-item-label-group{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+#project-menu-people-list-item-label-group-icon{
+    width: 27px;
+    height: 27px;
+    background-color: #FED9D9;
+    border-radius: 360px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+#project-menu-people-list-item-label-group-label-container{
+
+}
+
+#project-menu-people-list-item-label-group-label-username{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 10px;
+}
+#project-menu-people-list-item-label-group-label-status-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+}
+
+#project-menu-people-list-item-label-group-label-status-color-active{
+
+    width: 7px;
+    height: 7px;
+    background-color: #0BE100;
+    color: #0BE100;
+    border-radius: 360px;
+}
+
+#project-menu-people-list-item-label-group-label-status-color-passive{
+
+    width: 7px;
+    height: 7px;
+    background-color: #DBDBDB;
+    color: #DBDBDB;
+    border-radius: 360px;
+}
+
+
+#project-menu-people-list-item-label-group-label-status-text{
+    font-family: "Ruberoid Regular";
+    font-size: 8px;
+    color:#969595;
+}
+
+/*----------------------------------------------------------*/
+#project-menu-events-container{
+    display: flex;
+    flex-direction: column;
+    padding: 0px 15px;
+    gap: 25px;
+}
+
+#project-menu-events-label{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 22px;
+    color: black;
+}
+
+#project-menu-events-window{
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px 8px;
+    border-width: 0.7px;
+    border-color: #DBDBDB;
+    border-style: solid;
+    gap: 10px;
+}
+
+#project-menu-events-window-all{
+
+    font-family: "Ruberoid Semi Bold";
+    font-size: 10px;
+    color: #969595;
+}
+
+#project-menu-events-window-events{
+    display: flex;
+    justify-content: space-between;
+
+}
+
+#project-menu-events-window-events-counter{
+    font-family: "Ruberoid Bold";
+    font-size: 18px;
+    color: black;
+}
+
+#project-menu-events-window-events-added{
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+}
+
+#project-menu-events-window-events-added-text{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 10px;
+    color: #0BE100;
+}
+
+#project-menu-events-window-events-added-label{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 10px;
+    color: #969595;
+}
+
+/*----------------------------------------------------------*/
+
+#project-menu-add-project-button{
+    border-radius: 5px;
+    background-color: #FFFFFF;
+    display: flex;
+    width: 220px;
+    align-self: center;
+    flex-direction: column;
+    justify-content: space-between;
+    border-color: #5558FF;
+    border-style: dashed;
+    border-width: 1px;
+    padding: 12px 0px;
+    text-align: center;
+
+}
+
+#project-menu-add-project-button-text{
+    font-family: "Ruberoid Bold";
+    font-size: 14px;
+    color: #5558FF;
+}
+
+

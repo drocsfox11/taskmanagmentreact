@@ -1,0 +1,48 @@
+#left-menu-container{
+    width: 70px;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 0px;
+    height: calc(100% - 60px);
+    border-width: 0.7px;
+    border-color: #DBDBDB;
+    border-style: solid;
+
+    border-top: none;
+}
+
+#left-menu-logo{
+    width:32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color:#5558FF;
+    border-radius: 5px;
+    margin-bottom: 90px;
+
+}
+
+#left-menu-logo-text{
+    font-family: "Ruberoid Semi Bold";
+    font-size: 28px;
+    color: #FFF;
+}
+
+#left-menu-main-icons-container{
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    align-items: center;
+    justify-content: center;
+}
+
+#left-menu-main-icons-container img{
+    cursor: pointer;
+}
+
+#left-menu-logout{
+    cursor: pointer;
+}
