@@ -5,6 +5,8 @@ import ProjectMenu from "../components/ProjectMenu";
 import {Emoji, EmojiProvider} from "react-apple-emojis";
 import emojiData from "react-apple-emojis/src/data.json"
 import Girl from "../assets/icons/profile_picture.svg";
+import TaskCard from "../components/TaskCard";
+import OptionsPassive from "../assets/icons/options_passive.svg";
 
 function TaskDashboard() {
     return (
@@ -71,44 +73,134 @@ function TaskDashboard() {
 
                 </div>
 
-                <div id='task-dashboard-cards-container'>
+                <div id='task-dashboard-cards-containeres'>
 
-                <div id='task-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                    <div id='task-dashboard-card-column'>
 
+                        <div id='task-dashboard-card-column-topbar'>
+
+                            <div id='task-dashboard-card-column-topbar-label-container'>
+                                <div id='task-dashboard-card-column-topbar-label-name-container'>
+                                    <div id='task-dashboard-card-column-topbar-label-name-circle'></div>
+                                    <div id='task-dashboard-card-column-topbar-label-name-text'>Сделать</div>
+                                </div>
+                                <div id='task-dashboard-card-column-topbar-label-name-task-counter'>3</div>
+                            </div>
+                            <div>
+                                <img src={OptionsPassive} alt="Options Active"/>
+                            </div>
+
+                        </div>
+
+                        <div id='task-dashboard-add-task-button'>
+
+                            <div id='task-dashboard-add-task-button-text'>+ Добавить задачу</div>
+                        </div>
+
+                        <div id='task-dashboard-cards-container'>
+
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+
+                        </div>
 
                     </div>
+                    <div id='task-dashboard-card-column'>
 
-                    <div id='task-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <div id='task-dashboard-card-column-topbar'>
 
+                            <div id='task-dashboard-card-column-topbar-label-container'>
+                                <div id='task-dashboard-card-column-topbar-label-name-container'>
+                                    <div id='task-dashboard-card-column-topbar-label-name-circle'></div>
+                                    <div id='task-dashboard-card-column-topbar-label-name-text'>Сделать</div>
+                                </div>
+                                <div id='task-dashboard-card-column-topbar-label-name-task-counter'>3</div>
+                            </div>
+                            <div>
+                                <img src={OptionsPassive} alt="Options Active"/>
+                            </div>
+
+                        </div>
+
+                        <div id='task-dashboard-add-task-button'>
+
+                            <div id='task-dashboard-add-task-button-text'>+ Добавить задачу</div>
+                        </div>
+
+                        <div id='task-dashboard-cards-container'>
+
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+
+                        </div>
 
                     </div>
+                    <div id='task-dashboard-card-column'>
 
-                    <div id='task-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <div id='task-dashboard-card-column-topbar'>
 
+                            <div id='task-dashboard-card-column-topbar-label-container'>
+                                <div id='task-dashboard-card-column-topbar-label-name-container'>
+                                    <div id='task-dashboard-card-column-topbar-label-name-circle'></div>
+                                    <div id='task-dashboard-card-column-topbar-label-name-text'>Сделать</div>
+                                </div>
+                                <div id='task-dashboard-card-column-topbar-label-name-task-counter'>3</div>
+                            </div>
+                            <div>
+                                <img src={OptionsPassive} alt="Options Active"/>
+                            </div>
+
+                        </div>
+
+                        <div id='task-dashboard-add-task-button'>
+
+                            <div id='task-dashboard-add-task-button-text'>+ Добавить задачу</div>
+                        </div>
+
+                        <div id='task-dashboard-cards-container'>
+
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+
+                        </div>
 
                     </div>
-                    <div id='task-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                    <div id='task-dashboard-card-column'>
 
+                        <div id='task-dashboard-card-column-topbar'>
+
+                            <div id='task-dashboard-card-column-topbar-label-container'>
+                                <div id='task-dashboard-card-column-topbar-label-name-container'>
+                                    <div id='task-dashboard-card-column-topbar-label-name-circle'></div>
+                                    <div id='task-dashboard-card-column-topbar-label-name-text'>Сделать</div>
+                                </div>
+                                <div id='task-dashboard-card-column-topbar-label-name-task-counter'>3</div>
+                            </div>
+                            <div>
+                                <img src={OptionsPassive} alt="Options Active"/>
+                            </div>
+
+                        </div>
+
+                        <div id='task-dashboard-add-task-button'>
+
+                            <div id='task-dashboard-add-task-button-text'>+ Добавить задачу</div>
+                        </div>
+
+                        <div id='task-dashboard-cards-container'>
+
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+                            <TaskCard></TaskCard>
+
+                        </div>
 
                     </div>
 
