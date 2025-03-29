@@ -75,7 +75,7 @@ function TaskDashboard() {
                             <img src={LeftIcon}/>
                         </div>
                         <div id='task-calendar-cards-week-pagination-current-week'>
-                            1 апреля - 7 апреля
+                            1 апреля - 14 апреля
                         </div>
                         <div id='task-calendar-cards-week-pagination-right'>
                             <img src={RightIcon}/>
@@ -88,13 +88,20 @@ function TaskDashboard() {
                 </div>
 
                 <div className="custom-calendar-grid">
-                    <div>Пн (1)</div>
-                    <div>Вт (2)</div>
-                    <div>Ср (3)</div>
-                    <div>Чт (4)</div>
-                    <div>Пт (5)</div>
-                    <div>Сб (6)</div>
-                    <div>Вс (7)</div>
+                    <div id='custom-calendar-grid-day'>Пн 1</div>
+                    <div id='custom-calendar-grid-day'>Вт 2</div>
+                    <div id='custom-calendar-grid-day'>Ср 3</div>
+                    <div id='custom-calendar-grid-day'>Чт 4</div>
+                    <div id='custom-calendar-grid-day'>Пт 5</div>
+                    <div id='custom-calendar-grid-day'>Сб 6</div>
+                    <div id='custom-calendar-grid-day'>Вс 7</div>
+                    <div id='custom-calendar-grid-day'>Пн 8</div>
+                    <div id='custom-calendar-grid-day'>Вт 9</div>
+                    <div id='custom-calendar-grid-day'>Ср 10</div>
+                    <div id='custom-calendar-grid-day'>Чт 11</div>
+                    <div id='custom-calendar-grid-day'>Пт 12</div>
+                    <div id='custom-calendar-grid-day'>Сб 13</div>
+                    <div id='custom-calendar-grid-day'>Вс 14</div>
 
                     <CalendarCard
                         startDate={task.startDate}
