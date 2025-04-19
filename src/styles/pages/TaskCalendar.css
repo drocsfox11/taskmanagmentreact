@@ -297,21 +297,44 @@
 }
 
 .custom-calendar-grid {
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+
+}
+
+.custom-calendar-grid-header {
     display: grid;
     grid-template-columns: repeat(14, 1fr);
     gap: 10px;
     padding: 10px 20px;
-    background-color: #f5f5f5;
+
+
 }
 
-.custom-calendar-grid > #custom-calendar-grid-day {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+
+.day-cell {
+    background-color: #f5f5f5;
+    z-index: 2;
+    padding: 10px 0;
+    text-align: center;
     font-family: "Ruberoid Bold";
     font-size: 14px;
     color: #969595;
 }
+
+.calendar-body {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 10px;
+    padding: 10px 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+
+}
+
 
 
 

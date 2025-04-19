@@ -88,26 +88,74 @@ function TaskDashboard() {
                 </div>
 
                 <div className="custom-calendar-grid">
-                    <div id='custom-calendar-grid-day'>Пн 1</div>
-                    <div id='custom-calendar-grid-day'>Вт 2</div>
-                    <div id='custom-calendar-grid-day'>Ср 3</div>
-                    <div id='custom-calendar-grid-day'>Чт 4</div>
-                    <div id='custom-calendar-grid-day'>Пт 5</div>
-                    <div id='custom-calendar-grid-day'>Сб 6</div>
-                    <div id='custom-calendar-grid-day'>Вс 7</div>
-                    <div id='custom-calendar-grid-day'>Пн 8</div>
-                    <div id='custom-calendar-grid-day'>Вт 9</div>
-                    <div id='custom-calendar-grid-day'>Ср 10</div>
-                    <div id='custom-calendar-grid-day'>Чт 11</div>
-                    <div id='custom-calendar-grid-day'>Пт 12</div>
-                    <div id='custom-calendar-grid-day'>Сб 13</div>
-                    <div id='custom-calendar-grid-day'>Вс 14</div>
 
-                    <CalendarCard
-                        startDate={task.startDate}
-                        endDate={task.endDate}
-                        style={{gridColumn: `${startCol} / ${endCol}`}}
-                    />
+                    <div className="custom-calendar-grid-header">
+                        <div className="day-cell">Пн 1</div>
+                        <div className="day-cell">Вт 2</div>
+                        <div className="day-cell">Ср 3</div>
+                        <div className="day-cell">Чт 4</div>
+                        <div className="day-cell">Пт 5</div>
+                        <div className="day-cell">Сб 6</div>
+                        <div className="day-cell">Вс 7</div>
+                        <div className="day-cell">Пн 8</div>
+                        <div className="day-cell">Вт 9</div>
+                        <div className="day-cell">Ср 10</div>
+                        <div className="day-cell">Чт 11</div>
+                        <div className="day-cell">Пт 12</div>
+                        <div className="day-cell">Сб 13</div>
+                        <div className="day-cell">Вс 14</div>
+                    </div>
+
+                    <div className="calendar-body">
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                        <CalendarCard
+                            startDate={task.startDate}
+                            endDate={task.endDate}
+                            style={{gridColumn: `${startCol} / ${endCol}`}}
+                        />
+                    </div>
+
+
+
                 </div>
 
 
