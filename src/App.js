@@ -1,10 +1,11 @@
 import './styles/fonts.css'
 import TaskDashboard from "./pages/TaskDashboard";
 import TaskCalendar from "./pages/TaskCalendar";
+import LeftMenuMessenger from "./components/LeftMenuMessenger";
 
 function App() {
   return (
-      <TaskCalendar></TaskCalendar>
+      <LeftMenuMessenger></LeftMenuMessenger>
   );
 }
 

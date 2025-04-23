@@ -1,0 +1,87 @@
+#left-menu-messenger-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 400px;
+    overflow: hidden;
+    height: 100%;
+
+
+}
+
+#left-menu-messenger-search-and-title-container{
+    padding: 30px 15px;
+    background-color: #FFFFFF;
+    width: 100%;
+
+}
+
+#left-menu-messenger-search-and-title-title{
+    font-size: 22px;
+    color: black;
+    font-family: "Ruberoid Semi Bold";
+    margin-bottom: 25px;
+}
+
+#left-menu-messenger-chats-container{
+    padding: 20px 10px;
+    background-color: #F5F5F5;
+    width: 100%;
+    overflow-y: auto;
+    flex-grow: 1;
+
+
+}
+
+#left-menu-messenger-chat-card{
+    padding: 10px 10px;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: row;
+    gap: 14px;
+    border-color: #DBDBDB;
+    border-width: 1px;
+    border-style: solid;
+
+
+}
+
+#left-menu-messenger-chat-card-image{
+    width: 40px;
+}
+
+#left-menu-messenger-chat-card-text-container{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+
+}
+
+#left-menu-messenger-chat-card-chat-name{
+    font-size: 14px;
+    color: black;
+    font-family: "Ruberoid Semi Bold";
+
+}
+
+#left-menu-messenger-chat-card-chat-message-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+
+}
+
+#left-menu-messenger-chat-card-chat-message{
+    font-size: 10px;
+    color: #969595;
+    font-family: "Ruberoid Regular";
+}
+
+#left-menu-messenger-chat-card-chat-message-date{
+    font-size: 10px;
+    color: #969595;
+    font-family: "Ruberoid Regular";
+}
