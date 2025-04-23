@@ -1,84 +1,84 @@
 @font-face {
     font-family: 'Ruberoid Bold';
-    src: local('Ruberoid Bold'), url(../assets/fonts/Ruberoid-Bold.ttf) format('ttf');
+    src: local('Ruberoid Bold'), url(../assets/fonts/Ruberoid-Bold.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Extra Bold';
-    src: local('Ruberoid Extra Bold'), url(../assets/fonts/Ruberoid-ExtraBold.ttf) format('ttf');
+    src: local('Ruberoid Extra Bold'), url(../assets/fonts/Ruberoid-ExtraBold.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Extra Bold Oblique';
-    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-ExtraBoldOblique.ttf) format('ttf');
+    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-ExtraBoldOblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Extra Light';
-    src: local('Ruberoid Extra Light'), url(../assets/fonts/Ruberoid-ExtraLight.ttf) format('ttf');
+    src: local('Ruberoid Extra Light'), url(../assets/fonts/Ruberoid-ExtraLight.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Extra Light Oblique';
-    src: local('Ruberoid Extra Light Oblique'), url(../assets/fonts/Ruberoid-ExtraLightOblique.ttf) format('ttf');
+    src: local('Ruberoid Extra Light Oblique'), url(../assets/fonts/Ruberoid-ExtraLightOblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Light';
-    src: local('Ruberoid Light'), url(../assets/fonts/Ruberoid-Light.ttf) format('ttf');
+    src: local('Ruberoid Light'), url(../assets/fonts/Ruberoid-Light.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Light Oblique';
-    src: local('Ruberoid Light Oblique'), url(../assets/fonts/Ruberoid-LightOblique.ttf) format('ttf');
+    src: local('Ruberoid Light Oblique'), url(../assets/fonts/Ruberoid-LightOblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Medium';
-    src: local('Ruberoid Medium'), url(../assets/fonts/Ruberoid-Medium.ttf) format('ttf');
+    src: local('Ruberoid Medium'), url(../assets/fonts/Ruberoid-Medium.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Medium Oblique';
-    src: local('Ruberoid Medium Oblique'), url(../assets/fonts/Ruberoid-MediumOblique.ttf) format('ttf');
+    src: local('Ruberoid Medium Oblique'), url(../assets/fonts/Ruberoid-MediumOblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Oblique';
-    src: local('Ruberoid Oblique'), url(../assets/fonts/Ruberoid-Oblique.ttf) format('ttf');
+    src: local('Ruberoid Oblique'), url(../assets/fonts/Ruberoid-Oblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Regular';
-    src: local('Ruberoid Regular'), url(../assets/fonts/Ruberoid-Regular.ttf) format('ttf');
+    src: local('Ruberoid Regular'), url(../assets/fonts/Ruberoid-Regular.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Semi Bold';
-    src: local('Ruberoid Semi Bold'), url(../assets/fonts/Ruberoid-SemiBold.ttf) format('ttf');
+    src: local('Ruberoid Semi Bold'), url(../assets/fonts/Ruberoid-SemiBold.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Semi Bold Oblique';
-    src: local('Ruberoid Semi Bold Oblique'), url(../assets/fonts/Ruberoid-SemiBoldOblique.ttf) format('ttf');
+    src: local('Ruberoid Semi Bold Oblique'), url(../assets/fonts/Ruberoid-SemiBoldOblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Thin';
-    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-Thin.ttf) format('ttf');
+    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-Thin.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Thin Oblique';
-    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-ThinOblique.ttf) format('ttf');
+    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-ThinOblique.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Ultra Light';
-    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-UltraLight.ttf) format('ttf');
+    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-UltraLight.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'Ruberoid Ultra Light Oblique';
-    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-UltraLightOblique.ttf) format('ttf');
+    src: local('Ruberoid Extra Bold Oblique'), url(../assets/fonts/Ruberoid-UltraLightOblique.ttf) format('truetype');
 }

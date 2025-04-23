@@ -19,7 +19,7 @@
 #left-menu-messenger-search-and-title-title{
     font-size: 22px;
     color: black;
-    font-family: "Ruberoid Semi Bold";
+    font-family: "Ruberoid Semi Bold", sans-serif;
     margin-bottom: 25px;
 }
 
@@ -62,7 +62,7 @@
 #left-menu-messenger-chat-card-chat-name{
     font-size: 14px;
     color: black;
-    font-family: "Ruberoid Semi Bold";
+    font-family: "Ruberoid Semi Bold", sans-serif;
 
 }
 
@@ -77,11 +77,11 @@
 #left-menu-messenger-chat-card-chat-message{
     font-size: 10px;
     color: #969595;
-    font-family: "Ruberoid Regular";
+    font-family: "Ruberoid Regular", sans-serif;
 }
 
 #left-menu-messenger-chat-card-chat-message-date{
     font-size: 10px;
     color: #969595;
-    font-family: "Ruberoid Regular";
+    font-family: "Ruberoid Regular", sans-serif;
 }
