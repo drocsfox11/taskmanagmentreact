@@ -5,6 +5,12 @@
     width: 400px;
     overflow: hidden;
     height: 100%;
+    border-color: #DBDBDB;
+    border-width: 1px;
+    border-style: solid;
+    border-bottom:none;
+    border-top:none;
+    border-left:none;
 
 
 }
@@ -12,7 +18,13 @@
 #left-menu-messenger-search-and-title-container{
     padding: 30px 15px;
     background-color: #FFFFFF;
-    width: 100%;
+
+    border-color: #DBDBDB;
+    border-width: 1px;
+    border-style: solid;
+    border-right:none;
+    border-top:none;
+    border-left:none;
 
 }
 
@@ -26,9 +38,12 @@
 #left-menu-messenger-chats-container{
     padding: 20px 10px;
     background-color: #F5F5F5;
-    width: 100%;
+
     overflow-y: auto;
     flex-grow: 1;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
 
 
 }

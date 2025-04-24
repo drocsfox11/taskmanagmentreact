@@ -5,10 +5,11 @@ import TaskDashboard from "./pages/TaskDashboard";
 import TaskCalendar from "./pages/TaskCalendar";
 import LeftMenuMessenger from "./components/LeftMenuMessenger";
 import store from './store';
+import MessengerPage from "./pages/MessengerPage";
 
 const router = createBrowserRouter([
   {
-    element: <LeftMenuMessenger />,
+    element: <MessengerPage />,
     children: [
       {
         index: true,

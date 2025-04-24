@@ -6,7 +6,7 @@ import {
 } from './tasksSlice';
 import { fetchWithAuth } from '../../../utils/api';
 
-// Example API call function
+
 const fetchTasksApi = () => fetchWithAuth('/api/tasks');
 
 function* fetchTasks() {
