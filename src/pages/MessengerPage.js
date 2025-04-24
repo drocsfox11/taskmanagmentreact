@@ -14,7 +14,6 @@ function MessengerPage() {
         <div id="messenger-page-container">
 
 
-            <LeftMenu></LeftMenu>
             <LeftMenuMessenger></LeftMenuMessenger>
 
 

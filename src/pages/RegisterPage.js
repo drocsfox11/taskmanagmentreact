@@ -1,8 +1,15 @@
 import '../styles/pages/RegisterPage.css';
 import LoginFieldIcon from '../assets/icons/login_email_field_icon.svg'
 import PasswordFieldIcon from '../assets/icons/login_password_field_icon.svg'
+import {useNavigate} from "react-router-dom";
 
 function RegisterPage() {
+    const navigate = useNavigate();
+
+    const handleRegister = () => {
+        navigate('/system');
+    };
+
     return (
         <div id='register-page-container'>
 
@@ -46,7 +53,7 @@ function RegisterPage() {
                 </div>
 
 
-                <div id='register-page-register-form-submit-button'>
+                <div id='register-page-register-form-submit-button'                     onClick={handleRegister}>
                     <div id='register-page-register-form-submit-button-text'>Зарегистрироваться</div>
                 </div>
 

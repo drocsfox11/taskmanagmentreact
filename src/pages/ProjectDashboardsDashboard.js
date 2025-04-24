@@ -2,8 +2,15 @@ import TopBar from "../components/TopBar";
 import ProjectAndDashboardCard from "../components/ProjectAndDashboardCard";
 import '../styles/pages/ProjectDashboardsDashboard.css'
 import ProjectMenu from "../components/ProjectMenu";
+import {useNavigate} from "react-router-dom";
 
 function ProjectDashBoardsDashboard() {
+
+    const navigate = useNavigate();
+    const handleRedirect = () => {
+        navigate('/system/project/tasks');
+    };
+
     return (
 
         <div id='project-dashboards-dashboard-container'>
@@ -24,7 +31,7 @@ function ProjectDashBoardsDashboard() {
                 <div id='project-dashboard-cards-container'>
 
                     <div id='project-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <ProjectAndDashboardCard onClick={handleRedirect}></ProjectAndDashboardCard>
                         <ProjectAndDashboardCard></ProjectAndDashboardCard>
                         <ProjectAndDashboardCard></ProjectAndDashboardCard>
                         <ProjectAndDashboardCard></ProjectAndDashboardCard>

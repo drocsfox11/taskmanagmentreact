@@ -9,7 +9,7 @@
     border-width: 0.7px;
     border-color: #DBDBDB;
     border-style: solid;
-
+    min-width: 70px;
     border-top: none;
 }
 

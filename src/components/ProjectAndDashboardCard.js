@@ -4,10 +4,13 @@ import emojiData from "react-apple-emojis/src/data.json"
 import '../styles/components/ProjectAndDashboardCard.css'
 import OptionsPassive from "../assets/icons/options_passive.svg";
 
-function ProjectAndDashboardCard() {
+function ProjectAndDashboardCard({ onClick }) {
     return (
 
-        <div id='project-card-container'>
+        <div id='project-card-container'
+
+             onClick={onClick}
+        >
 
             <div id='project-card-icon-row-container'>
                 <div id='project-card-icon-container'>

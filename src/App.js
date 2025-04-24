@@ -1,26 +1,60 @@
 import './styles/fonts.css'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import {createBrowserRouter, Navigate, RouterProvider} from 'react-router-dom';
 import { Provider } from 'react-redux';
 import TaskDashboard from "./pages/TaskDashboard";
 import TaskCalendar from "./pages/TaskCalendar";
 import LeftMenuMessenger from "./components/LeftMenuMessenger";
 import store from './store';
 import MessengerPage from "./pages/MessengerPage";
+import LoginPage from "./pages/LoginPage";
+import ProjectDashboard from "./pages/ProjectDashboard";
+import RegisterPage from "./pages/RegisterPage";
+import ProjectDashboardsDashboard from "./pages/ProjectDashboardsDashboard";
+import ContentContainer from "./pages/ContentContainer";
 
 const router = createBrowserRouter([
-  {
-    element: <MessengerPage />,
-    children: [
-      {
-        index: true,
-        element: <TaskDashboard />,
-      },
-      {
-        path: "/calendar",
-        element: <TaskCalendar />,
-      },
-    ]
-  }
+
+    {
+      index:true,
+      element: <LoginPage />,
+    },
+    {
+      path: "/login",
+      element: <LoginPage />,
+    },
+    {
+      path: "/register",
+      element: <RegisterPage />,
+    },
+    {
+      path: "/system",
+      element: <ContentContainer />,
+      children:[
+          { index: true, element: <Navigate to="project" replace /> },
+        {
+          path: "/system/project",
+          element: <ProjectDashboard />,
+        },
+        {
+          path: "/system/messenger",
+          element: <MessengerPage />,
+        },
+        {
+          path: "/system/calendar",
+          element: <TaskCalendar />,
+        },
+          {
+              path: "/system/project/dashboards",
+              element: <ProjectDashboardsDashboard />,
+          },
+          {
+              path: "/system/project/tasks",
+              element: <TaskDashboard />,
+          }
+      ]
+    }
+
+
 ]);
 
 function App() {

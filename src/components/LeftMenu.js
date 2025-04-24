@@ -7,13 +7,23 @@ import MessengerPassive from '../assets/icons/messenger_passive.svg';
 import CalendarActive from '../assets/icons/calender_active.svg';
 import CalendarPassive from '../assets/icons/calender_passive.svg';
 import Logout from '../assets/icons/logout.svg';
+import {useNavigate} from "react-router-dom";
 
 function LeftMenu() {
     const [activeIcon, setActiveIcon] = useState('work');
+    const navigate = useNavigate();
+
+    const routeMap = {
+        work:       '/system/project',
+        messenger:  '/system/messenger',
+        calendar:   '/system/calendar'
+    };
 
     const handleIconClick = (icon) => {
         setActiveIcon(icon);
+        navigate(routeMap[icon]);
     };
+
 
     return (
         <div id="left-menu-container">
