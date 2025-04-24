@@ -1,15 +1,55 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL
+import store from '../store';
+import { clearCurrentUser } from '../store/features/currentUser/currentUserSlice';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+const handleUnauthorized = () => {
+    store.dispatch(clearCurrentUser());
+    window.location.href = '/login';
+};
 
 export const fetchWithAuth = async (endpoint, options = {}) => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    credentials: 'include',
-    ...options,
-  });
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            credentials: 'include',
+            ...options,
+        });
+        console.log(response);
+        console.log(response.status);
 
-  console.log("API call", endpoint, response);
-  if (!response.ok) {
-    throw new Error(`API call failed: ${response.statusText}`);
-  }
+        // Only handle 401 if it's not a login/register endpoint
+        if (response.status === 401 && !endpoint.includes('/auth/')) {
+            handleUnauthorized();
+            throw new Error('Unauthorized');
+        }
 
-  return response.json();
+        if (!response.ok) {
+            const error = new Error(`API call failed: ${response.statusText}`);
+            error.status = response.status;
+            throw error;
+        }
+
+        return response.json();
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const api = {
+    get: (endpoint) => fetchWithAuth(endpoint, { method: 'GET' }),
+    post: (endpoint, data) => fetchWithAuth(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    }),
+    put: (endpoint, data) => fetchWithAuth(endpoint, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    }),
+    delete: (endpoint) => fetchWithAuth(endpoint, { method: 'DELETE' }),
 }; 
