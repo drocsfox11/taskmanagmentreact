@@ -1,11 +1,13 @@
-
 import '../styles/components/TopBar.css'
 import Search from '../assets/icons/search.svg'
 import Settings from '../assets/icons/settings.svg'
 import Notifications from '../assets/icons/notificaitons.svg'
 import ProfilePicture from '../assets/icons/profile_picture.svg'
+import { useSelector } from 'react-redux'
 
 function TopBar() {
+    const { avatar, name } = useSelector(state => state.currentUser)
+
     return (
         <div id='top-bar-container'>
 
@@ -20,11 +22,11 @@ function TopBar() {
                 <div id='top-bar-profile-field-container'>
 
                     <div id='top-bar-profile-icon-container'>
-                        <img src={ProfilePicture} id='top-bar-profile-icon'/>
+                        <img src={avatar || ProfilePicture} id='top-bar-profile-icon'/>
 
                     </div>
 
-                    <div id='top-bar-profile-name'>Малькова А.А.</div>
+                    <div id='top-bar-profile-name'>{name || "Пользователь"}</div>
 
                 </div>
 

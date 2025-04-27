@@ -1,5 +1,5 @@
 import { takeLatest, put, call } from 'redux-saga/effects';
-import { setCurrentUser, updateLastLogin, setError, checkAuth, clearCurrentUser } from './currentUserSlice';
+import { setCurrentUser, updateLastLogin, setError, checkAuth, clearCurrentUser, logout as logoutAction } from './currentUserSlice';
 import { api } from '../../../utils/api';
 
 // Mock API call - replace with actual API call later
@@ -21,24 +21,37 @@ const loginApi = async (username, password) => {
 function* handleCheckAuth() {
     try {
         console.log('Checking auth with /me endpoint');
+
         const userData = yield call(api.get, '/auth/me');
         console.log('Auth check response:', userData);
-        yield put(setCurrentUser(userData));
+
+        // Преобразуем avatarURL -> avatar
+        const normalizedUser = {
+            ...userData,
+            avatar: userData.avatarURL || null,
+        };
+        yield put(setCurrentUser(normalizedUser));
     } catch (error) {
-        console.log('Auth check error:', error);
+        console.error('Auth check FAILED:', error);
+
         yield put(clearCurrentUser());
-    } finally {
-        // Ensure loading state is set to false after the check
-        yield put(setError(null));
+
+        yield put(setError('Сессия истекла, войдите снова'));
     }
 }
+
 
 function* handleLogin(action) {
     try {
         const { username, password } = action.payload;
         const userData = yield call(api.post, '/auth/login', { username, password });
         
-        yield put(setCurrentUser(userData));
+        // Преобразуем avatarURL -> avatar
+        const normalizedUser = {
+            ...userData,
+            avatar: userData.avatarURL || null,
+        };
+        yield put(setCurrentUser(normalizedUser));
         yield put(updateLastLogin());
         
         // Navigate to dashboard after successful login
@@ -63,7 +76,12 @@ function* handleRegister(action) {
 
         const userData = yield call(api.post, '/auth/register', { username, password });
         
-        yield put(setCurrentUser(userData));
+        // Преобразуем avatarURL -> avatar
+        const normalizedUser = {
+            ...userData,
+            avatar: userData.avatarURL || null,
+        };
+        yield put(setCurrentUser(normalizedUser));
         yield put(updateLastLogin());
         
         // Navigate to dashboard after successful registration
@@ -80,8 +98,19 @@ function* handleRegister(action) {
     }
 }
 
+function* handleLogout() {
+    try {
+        yield call(api.logout);
+    } catch (error) {
+        yield put(setError('Ошибка при выходе из системы'));
+    }
+    yield put(clearCurrentUser());
+    window.location.href = '/login';
+}
+
 export function* currentUserSaga() {
     yield takeLatest('currentUser/checkAuth', handleCheckAuth);
     yield takeLatest('currentUser/login', handleLogin);
     yield takeLatest('currentUser/register', handleRegister);
+    yield takeLatest('currentUser/logout', handleLogout);
 } 

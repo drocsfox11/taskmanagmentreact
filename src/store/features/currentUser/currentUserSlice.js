@@ -7,7 +7,7 @@ const initialState = {
   isAuthenticated: false,
   lastLogin: null,
   error: null,
-  isLoading: false
+  isLoading: true
 };
 
 const currentUserSlice = createSlice({
@@ -35,9 +35,10 @@ const currentUserSlice = createSlice({
         error: null
       };
     },
-    clearCurrentUser: (state) => {
-      return initialState;
-    },
+    clearCurrentUser: () => ({
+      ...initialState,
+      isLoading: false
+    }),
     updateLastLogin: (state) => {
       state.lastLogin = new Date().toISOString();
     },
@@ -51,9 +52,13 @@ const currentUserSlice = createSlice({
     navigateTo: (state, action) => {
       // This is just a marker action, actual navigation will be handled by middleware
       return state;
+    },
+    logout: (state) => {
+      state.isLoading = true;
+      state.error = null;
     }
   }
 });
 
-export const { login, register, checkAuth, setCurrentUser, clearCurrentUser, updateLastLogin, setError, resetError, navigateTo } = currentUserSlice.actions;
+export const { login, register, checkAuth, setCurrentUser, clearCurrentUser, updateLastLogin, setError, resetError, navigateTo, logout } = currentUserSlice.actions;
 export default currentUserSlice.reducer; 

@@ -8,10 +8,13 @@ import CalendarActive from '../assets/icons/calender_active.svg';
 import CalendarPassive from '../assets/icons/calender_passive.svg';
 import Logout from '../assets/icons/logout.svg';
 import {useNavigate} from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/features/currentUser/currentUserSlice';
 
 function LeftMenu() {
     const [activeIcon, setActiveIcon] = useState('work');
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const routeMap = {
         work:       '/system/project',
@@ -24,6 +27,9 @@ function LeftMenu() {
         navigate(routeMap[icon]);
     };
 
+    const handleLogout = () => {
+        dispatch(logout());
+    };
 
     return (
         <div id="left-menu-container">
@@ -52,7 +58,7 @@ function LeftMenu() {
             </div>
 
             <div id="left-menu-logout">
-                <img src={Logout} alt="Logout" />
+                <img src={Logout} alt="Logout" onClick={handleLogout} style={{ cursor: 'pointer' }} />
             </div>
         </div>
     );

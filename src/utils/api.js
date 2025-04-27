@@ -18,10 +18,12 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
         console.log(response.status);
 
         // Only handle 401 if it's not a login/register endpoint
-        if (response.status === 401 && !endpoint.includes('/auth/')) {
+        if ((response.status === 401 || response.status === 403) &&
+            !endpoint.startsWith('/auth/')) {
             handleUnauthorized();
             throw new Error('Unauthorized');
         }
+
 
         if (!response.ok) {
             const error = new Error(`API call failed: ${response.statusText}`);
@@ -52,4 +54,5 @@ export const api = {
         body: JSON.stringify(data),
     }),
     delete: (endpoint) => fetchWithAuth(endpoint, { method: 'DELETE' }),
+    logout: () => fetchWithAuth('/auth/logout', { method: 'POST' }),
 }; 
