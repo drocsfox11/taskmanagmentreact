@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../store/features/currentUser/currentUserSlice';
@@ -10,7 +10,7 @@ import {setError } from '../store/features/currentUser/currentUserSlice';
 function RegisterPage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isLoading, error } = useSelector(state => state.currentUser);
+    const { isLoading, error, isAuthenticated } = useSelector(state => state.currentUser);
     
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -33,6 +33,12 @@ function RegisterPage() {
         console.log('Proceeding with registration');
         dispatch(register({ username, password, confirmPassword }));
     };
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/system');
+        }
+    }, [isAuthenticated, navigate]);
 
     return (
         <div className='register-page-container'>

@@ -65,3 +65,58 @@
     font-size: 10px;
     color:#969595;
 }
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: transparent;
+    z-index: 1000;
+}
+
+.modal-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 200px;
+    min-height: 100px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10);
+    z-index: 10;
+}
+
+
+
+.modal-content-custom {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.modal-edit {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-style: normal;
+    font-size: 12px;
+    color: #000000;
+
+    cursor: pointer;
+}
+
+.modal-delete {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-style: normal;
+    font-size: 12px;
+    color: #FF0000;
+    cursor: pointer;
+}

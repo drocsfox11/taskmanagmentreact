@@ -7,7 +7,7 @@ const initialState = {
   isAuthenticated: false,
   lastLogin: null,
   error: null,
-  isLoading: true
+  isLoading: false
 };
 
 const currentUserSlice = createSlice({

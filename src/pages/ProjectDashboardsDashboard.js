@@ -1,5 +1,5 @@
 import TopBar from "../components/TopBar";
-import ProjectAndDashboardCard from "../components/ProjectAndDashboardCard";
+import ProjectCard from "../components/ProjectCard";
 import '../styles/pages/ProjectDashboardsDashboard.css'
 import ProjectMenu from "../components/ProjectMenu";
 import {useNavigate} from "react-router-dom";
@@ -31,40 +31,40 @@ function ProjectDashBoardsDashboard() {
                 <div id='project-dashboard-cards-container'>
 
                     <div id='project-dashboard-card-row'>
-                        <ProjectAndDashboardCard onClick={handleRedirect}></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <ProjectCard onClick={handleRedirect}></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
 
 
                     </div>
 
                     <div id='project-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
 
 
                     </div>
 
                     <div id='project-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
 
 
                     </div>
                     <div id='project-dashboard-card-row'>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
-                        <ProjectAndDashboardCard></ProjectAndDashboardCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
+                        <ProjectCard></ProjectCard>
 
 
                     </div>

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../store/features/currentUser/currentUserSlice';
 import '../styles/pages/LoginPage.css';
@@ -10,7 +10,7 @@ import PasswordFieldIcon from '../assets/icons/login_password_field_icon.svg';
 function LoginPage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isLoading, error } = useSelector(state => state.currentUser);
+    const { isLoading, error, isAuthenticated } = useSelector(state => state.currentUser);
     
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -22,6 +22,12 @@ function LoginPage() {
         }
         dispatch(login({ username, password }));
     };
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/system');
+        }
+    }, [isAuthenticated, navigate]);
 
     return (
         <div id="login-page-container">

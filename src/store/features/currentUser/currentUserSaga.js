@@ -53,9 +53,6 @@ function* handleLogin(action) {
         };
         yield put(setCurrentUser(normalizedUser));
         yield put(updateLastLogin());
-        
-        // Navigate to dashboard after successful login
-        window.location.href = '/system';
     } catch (error) {
         console.log('Login error:', error);
         // Reset error state and set new error
@@ -83,9 +80,6 @@ function* handleRegister(action) {
         };
         yield put(setCurrentUser(normalizedUser));
         yield put(updateLastLogin());
-        
-        // Navigate to dashboard after successful registration
-        window.location.href = '/system';
     } catch (error) {
         console.log('Register error:', error);
         if (error.status === 409) {

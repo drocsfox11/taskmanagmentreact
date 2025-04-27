@@ -1,5 +1,5 @@
 import TopBar from "../components/TopBar";
-import ProjectAndDashboardCard from "../components/ProjectAndDashboardCard";
+import ProjectCard from "../components/ProjectCard";
 import '../styles/pages/TaskDashboard.css'
 import ProjectMenu from "../components/ProjectMenu";
 import {Emoji, EmojiProvider} from "react-apple-emojis";

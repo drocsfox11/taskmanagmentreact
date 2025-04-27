@@ -31,7 +31,9 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
             throw error;
         }
 
-        return response.json();
+        const text = await response.text();
+        if (!text) return null;
+        return JSON.parse(text);
     } catch (error) {
         throw error;
     }
