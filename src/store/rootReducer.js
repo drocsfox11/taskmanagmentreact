@@ -7,6 +7,7 @@ import usersReducer from './features/users/usersSlice';
 import uiReducer from './features/ui/uiSlice';
 import boardsReducer from './features/boards/boardsSlice';
 import tagsReducer from './features/tags/tagsReducer';
+import permissionsReducer from './features/permissions/permissionsSlice';
 
 const rootReducer = combineReducers({
   tasks: tasksReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   ui: uiReducer,
   boards: boardsReducer,
   tags: tagsReducer,
+  permissions: permissionsReducer,
 });
 
 export default rootReducer; 
