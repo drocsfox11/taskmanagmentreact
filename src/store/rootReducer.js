@@ -5,6 +5,8 @@ import projectsReducer from './features/projects/projectsSlice';
 import columnsReducer from './features/columns/columnsSlice';
 import usersReducer from './features/users/usersSlice';
 import uiReducer from './features/ui/uiSlice';
+import boardsReducer from './features/boards/boardsSlice';
+import tagsReducer from './features/tags/tagsReducer';
 
 const rootReducer = combineReducers({
   tasks: tasksReducer,
@@ -12,7 +14,9 @@ const rootReducer = combineReducers({
   projects: projectsReducer,
   columns: columnsReducer,
   users: usersReducer,
-  ui: uiReducer
+  ui: uiReducer,
+  boards: boardsReducer,
+  tags: tagsReducer,
 });
 
 export default rootReducer; 

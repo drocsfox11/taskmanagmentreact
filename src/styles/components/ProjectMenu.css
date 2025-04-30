@@ -52,7 +52,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 8px;
-
+    cursor: pointer;
 }
 
 #project-menu-project-list-item-label-group{
@@ -91,7 +91,7 @@
     border-width: 0.7px;
     border-color: #DBDBDB;
     border-style: solid;
-
+    cursor: pointer;
 }
 
 #project-menu-project-list-item-label-group-icon-passive{
@@ -253,43 +253,190 @@
 #project-menu-events-window-events-added{
     display: flex;
     flex-direction: row;
-    gap: 3px;
+    align-items: center;
+    gap: 8px;
 }
 
 #project-menu-events-window-events-added-text{
-    font-family: "Ruberoid Semi Bold";
-    font-size: 10px;
-    color: #0BE100;
+    font-family: "Ruberoid Bold";
+    font-size: 18px;
+    color: #5558FF;
 }
 
 #project-menu-events-window-events-added-label{
-    font-family: "Ruberoid Semi Bold";
+    font-family: "Ruberoid Regular";
     font-size: 10px;
     color: #969595;
+
 }
 
-/*----------------------------------------------------------*/
-
 #project-menu-add-project-button{
+    margin: 0px 15px;
+    background-color: #5558FF;
     border-radius: 5px;
-    background-color: #FFFFFF;
+    padding: 11px 0px;
     display: flex;
-    width: 180px;
-    align-self: center;
-    flex-direction: column;
-    justify-content: space-between;
-    border-color: #5558FF;
-    border-style: dashed;
-    border-width: 1px;
-    padding: 12px 0px;
-    text-align: center;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+    cursor: pointer;
+}
 
+#project-menu-add-project-button:hover {
+    background-color: #4245cc;
 }
 
 #project-menu-add-project-button-text{
-    font-family: "Ruberoid Bold";
+    font-family: "Ruberoid Semi Bold";
     font-size: 14px;
+    color: white;
+}
+
+/* Project list modal styles */
+.projects-list-modal {
+    max-width: 500px !important;
+    width: 500px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.projects-list-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 15px;
+    gap: 10px;
+}
+
+.project-list-item {
+    padding: 12px 16px;
+    border-radius: 5px;
+    border: 1px solid #DBDBDB;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.project-list-item:hover {
+    background-color: #f9f9f9;
+}
+
+.project-list-item.active {
+    background-color: #5558FF;
+    border-color: #5558FF;
+}
+
+.project-list-item.active .project-list-item-title {
+    color: white;
+}
+
+.project-list-item-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.project-list-item-icon {
+    width: 30px;
+    height: 30px;
+    background-color: #D9EDFE;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.project-list-item.active .project-list-item-icon {
+    background-color: white;
+}
+
+.project-list-item-title {
+    font-family: "Ruberoid Semi Bold";
+    font-size: 16px;
+    color: #333;
+}
+
+.project-menu-show-more {
+    justify-content: center !important;
     color: #5558FF;
+}
+
+.project-menu-show-more:hover {
+    background-color: #f0f0f0;
+}
+
+.project-menu-show-more #project-menu-project-list-item-label-group-label-passive {
+    color: #5558FF;
+}
+
+.dropdown-container {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background-color: white;
+    border: 1px solid #DBDBDB;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 8px 0;
+    z-index: 1000;
+    min-width: 130px;
+}
+
+.project-list-options .dropdown-menu {
+    right: 8px;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    font-family: "Ruberoid Regular";
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+#project-menu-project-list-item-active .dropdown-menu {
+    background-color: white;
+}
+
+#project-menu-project-list-item-active .dropdown-item {
+    color: #333;
+}
+
+.project-list-options {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.project-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.project-list-item-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#project-menu-people-list-item-options {
+    position: relative;
+    cursor: pointer;
+}
+
+#project-menu-people-list-item-options .dropdown-menu {
+    right: 0;
+    top: 100%;
+    z-index: 1000;
 }
 
 

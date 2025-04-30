@@ -6,23 +6,32 @@ import { checkAuth } from '../store/features/currentUser/currentUserSlice';
 function AuthGuard({ children }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading } = useSelector(state => state.currentUser);
+    const { isAuthenticated, isLoading, username } = useSelector(state => state.currentUser);
 
     useEffect(() => {
-        console.log('Checking auth');
+        console.log('Проверка авторизации');
+        
+
+        if (username) {
+            console.log('Сессия восстановлена из localStorage, проверяем актуальность');
+        } else {
+            console.log('Сессия не найдена, проверяем через API');
+        }
+        
         dispatch(checkAuth());
-    }, [dispatch]);
+    }, [dispatch, username]);
 
     useEffect(() => {
-        console.log('Auth state changed:', { isAuthenticated, isLoading });
+        console.log('Состояние авторизации изменилось:', { isAuthenticated, isLoading });
+        
         if (!isLoading && !isAuthenticated) {
-            console.log('Navigating to login');
+            console.log('Перенаправление на страницу входа');
             navigate('/login');
         }
     }, [isLoading, isAuthenticated, navigate]);
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <div>Загрузка...</div>;
     }
 
     return isAuthenticated ? children : null;

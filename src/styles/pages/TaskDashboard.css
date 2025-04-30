@@ -1,8 +1,8 @@
 #task-dashboards-dashboard-container{
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     height: 100vh;
-
+    width: 100%;
 }
 
 
@@ -11,6 +11,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 
@@ -52,17 +53,19 @@
 #task-dashboard-cards-containeres{
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 30px 20px;
-    gap:25px;
-    overflow-y: auto;
+    gap: 25px;
+    overflow-x: auto;
+    width: 100%;
 }
 
 #task-dashboard-card-column{
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    width: fit-content;
+    justify-content: flex-start;
+    min-width: 280px;
+    width: 280px;
     gap: 20px;
 }
 
@@ -72,6 +75,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    position: relative;
 }
 
 #task-dashboard-card-column-topbar-label-container{
@@ -109,8 +113,50 @@
     font-size: 10px;
 }
 
+.modal-container {
+    position: absolute;
+    background: #FFFFFF;
+    border-radius: 5px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    z-index: 1000;
+}
 
+.modal-content-custom {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 8px 0;
+}
 
+.modal-edit {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-style: normal;
+    font-size: 12px;
+    color: #000000;
+    cursor: pointer;
+    padding: 8px 16px;
+    width: 100%;
+    text-align: center;
+}
+
+.modal-delete {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-style: normal;
+    font-size: 12px;
+    color: #FF0000;
+    cursor: pointer;
+    padding: 8px 16px;
+    width: 100%;
+    text-align: center;
+}
+
+.modal-edit:hover, .modal-delete:hover {
+    background-color: #F5F5F5;
+}
 
 
 #task-dashboard-icon-container{

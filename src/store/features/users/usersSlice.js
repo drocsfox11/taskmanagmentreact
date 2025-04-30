@@ -2,7 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   byId: {},
-  allIds: []
+  allIds: [],
+  byUsername: {}
 };
 
 const usersSlice = createSlice({
@@ -32,9 +33,13 @@ const usersSlice = createSlice({
       const id = action.payload;
       delete state.byId[id];
       state.allIds = state.allIds.filter(userId => userId !== id);
+    },
+    setUser: (state, action) => {
+      const user = action.payload;
+      state.byUsername[user.username] = user;
     }
   }
 });
 
-export const { setUsers, addUser, updateUser, deleteUser } = usersSlice.actions;
+export const { setUsers, addUser, updateUser, deleteUser, setUser } = usersSlice.actions;
 export default usersSlice.reducer; 

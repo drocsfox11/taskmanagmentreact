@@ -7,6 +7,9 @@ import DropdownIcon from "../assets/icons/month_dropdown.svg";
 import LeftIcon from "../assets/icons/left_date.svg";
 import RightIcon from '../assets/icons/right_date.svg'
 import CalendarCard from "../components/CalendarCard";
+import { useSelector } from 'react-redux';
+import LoadingSpinner from "../components/LoadingSpinner";
+import { useParams } from "react-router-dom";
 
 const tasks = [
     {
@@ -17,22 +20,20 @@ const tasks = [
 ];
 
 function TaskDashboard() {
-
+    const isLoading = useSelector(state => state.ui.loading.tasks);
+    const { projectId } = useParams();
     const task = tasks[0];
-
 
     const startCol = parseInt(task.startDate.split("-")[2], 10); // "2025-04-01" => 01 => 1
     const endCol = parseInt(task.endDate.split("-")[2], 10) + 1; // 5 + 1 = 6
 
     return (
-
         <div id='task-calendars-dashboard-container'>
-            <ProjectMenu></ProjectMenu>
+            <ProjectMenu />
             <div id='task-calendar-container'>
-
                 <TopBar></TopBar>
+                {isLoading && <LoadingSpinner />}
                 <div id='task-calendar-add-bar-container'>
-
                     <div id='task-calendar-icon-row-container'>
                         <div id='task-calendar-icon-container'>
                             <EmojiProvider data={emojiData}>

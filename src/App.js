@@ -1,6 +1,5 @@
 import './styles/fonts.css'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import { Provider } from 'react-redux';
 import TaskDashboard from "./pages/TaskDashboard";
 import TaskCalendar from "./pages/TaskCalendar";
 import MessengerPage from "./pages/MessengerPage";
@@ -10,7 +9,8 @@ import RegisterPage from "./pages/RegisterPage";
 import ProjectDashboardsDashboard from "./pages/ProjectDashboardsDashboard";
 import ContentContainer from "./pages/ContentContainer";
 import AuthGuard from "./components/AuthGuard";
-import store from './store';
+import { useEffect } from 'react';
+import { markPageLoad, clearPageLoadFlag } from './utils/refreshManager';
 
 const router = createBrowserRouter([
     {
@@ -32,9 +32,10 @@ const router = createBrowserRouter([
             { index: true, element: <Navigate to="project" replace /> },
             { path: "project", element: <ProjectDashboard /> },
             { path: "messenger", element: <MessengerPage /> },
-            { path: "calendar", element: <TaskCalendar /> },
-            { path: "project/dashboards", element: <ProjectDashboardsDashboard /> },
-            { path: "project/tasks", element: <TaskDashboard /> }
+            { path: "calendar/:projectId?", element: <TaskCalendar /> },
+            { path: "project/dashboards/:projectId", element: <ProjectDashboardsDashboard /> },
+            { path: "project/:projectId/board/:boardId/tasks", element: <TaskDashboard /> },
+            { path: "project/tasks/:projectId?", element: <TaskDashboard /> }
         ]
     },
     {
@@ -44,10 +45,19 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+    // Установить флаг, что страница была загружена
+    useEffect(() => {
+        // Устанавливаем флаг только при первоначальной загрузке
+        markPageLoad();
+        
+        // При размонтировании компонента очищаем флаг
+        return () => {
+            clearPageLoadFlag();
+        };
+    }, []);
+
     return (
-        <Provider store={store}>
-            <RouterProvider router={router} />
-        </Provider>
+        <RouterProvider router={router} />
     );
 }
 

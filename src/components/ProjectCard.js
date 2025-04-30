@@ -57,19 +57,6 @@ function ProjectCard({ project, onClick, onEdit }) {
                 <div id='project-card-progress-bar'></div>
                 <div id='project-card-progress-text'>13% завершено</div>
             </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: 4, marginTop: 8}}>
-                {project.participants && project.participants.slice(0, 3).map((user, idx) => (
-                    <img
-                        key={user.id || user.email || idx}
-                        src={user.avatarUrl || Girl}
-                        alt={user.name || user.email || 'user'}
-                        className="create-project-modal-avatar"
-                    />
-                ))}
-                {project.participants && project.participants.length > 3 && (
-                    <span className="create-project-modal-avatars-more">+{project.participants.length - 3}</span>
-                )}
-            </div>
             {isModalOpen && (
                 <div ref={modalRef} className="modal-container">
                     <div className="modal-content-custom">
