@@ -3,32 +3,23 @@ import ProjectCard from "../components/ProjectCard";
 import '../styles/pages/ProjectDashboard.css'
 import {useNavigate} from "react-router-dom";
 import {useState, useRef, useEffect} from "react";
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjectsRequest, createProjectRequest, updateProjectRequest } from '../store/features/projects/projectsActions';
-import { selectProjects } from '../store/features/projects/projectsSelectors';
+import { useGetProjectsQuery, useCreateProjectMutation, useUpdateProjectMutation } from '../services/api/projectsApi';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
-import Man from '../assets/icons/man.svg';
-import Man2 from '../assets/icons/man2.svg';
 import LoadingSpinner from "../components/LoadingSpinner";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function ProjectDashboard() {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const projects = useSelector(selectProjects);
-    const isLoading = useSelector(state => state.ui.loading.projects);
+    const { data: projects = [], isLoading } = useGetProjectsQuery();
+    const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
+    const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('create'); // 'create' | 'edit'
     const [editProject, setEditProject] = useState(null);
     const modalRef = useRef(null);
-    const usersByUsername = useSelector(state => state.users.byUsername);
 
-    useEffect(() => {
-        // Всегда загружаем свежие данные при монтировании компонента
-        dispatch(fetchProjectsRequest());
-    }, [dispatch]);
+    console.log(projects);
 
     const handleRedirect = (id) => {
         navigate(`/system/project/dashboards/${id}`);
@@ -68,54 +59,78 @@ function ProjectDashboard() {
     }, [isModalOpen]);
 
     // Форма создания/редактирования
-    const [form, setForm] = useState({ title: '', description: '', participants: [] });
+    const [form, setForm] = useState({ title: '', description: '', participantUsernames: [] });
+    
     useEffect(() => {
         if (modalMode === 'edit' && editProject) {
+            // Extract usernames from participant objects
+            const participantUsernames = editProject.participants 
+                ? editProject.participants.map(user => user.username)
+                : [];
+                
             setForm({
                 title: editProject.title || '',
                 description: editProject.description || '',
-                participants: editProject.participants || [],
-            });
-            // Загружаем данные пользователей через redux-saga, если их нет
-            (editProject.participants || []).forEach(username => {
-                if (!usersByUsername[username]) {
-                    dispatch({ type: 'users/fetchUser', payload: username });
-                }
+                participantUsernames,
             });
         } else {
-            setForm({ title: '', description: '', participants: [] });
+            setForm({ title: '', description: '', participantUsernames: [] });
         }
-    }, [modalMode, editProject, isModalOpen, usersByUsername, dispatch]);
+    }, [modalMode, editProject, isModalOpen]);
 
     const handleFormChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Format the data for the API
+        const projectData = {
+            title: form.title,
+            description: form.description,
+            // The backend expects just an array of usernames for participants
+            participants: form.participantUsernames
+        };
+        
         if (modalMode === 'create') {
-            dispatch(createProjectRequest(form));
-            setTimeout(() => dispatch(fetchProjectsRequest()), 500);
+            try {
+                await createProject(projectData).unwrap();
+            } catch (err) {
+                console.error('Failed to create project:', err);
+            }
         } else if (modalMode === 'edit' && editProject) {
-            dispatch(updateProjectRequest({ id: editProject.id, ...form }));
+            try {
+                await updateProject({ id: editProject.id, ...projectData }).unwrap();
+            } catch (err) {
+                console.error('Failed to update project:', err);
+            }
         }
         setIsModalOpen(false);
     };
 
-    // Участники (email добавление)
     const [participantInput, setParticipantInput] = useState('');
+    
     const handleAddParticipant = () => {
-        if (participantInput && !form.participants.includes(participantInput)) {
-            dispatch({ type: 'users/fetchUser', payload: participantInput });
-            setForm({ ...form, participants: [...form.participants, participantInput] });
+        if (participantInput && !form.participantUsernames.includes(participantInput)) {
+            setForm({ 
+                ...form, 
+                participantUsernames: [...form.participantUsernames, participantInput] 
+            });
             setParticipantInput('');
         }
+    };
+    
+    const handleRemoveParticipant = (username) => {
+        setForm({
+            ...form,
+            participantUsernames: form.participantUsernames.filter(p => p !== username)
+        });
     };
 
     return (
         <div id='project-dashboard-container'>
             <TopBar/>
-            {isLoading && <LoadingSpinner />}
             <div id='project-dashboard-add-bar-container'>
                 <div id='project-dashboard-add-bar-label'>Мои проекты</div>
                 <div id='project-dashboard-add-bar-add-button' onClick={handleAddProjectClick}>
@@ -123,6 +138,8 @@ function ProjectDashboard() {
                 </div>
             </div>
             <div id='project-dashboard-cards-container'>
+                {(isLoading || isCreating || isUpdating) && <LoadingSpinner />}
+
                 <div id='project-dashboard-card-row'>
                     {projects.map(project => (
                         <ProjectCard
@@ -169,7 +186,7 @@ function ProjectDashboard() {
                                 className="create-project-modal-input-participant" 
                                 value={participantInput} 
                                 onChange={e => setParticipantInput(e.target.value)} 
-                                placeholder="email@example.com"
+                                placeholder="username"
                             />
                             <button 
                                 type="button" 
@@ -180,29 +197,50 @@ function ProjectDashboard() {
                             </button>
                         </div>
                         
-                        <div className="create-project-modal-avatars-row">
-                            {form.participants.slice(0, 3).map((username, idx) => {
-                                const user = usersByUsername[username];
-                                return (
+                        {/* Список добавленных участников */}
+                        {form.participantUsernames.length > 0 && (
+                            <div className="create-project-modal-participants-list">
+                                {form.participantUsernames.map(username => (
+                                    <div key={username} className="participant-tag">
+                                        <span>{username}</span>
+                                        <button 
+                                            type="button" 
+                                            className="remove-participant"
+                                            onClick={() => handleRemoveParticipant(username)}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Аватары участников (для редактирования существующего проекта) */}
+                        {modalMode === 'edit' && editProject?.participants && editProject.participants.length > 0 && (
+                            <div className="create-project-modal-avatars-row">
+                                {editProject.participants.slice(0, 3).map((user, idx) => (
                                     <img
-                                        key={username}
-                                        src={user?.avatarURL || Girl}
-                                        alt={username}
+                                        key={user.username || idx}
+                                        src={user.avatarURL || Girl}
+                                        alt={user.username}
                                         className="create-project-modal-avatar"
                                     />
-                                );
-                            })}
-                            {form.participants.length > 3 && (
-                                <span className="create-project-modal-avatars-more">+{form.participants.length - 3}</span>
-                            )}
-                        </div>
+                                ))}
+                                {editProject.participants.length > 3 && (
+                                    <span className="create-project-modal-avatars-more">+{editProject.participants.length - 3}</span>
+                                )}
+                            </div>
+                        )}
                         
                         <button 
                             type="submit" 
                             className="create-project-modal-add-participant" 
                             style={{marginTop: 16}}
+                            disabled={isCreating || isUpdating}
                         >
-                            {modalMode === 'edit' ? 'Сохранить' : 'Создать'}
+                            {modalMode === 'edit' 
+                                ? (isUpdating ? 'Сохранение...' : 'Сохранить') 
+                                : (isCreating ? 'Создание...' : 'Создать')}
                         </button>
                     </form>
                 </div>

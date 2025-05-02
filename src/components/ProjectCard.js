@@ -3,15 +3,14 @@ import emojiData from "react-apple-emojis/src/data.json"
 import '../styles/components/ProjectAndDashboardCard.css'
 import OptionsPassive from "../assets/icons/options_passive.svg";
 import { useState, useRef, useEffect } from "react";
-import { useDispatch } from 'react-redux';
-import { deleteProjectRequest } from '../store/features/projects/projectsActions';
+import { useDeleteProjectMutation } from '../services/api/projectsApi';
 import Girl from '../assets/icons/girl.svg';
 
 function ProjectCard({ project, onClick, onEdit }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
-    const dispatch = useDispatch();
+    const [deleteProject] = useDeleteProjectMutation();
 
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -32,11 +31,18 @@ function ProjectCard({ project, onClick, onEdit }) {
         };
     }, []);
 
-    const handleDelete = () => {
-        dispatch(deleteProjectRequest(project.id));
-        setIsModalOpen(false);
+    const handleDelete = async () => {
+        try {
+            await deleteProject(project.id);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Error deleting project:', error);
+        }
     };
 
+    // Get the first few participants to display (if any)
+    const participants = project.participants || [];
+    
     return (
         <div id='project-card-container' onClick={onClick} style={{ position: 'relative' }}>
             <div id='project-card-icon-row-container'>

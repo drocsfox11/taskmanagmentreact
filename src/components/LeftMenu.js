@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../styles/components/LeftMenu.css';
 import WorkActive from '../assets/icons/work_active.svg';
 import WorkPassive from '../assets/icons/work_passive.svg';
@@ -8,13 +8,12 @@ import CalendarActive from '../assets/icons/calender_active.svg';
 import CalendarPassive from '../assets/icons/calender_passive.svg';
 import Logout from '../assets/icons/logout.svg';
 import {useNavigate} from "react-router-dom";
-import { useDispatch } from 'react-redux';
-import { logout } from '../store/features/currentUser/currentUserSlice';
+import { useLogoutMutation } from '../services/api';
 
 function LeftMenu() {
     const [activeIcon, setActiveIcon] = useState('work');
     const navigate = useNavigate();
-    const dispatch = useDispatch();
+    const [logout, { isLoading, error, isSuccess }] = useLogoutMutation();
 
     const routeMap = {
         work:       '/system/project',
@@ -27,9 +26,15 @@ function LeftMenu() {
         navigate(routeMap[icon]);
     };
 
-    const handleLogout = () => {
-        dispatch(logout());
+    const handleLogout = async () => {
+        await logout();
     };
+
+    useEffect(() => {
+        if (isSuccess) {
+            navigate('/login');
+        }
+    }, [isSuccess, navigate]);
 
     return (
         <div id="left-menu-container">

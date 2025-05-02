@@ -1,47 +1,50 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { register, resetError, setError } from '../store/features/currentUser/currentUserSlice';
+import { useRegisterMutation } from '../services/api';
 import '../styles/pages/RegisterPage.css';
 import LoginFieldIcon from '../assets/icons/login_username_field_icon.svg'
 import PasswordFieldIcon from '../assets/icons/login_password_field_icon.svg'
 
 function RegisterPage() {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const { isLoading, error, username } = useSelector(state => state.currentUser);
+    const [register, { isLoading, error, isSuccess }] = useRegisterMutation();
     
     const [usernameInput, setUsernameInput] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [localError, setLocalError] = useState(null);
 
-    useEffect(() => {
-        dispatch(resetError());
-    }, [dispatch]);
+    let errorMessage = error?.data;
 
-    const handleRegister = (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
-        console.log('Registration attempt started');
-        console.log('Username:', usernameInput);
-        console.log('Password:', password);
-        console.log('Confirm Password:', confirmPassword);
-        
-        dispatch(setError(null));
+        setLocalError(null);
 
         if (!usernameInput || !password || !confirmPassword) {
-            console.log('Empty fields detected:', { username: !usernameInput, password: !password, confirmPassword: !confirmPassword });
             return;
         }
 
-        console.log('Proceeding with registration');
-        dispatch(register({ username: usernameInput, password, confirmPassword }));
+        if (password !== confirmPassword) {
+            setLocalError('Пароли не совпадают');
+            return;
+        }
+        
+        try {
+            const result = await register({ username: usernameInput, password }).unwrap();
+            
+            if (result) {
+                navigate('/system');
+            }
+        } catch (err) {
+            console.error('Registration failed:', err);
+        }
     };
 
     useEffect(() => {
-        if (username) {
+        if (isSuccess) {
             navigate('/system');
         }
-    }, [username, navigate]);
+    }, [isSuccess, navigate]);
 
     return (
         <div className="register-page-container">
@@ -50,9 +53,9 @@ function RegisterPage() {
             </div>
 
             <div className='register-page-register-form'>
-                {error && (
+                {(errorMessage || localError) && (
                     <div className='register-page-error'>
-                        {error}
+                        {errorMessage || localError}
                     </div>
                 )}
 
@@ -65,7 +68,7 @@ function RegisterPage() {
                     <input 
                         type="text"
                         placeholder="username"
-                        id="register-page-register-form-username-field"
+                        className="register-page-register-form-username-field-container-input"
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
                         disabled={isLoading}
@@ -97,7 +100,7 @@ function RegisterPage() {
                     <input 
                         type="password"
                         placeholder="confirm password"
-                        id="register-page-register-form-confirm-password-field"
+                        className='register-page-register-form-password-field-container-input'
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         disabled={isLoading}

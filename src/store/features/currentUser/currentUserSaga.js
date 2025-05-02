@@ -1,44 +1,7 @@
 import { takeLatest, put, call } from 'redux-saga/effects';
-import { setCurrentUser, updateLastLogin, setError, checkAuth, clearCurrentUser, logout as logoutAction } from './currentUserSlice';
+import { setCurrentUser, updateLastLogin, setError, clearCurrentUser } from './currentUserSlice';
 import { api } from '../../../utils/api';
 
-// Mock API call - replace with actual API call later
-const loginApi = async (username, password) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock successful login
-  if (username && password) {
-    return {
-      username,
-      name: 'Test User',
-      avatar: null
-    };
-  }
-  throw new Error('Invalid credentials');
-};
-
-function* handleCheckAuth() {
-    try {
-        console.log('Checking auth with /me endpoint');
-
-        const userData = yield call(api.get, '/auth/me');
-        console.log('Auth check response:', userData);
-
-        // Преобразуем avatarURL -> avatar
-        const normalizedUser = {
-            ...userData,
-            avatar: userData.avatarURL || null,
-        };
-        yield put(setCurrentUser(normalizedUser));
-    } catch (error) {
-        console.error('Auth check FAILED:', error);
-
-        yield put(clearCurrentUser());
-
-        yield put(setError('Сессия истекла, войдите снова'));
-    }
-}
 
 
 function* handleLogin(action) {
@@ -105,7 +68,6 @@ function* handleLogout() {
 }
 
 export function* currentUserSaga() {
-    yield takeLatest('currentUser/checkAuth', handleCheckAuth);
     yield takeLatest('currentUser/login', handleLogin);
     yield takeLatest('currentUser/register', handleRegister);
     yield takeLatest('currentUser/logout', handleLogout);

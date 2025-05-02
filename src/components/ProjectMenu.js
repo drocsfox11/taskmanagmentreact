@@ -6,43 +6,25 @@ import emojiData from "react-apple-emojis/src/data.json"
 import Man from "../assets/icons/man.svg"
 import Man2 from "../assets/icons/man2.svg"
 import Girl from "../assets/icons/girl.svg"
-import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
-import { fetchProjectsRequest } from '../store/features/projects/projectsActions'
-import { selectProjects } from '../store/features/projects/projectsSelectors'
 import CloseCross from '../assets/icons/close_cross.svg'
+import { useGetProjectsQuery, useGetProjectQuery } from '../services/api/projectsApi'
 
 function ProjectMenu() {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
     const { projectId } = useParams();
     const currentProjectId = projectId ? Number(projectId) : null;
-    const projects = useSelector(selectProjects);
-    const currentProject = projects.find(p => p.id === currentProjectId);
-    const usersByUsername = useSelector(state => state.users.byUsername);
+    
+    // Use RTK Query hooks to fetch projects
+    const { data: projects = [] } = useGetProjectsQuery();
+    const { data: currentProject } = useGetProjectQuery(currentProjectId, { 
+        skip: !currentProjectId 
+    });
+    
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const modalRef = useRef(null);
-
-    // Fetch projects on component mount if not already loaded
-    useEffect(() => {
-        if (projects.length === 0) {
-            dispatch(fetchProjectsRequest());
-        }
-    }, [dispatch, projects.length]);
-
-    // Fetch user data for project participants
-    useEffect(() => {
-        if (currentProject && currentProject.participants) {
-            // Load user data for each participant
-            [...currentProject.participants, currentProject.owner].filter(Boolean).forEach(username => {
-                if (!usersByUsername[username]) {
-                    dispatch({ type: 'users/fetchUser', payload: username });
-                }
-            });
-        }
-    }, [currentProject, usersByUsername, dispatch]);
 
     // Handle clicking outside the modal to close it
     useEffect(() => {
@@ -120,19 +102,22 @@ function ProjectMenu() {
         setOpenDropdownId(null);
     };
 
-    // Get project participants
+    // Get project participants from current project
     const getProjectParticipants = () => {
         if (!currentProject) return [];
         
-        // Combine owner and participants, removing duplicates and null values
-        const participantUsernames = [
-            currentProject.owner, 
-            ...(currentProject.participants || [])
-        ].filter((username, index, self) => 
-            username && self.indexOf(username) === index
-        );
+        // The participants are now directly available in the project
+        // Ensure we have a valid participants array
+        const participants = currentProject.participants || [];
         
-        return participantUsernames.map(username => usersByUsername[username] || { username });
+        // Add owner to the list if it exists and isn't already in participants
+        const allParticipants = currentProject.owner ? 
+            [currentProject.owner, ...participants] : [...participants];
+            
+        // Remove duplicates if any (based on username)
+        return allParticipants.filter((user, index, self) => 
+            index === self.findIndex((u) => u.username === user.username)
+        );
     };
 
     // Projects to display in the side menu (up to 4)
@@ -213,7 +198,7 @@ function ProjectMenu() {
                                     </div>
                                     <div id='project-menu-people-list-item-label-group-label-container'>
                                         <div id='project-menu-people-list-item-label-group-label-username'>
-                                            {user.displayName || user.username}
+                                            {user.name || user.username}
                                         </div>
                                         <div id='project-menu-people-list-item-label-group-label-status-container'>
                                             <div id='project-menu-people-list-item-label-group-label-status-color-active'></div>

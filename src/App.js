@@ -25,12 +25,17 @@ const router = createBrowserRouter([
         element: <ContentContainer />,
         children: [
             { index: true, element: <Navigate to="project" replace /> },
-            { path: "project", element: <ProjectDashboard /> },
+            { 
+                path: "project",
+                children: [
+                    { index: true, element: <ProjectDashboard /> },
+                    { path: "dashboards/:projectId", element: <ProjectDashboardsDashboard /> },
+                    { path: ":projectId/board/:boardId/tasks", element: <TaskDashboard /> },
+                    { path: "tasks/:projectId?", element: <TaskDashboard /> }
+                ]
+            },
             { path: "messenger", element: <MessengerPage /> },
-            { path: "calendar/:projectId?", element: <TaskCalendar /> },
-            { path: "project/dashboards/:projectId", element: <ProjectDashboardsDashboard /> },
-            { path: "project/:projectId/board/:boardId/tasks", element: <TaskDashboard /> },
-            { path: "project/tasks/:projectId?", element: <TaskDashboard /> }
+            { path: "calendar/:projectId?", element: <TaskCalendar /> }
         ]
     },
     {

@@ -3,22 +3,23 @@ import '../styles/pages/ProjectDashboardsDashboard.css'
 import ProjectMenu from "../components/ProjectMenu";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchBoardsByProjectRequest, createBoardRequest, updateBoardRequest, deleteBoardRequest } from "../store/features/boards/boardsActions";
-import { selectBoardsByProjectId } from "../store/features/boards/boardsSelectors";
-import { selectProjects } from "../store/features/projects/projectsSelectors";
+import { useGetBoardsQuery, useCreateBoardMutation, useUpdateBoardMutation, useDeleteBoardMutation } from "../services/api/boardsApi";
+import { useGetProjectQuery } from "../services/api/projectsApi";
 import CloseCross from '../assets/icons/close_cross.svg';
 import DashboardCard from "../components/DashboardCard";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 function ProjectDashBoardsDashboard() {
-    const dispatch = useDispatch();
     const { projectId } = useParams();
-    const boards = useSelector(state => selectBoardsByProjectId(state, Number(projectId)));
-    const projects = useSelector(selectProjects);
-    const project = projects.find(p => p.id === Number(projectId));
-    const usersByUsername = useSelector(state => state.users.byUsername);
-    const isLoading = useSelector(state => state.ui.loading.boards);
+    const numericProjectId = Number(projectId);
+    
+    // Use RTK Query hooks
+    const { data: project, isLoading: isProjectLoading } = useGetProjectQuery(numericProjectId);
+    const { data: boards = [], isLoading: isBoardsLoading } = useGetBoardsQuery(numericProjectId);
+    const [createBoard] = useCreateBoardMutation();
+    const [updateBoard] = useUpdateBoardMutation();
+    const [deleteBoard] = useDeleteBoardMutation();
+    
     const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
     const [boardModalMode, setBoardModalMode] = useState('create');
     const [editBoard, setEditBoard] = useState(null);
@@ -28,20 +29,7 @@ function ProjectDashBoardsDashboard() {
     const modalRef = useRef(null);
     const navigate = useNavigate();
     
-    // Add state to track loading attempts
-    const [loadAttempts, setLoadAttempts] = useState(0);
-    const maxLoadAttempts = 3;
-
-    useEffect(() => {
-        if (projectId) {
-            dispatch(fetchBoardsByProjectRequest(Number(projectId)));
-            // Also fetch projects to make sure we have the project data
-            dispatch({ type: 'projects/fetchProjectsRequest' });
-            
-            // Increment load attempts
-            setLoadAttempts(prev => prev + 1);
-        }
-    }, [dispatch, projectId]);
+    const isLoading = isProjectLoading || isBoardsLoading;
 
     const handleOpenBoardModal = (board = null) => {
         setEditBoard(board);
@@ -53,14 +41,17 @@ function ProjectDashBoardsDashboard() {
         } : { title: '', description: '', tags: [] });
         setIsBoardModalOpen(true);
     };
+    
     const handleCloseBoardModal = () => {
         setIsBoardModalOpen(false);
         setEditBoard(null);
         setBoardForm({ title: '', description: '', tags: [] });
     };
+    
     const handleBoardFormChange = (e) => {
         setBoardForm({ ...boardForm, [e.target.name]: e.target.value });
     };
+    
     const handleAddTag = () => {
         if (tagTitle.trim()) {
             setBoardForm(prev => ({
@@ -71,38 +62,57 @@ function ProjectDashBoardsDashboard() {
             setTagColor('#FFD700');
         }
     };
+    
     const handleRemoveTag = (idx) => {
         setBoardForm(prev => ({
             ...prev,
             tags: prev.tags.filter((_, i) => i !== idx)
         }));
     };
-    const handleBoardSubmit = (e) => {
+    
+    const handleBoardSubmit = async (e) => {
         e.preventDefault();
         if (!project) return;
-        const participantUsernames = [...(project?.participants || []), project?.owner].filter(Boolean);
-        const participantIds = participantUsernames
-            .map(username => usersByUsername[username]?.id)
-            .filter(Boolean);
+        
+        // Get participant IDs directly from the project
+        const participantIds = project.participants 
+            ? project.participants.map(user => user.username)
+            : [];
+        
+        // Add owner if not already in the list
+        if (project.owner && !participantIds.includes(project.owner.username)) {
+            participantIds.push(project.owner.username);
+        }
+        
         const payload = {
             ...boardForm,
-            projectId: project?.id,
+            projectId: numericProjectId,
             participantIds,
             id: editBoard?.id,
         };
-        if (boardModalMode === 'create') {
-            dispatch(createBoardRequest(payload));
-        } else if (boardModalMode === 'edit') {
-            dispatch(updateBoardRequest(payload));
+        
+        try {
+            if (boardModalMode === 'create') {
+                await createBoard(payload);
+            } else if (boardModalMode === 'edit') {
+                await updateBoard(payload);
+            }
+            handleCloseBoardModal();
+        } catch (error) {
+            console.error('Error saving board:', error);
         }
-        handleCloseBoardModal();
-    };
-    const handleDeleteBoard = (boardId) => {
-        dispatch(deleteBoardRequest(boardId));
     };
     
-    // If we've tried loading a few times and still don't have data, show a proper error
-    if (!project && !isLoading && loadAttempts >= maxLoadAttempts) {
+    const handleDeleteBoard = async (boardId) => {
+        try {
+            await deleteBoard(boardId);
+        } catch (error) {
+            console.error('Error deleting board:', error);
+        }
+    };
+    
+    // If there's an error loading the project
+    if (!project && !isLoading) {
         return (
             <div style={{ textAlign: 'center', padding: '50px 20px' }}>
                 <h2>Проект не найден</h2>
@@ -123,11 +133,6 @@ function ProjectDashBoardsDashboard() {
                 </button>
             </div>
         );
-    }
-    
-    // If the project doesn't exist yet and we're not loading, show loading instead of "not found"
-    if (!project && !isLoading) {
-        return <div><LoadingSpinner /> Загрузка проекта...</div>;
     }
     
     return (
@@ -151,7 +156,7 @@ function ProjectDashBoardsDashboard() {
                                     <DashboardCard
                                         key={board.id}
                                         boardId={board.id}
-                                        projectId={Number(projectId)}
+                                        projectId={numericProjectId}
                                         onEdit={() => handleOpenBoardModal(board)}
                                         onDelete={() => handleDeleteBoard(board.id)}
                                         title={board.title}

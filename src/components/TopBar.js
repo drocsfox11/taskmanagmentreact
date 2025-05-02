@@ -3,10 +3,12 @@ import Search from '../assets/icons/search.svg'
 import Settings from '../assets/icons/settings.svg'
 import Notifications from '../assets/icons/notificaitons.svg'
 import ProfilePicture from '../assets/icons/profile_picture.svg'
-import { useSelector } from 'react-redux'
+import { useGetCurrentUserQuery } from '../services/api/usersApi'
 
 function TopBar() {
-    const { avatar, name } = useSelector(state => state.currentUser)
+    const { data: currentUser, isLoading } = useGetCurrentUserQuery()
+    const avatar = currentUser?.avatar
+    const name = currentUser?.name
 
     return (
         <div id='top-bar-container'>
@@ -26,7 +28,9 @@ function TopBar() {
 
                     </div>
 
-                    <div id='top-bar-profile-name'>{name || "Пользователь"}</div>
+                    <div id='top-bar-profile-name'>
+                        {isLoading ? "Загрузка..." : (name || "Пользователь")}
+                    </div>
 
                 </div>
 

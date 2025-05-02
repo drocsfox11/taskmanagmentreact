@@ -1,37 +1,44 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { login, resetError } from '../store/features/currentUser/currentUserSlice';
 import '../styles/pages/LoginPage.css';
+import { useLoginMutation} from '../services/api';
 
 import LoginFieldIcon from '../assets/icons/login_username_field_icon.svg';
 import PasswordFieldIcon from '../assets/icons/login_password_field_icon.svg';
 
 function LoginPage() {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const { isLoading, error, username } = useSelector(state => state.currentUser);
+    
+    const [login, { isLoading, error, isSuccess }] = useLoginMutation();
     
     const [usernameInput, setUsernameInput] = useState('');
     const [password, setPassword] = useState('');
 
-    useEffect(() => {
-        dispatch(resetError());
-    }, [dispatch]);
+    let errorMessage = error?.data;
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         if (!usernameInput || !password) {
             return;
         }
-        dispatch(login({ username: usernameInput, password }));
+        
+        try {
+            const result = await login({ username: usernameInput, password }).unwrap();
+            
+            if (result) {
+                navigate('/system');
+            }
+        } catch (err) {
+            console.error('Login failed:', err);
+        }
     };
 
     useEffect(() => {
-        if (username) {
+        console.log(isSuccess);
+        if (isSuccess) {
             navigate('/system');
         }
-    }, [username, navigate]);
+    }, [isSuccess, navigate]);
 
     return (
         <div className="login-page-container">
@@ -40,9 +47,9 @@ function LoginPage() {
             </div>
 
             <div className="login-page-login-form">
-                {error && (
+                {errorMessage && (
                     <div className="login-page-error">
-                        {error}
+                        {errorMessage}
                     </div>
                 )}
 

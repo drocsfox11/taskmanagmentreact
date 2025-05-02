@@ -146,3 +146,9 @@
 }
 
 
+.login-page-error {
+    color: #ff4d4f;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+}

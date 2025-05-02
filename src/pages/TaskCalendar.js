@@ -20,7 +20,8 @@ const tasks = [
 ];
 
 function TaskDashboard() {
-    const isLoading = useSelector(state => state.ui.loading.tasks);
+    // const isLoading = useSelector(state => state.ui.loading.tasks);
+    const isLoading = false;
     const { projectId } = useParams();
     const task = tasks[0];
 

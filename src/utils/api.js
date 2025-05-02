@@ -4,6 +4,7 @@ import { clearCurrentUser, setError } from '../store/features/currentUser/curren
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const handleUnauthorized = () => {
+    console.log('Unauthorized');
     store.dispatch(clearCurrentUser());
     store.dispatch(setError('Сессия истекла, войдите снова'));
     window.location.href = '/login';
@@ -18,7 +19,7 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
         console.log(response);
         console.log(response.status);
 
-        // Обрабатываем только 401 для не-auth эндпоинтов
+        
         if (response.status === 401 && !endpoint.startsWith('/auth/')) {
             handleUnauthorized();
             throw new Error('Unauthorized');
@@ -30,9 +31,7 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
             throw error;
         }
 
-        const text = await response.text();
-        if (!text) return null;
-        return JSON.parse(text);
+        return response;
     } catch (error) {
         throw error;
     }

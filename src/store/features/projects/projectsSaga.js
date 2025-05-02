@@ -18,7 +18,7 @@ function* fetchProjects() {
     const projects = yield call(api.get, '/api/projects/my');
     yield put(setProjects(projects));
   } catch (error) {
-    // handle error (можно добавить экшен для ошибок)
+    console.log('Ошибка при получении проектов: ' + (error.message || 'Неизвестная ошибка'));
   } finally {
     yield put(setLoading({ feature: 'projects', isLoading: false }));
   }

@@ -10,7 +10,8 @@ import { useSelector } from 'react-redux';
 import LoadingSpinner from "../components/LoadingSpinner";
 
 function MessengerPage() {
-    const isLoading = useSelector(state => state.ui.loading.messages || false);
+    // const isLoading = useSelector(state => state.ui.loading.messages || false);
+    const isLoading = false;
 
     return (
         <div id="messenger-page-container">

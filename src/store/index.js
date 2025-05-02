@@ -3,6 +3,7 @@ import createSagaMiddleware from 'redux-saga';
 import rootReducer from './rootReducer';
 import rootSaga from './rootSaga';
 import { markPageLoad, wasPageJustLoaded, clearPageLoadFlag, incrementRefreshAttempts, getRefreshAttempts } from '../utils/refreshManager';
+import { apiReducer, apiMiddleware } from '../services/api';
 
 // Функции для сохранения и восстановления состояния из localStorage
 export const saveState = (state) => {
@@ -137,16 +138,20 @@ const refreshMiddleware = (() => {
 })();
 
 const store = configureStore({
-  reducer: rootReducer,
-  preloadedState: persistedState, // Используем сохраненное состояние при создании стора
+  reducer: {
+    // ...rootReducer,
+    ...apiReducer, // Добавляем RTK Query редьюсеры
+  },
+  // preloadedState: persistedState, // Используем сохраненное состояние при создании стора
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
-      .concat(sagaMiddleware)
-      .concat(navigationMiddleware)
-      .concat(persistStateMiddleware)
-      .concat(refreshMiddleware)
+      // .concat(sagaMiddleware)
+      // .concat(navigationMiddleware)
+      // .concat(persistStateMiddleware)
+      // .concat(refreshMiddleware)
+      .concat(apiMiddleware)
 });
 
-sagaMiddleware.run(rootSaga);
+// sagaMiddleware.run(rootSaga);
 
 export default store; 
