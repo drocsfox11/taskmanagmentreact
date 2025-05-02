@@ -1,4 +1,4 @@
-#login-page-container{
+.login-page-container{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -8,7 +8,7 @@
     width: 100%;
 }
 
-#login-page-logo{
+.login-page-logo{
     width: 64px;
     height: 64px;
     display: flex;
@@ -20,13 +20,13 @@
 
 }
 
-#login-page-logo-text{
+.login-page-logo-text{
     font-family: "Ruberoid Semi Bold";
     font-size: 42px;
     color: #FFF;
 }
 
-#login-page-login-form{
+.login-page-login-form{
 
     display: flex;
     flex-direction: column;
@@ -41,13 +41,13 @@
 
 }
 
-#login-page-login-form-username-field-title{
+.login-page-login-form-username-field-title{
     font-family: "Ruberoid Medium";
     font-size: 16px;
     color: black;
 }
 
-#login-page-login-form-username-field-container{
+.login-page-login-form-username-field-container{
 
     width: 100%;
     display: flex;
@@ -60,11 +60,11 @@
 
 }
 
-#login-page-login-form-username-field-icon{
+.login-page-login-form-username-field-icon{
     margin: 8px;
 }
 
-#login-page-login-form-username-field-container-input{
+.login-page-login-form-username-field-container-input{
 
     border: none;
     outline: none;
@@ -74,7 +74,7 @@
 
 }
 
-#login-page-login-form-password-field-title{
+.login-page-login-form-password-field-title{
 
     font-family: "Ruberoid Medium";
     font-size: 16px;
@@ -83,7 +83,7 @@
 }
 
 
-#login-page-login-form-password-field-container{
+.login-page-login-form-password-field-container{
 
     width: 100%;
     display: flex;
@@ -99,11 +99,11 @@
 }
 
 
-#login-page-login-form-password-field-icon{
+.login-page-login-form-password-field-icon{
     margin: 8px;
 }
 
-#login-page-login-form-password-field-container-input{
+.login-page-login-form-password-field-container-input{
 
     border: none;
     outline: none;
@@ -113,7 +113,7 @@
 
 }
 
-#login-page-login-form-submit-button{
+.login-page-login-form-submit-button{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -125,14 +125,14 @@
     margin-top: 20px;
 }
 
-#login-page-login-form-submit-button-text{
+.login-page-login-form-submit-button-text{
     font-family: "Ruberoid Medium";
     font-size: 18px;
     color: white;
 
 }
 
-#login-page-register-link {
+.login-page-register-link {
     margin-top: 20px;
     text-align: center;
     color: #666;
@@ -141,7 +141,7 @@
     text-decoration: underline;
 }
 
-#login-page-register-link:hover {
+.login-page-register-link:hover {
     color: #333;
 }
 

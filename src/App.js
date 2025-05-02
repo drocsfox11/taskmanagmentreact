@@ -8,7 +8,6 @@ import ProjectDashboard from "./pages/ProjectDashboard";
 import RegisterPage from "./pages/RegisterPage";
 import ProjectDashboardsDashboard from "./pages/ProjectDashboardsDashboard";
 import ContentContainer from "./pages/ContentContainer";
-import AuthGuard from "./components/AuthGuard";
 import { useEffect } from 'react';
 import { markPageLoad, clearPageLoadFlag } from './utils/refreshManager';
 
@@ -23,11 +22,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/system",
-        element: (
-            <AuthGuard>
-                <ContentContainer />
-            </AuthGuard>
-        ),
+        element: <ContentContainer />,
         children: [
             { index: true, element: <Navigate to="project" replace /> },
             { path: "project", element: <ProjectDashboard /> },

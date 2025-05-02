@@ -1,50 +1,52 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { register } from '../store/features/currentUser/currentUserSlice';
+import { register, resetError, setError } from '../store/features/currentUser/currentUserSlice';
 import '../styles/pages/RegisterPage.css';
 import LoginFieldIcon from '../assets/icons/login_username_field_icon.svg'
 import PasswordFieldIcon from '../assets/icons/login_password_field_icon.svg'
-import {setError } from '../store/features/currentUser/currentUserSlice';
 
 function RegisterPage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isLoading, error, isAuthenticated } = useSelector(state => state.currentUser);
+    const { isLoading, error, username } = useSelector(state => state.currentUser);
     
-    const [username, setUsername] = useState('');
+    const [usernameInput, setUsernameInput] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    useEffect(() => {
+        dispatch(resetError());
+    }, [dispatch]);
 
     const handleRegister = (e) => {
         e.preventDefault();
         console.log('Registration attempt started');
-        console.log('Username:', username);
+        console.log('Username:', usernameInput);
         console.log('Password:', password);
         console.log('Confirm Password:', confirmPassword);
         
         dispatch(setError(null));
 
-        if (!username || !password || !confirmPassword) {
-            console.log('Empty fields detected:', { username: !username, password: !password, confirmPassword: !confirmPassword });
+        if (!usernameInput || !password || !confirmPassword) {
+            console.log('Empty fields detected:', { username: !usernameInput, password: !password, confirmPassword: !confirmPassword });
             return;
         }
 
         console.log('Proceeding with registration');
-        dispatch(register({ username, password, confirmPassword }));
+        dispatch(register({ username: usernameInput, password, confirmPassword }));
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
+        if (username) {
             navigate('/system');
         }
-    }, [isAuthenticated, navigate]);
+    }, [username, navigate]);
 
     return (
-        <div className='register-page-container'>
-
-            <div className='register-page-logo'>
-                <div className='register-page-logo-text'>T</div>
+        <div className="register-page-container">
+            <div className="register-page-logo">
+                <div className="register-page-logo-text">T</div>
             </div>
 
             <div className='register-page-register-form'>
@@ -63,12 +65,11 @@ function RegisterPage() {
                     <input 
                         type="text"
                         placeholder="username"
-                        className='register-page-register-form-username-field-container-input'
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        id="register-page-register-form-username-field"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
                         disabled={isLoading}
                     />
-
                 </div>
 
                 <div className='register-page-register-form-password-field-title'>Пароль</div>
@@ -85,7 +86,6 @@ function RegisterPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={isLoading}
                     />
-
                 </div>
 
                 <div className='register-page-register-form-password-field-title'>Пароль еще раз</div>
@@ -96,8 +96,8 @@ function RegisterPage() {
                          className='register-page-register-form-password-field-icon'/>
                     <input 
                         type="password"
-                        placeholder="password"
-                        className='register-page-register-form-password-field-container-input'
+                        placeholder="confirm password"
+                        id="register-page-register-form-confirm-password-field"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         disabled={isLoading}
@@ -118,9 +118,7 @@ function RegisterPage() {
                 <div className="register-page-login-link" onClick={() => navigate('/login')}>
                     Уже есть аккаунт? Войти
                 </div>
-
             </div>
-
         </div>
     );
 }

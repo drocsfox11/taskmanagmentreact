@@ -1,10 +1,11 @@
 import store from '../store';
-import { clearCurrentUser } from '../store/features/currentUser/currentUserSlice';
+import { clearCurrentUser, setError } from '../store/features/currentUser/currentUserSlice';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const handleUnauthorized = () => {
     store.dispatch(clearCurrentUser());
+    store.dispatch(setError('Сессия истекла, войдите снова'));
     window.location.href = '/login';
 };
 
@@ -17,13 +18,11 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
         console.log(response);
         console.log(response.status);
 
-        // Only handle 401 if it's not a login/register endpoint
-        if ((response.status === 401 || response.status === 403) &&
-            !endpoint.startsWith('/auth/')) {
+        // Обрабатываем только 401 для не-auth эндпоинтов
+        if (response.status === 401 && !endpoint.startsWith('/auth/')) {
             handleUnauthorized();
             throw new Error('Unauthorized');
         }
-
 
         if (!response.ok) {
             const error = new Error(`API call failed: ${response.statusText}`);

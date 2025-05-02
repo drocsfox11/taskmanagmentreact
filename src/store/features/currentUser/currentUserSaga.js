@@ -56,9 +56,11 @@ function* handleLogin(action) {
     } catch (error) {
         console.log('Login error:', error);
         // Reset error state and set new error
-        yield put(setError(error.message === 'Unauthorized' 
-            ? 'Неверный логин или пароль' 
-            : 'Произошла ошибка при входе. Попробуйте позже.'));
+        if (error.status === 401){
+            yield put(setError('Неверный логин или пароль'));
+        } else {
+            yield put(setError('Произошла ошибка при входе. Попробуйте позже.'));
+        }
     }
 }
 
