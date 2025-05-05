@@ -433,8 +433,6 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     
-    // console.log('Отрисовка колонки:', column);
-    
     const columnId = column?.id;
     const tasks = column?.tasks || [];
     const taskCount = tasks.length;
@@ -458,15 +456,11 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
         };
     }, []);
     
-    // Проверяем наличие columnId после вызова всех хуков
     if (!columnId) {
         console.error('Ошибка: Колонка не имеет ID!', column);
         return null;
     }
     
-
-    
-    // Используем title или name в зависимости от того, что доступно
     const columnTitle = column.title || column.name || 'Без названия';
 
     const handleEditColumn = () => {
@@ -477,10 +471,13 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
 
     const handleDeleteColumn = () => {
         if (window.confirm("Вы уверены, что хотите удалить раздел? Все задачи в этом разделе также будут удалены.")) {
-            deleteColumn(columnId)
+            deleteColumn({ 
+                id: columnId,
+                boardId: column.boardId
+            })
                 .unwrap()
                 .catch(error => {
-                    console.error('Failed to delete column using RTK Query:', error);
+                    console.error('Failed to delete column:', error);
                 });
         }
         setIsModalOpen(false);
@@ -489,13 +486,15 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     const handleUpdateColumn = () => {
         if (editColumnName.trim()) {
             updateColumn({ 
-                id: columnId, 
+                id: columnId,
+                boardId: column.boardId,
                 title: editColumnName,
-                name: editColumnName 
+                name: editColumnName,
+                position: column.position
             })
                 .unwrap()
                 .catch(error => {
-                    console.error('Failed to update column using RTK Query:', error);
+                    console.error('Failed to update column:', error);
                 });
             
             setIsEditModalOpen(false);
@@ -521,17 +520,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                 </div>
                 
                 {isModalOpen && (
-                    <div ref={modalRef} className="modal-container" style={{ 
-                        position: 'absolute', 
-                        top: '30px', 
-                        right: '10px',
-                        zIndex: 1000,
-                        background: '#FFFFFF',
-                        borderRadius: '5px',
-                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-                        padding: '8px 0',
-                        width: '150px'
-                    }}>
+                    <div ref={modalRef} className="modal-container" >
                         <div className="modal-content-custom">
                             <div 
                                 className="modal-edit"

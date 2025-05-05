@@ -483,7 +483,10 @@ export const boardsApi = baseApi.injectEndpoints({
         try {
           // Отправляем событие через STOMP
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('UPDATE_COLUMN', { id, ...updates });
+          const success = stompConn.sendAction('UPDATE_COLUMN', { 
+            columnId: id,  // Changed from id to columnId to match backend expectation
+            ...updates 
+          });
           
           if (!success) {
             throw new Error('Failed to send STOMP message');
@@ -514,7 +517,9 @@ export const boardsApi = baseApi.injectEndpoints({
         try {
           // Отправляем событие через STOMP
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('DELETE_COLUMN', { id });
+          const success = stompConn.sendAction('DELETE_COLUMN', { 
+            columnId: id  // Changed from id to columnId to match backend expectation
+          });
           
           if (!success) {
             throw new Error('Failed to send STOMP message');

@@ -291,14 +291,14 @@
 }
 
 /* Project list modal styles */
-.projects-list-modal {
+.project-menu-list-modal {
     max-width: 500px !important;
     width: 500px !important;
     max-height: 70vh;
     overflow-y: auto;
 }
 
-.projects-list-container {
+.project-menu-list-container {
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -306,7 +306,7 @@
     gap: 10px;
 }
 
-.project-list-item {
+.project-menu-list-item {
     padding: 12px 16px;
     border-radius: 5px;
     border: 1px solid #DBDBDB;
@@ -314,26 +314,26 @@
     transition: all 0.2s ease;
 }
 
-.project-list-item:hover {
+.project-menu-list-item:hover {
     background-color: #f9f9f9;
 }
 
-.project-list-item.active {
+.project-menu-list-item.active {
     background-color: #5558FF;
     border-color: #5558FF;
 }
 
-.project-list-item.active .project-list-item-title {
+.project-menu-list-item.active .project-menu-list-item-title {
     color: white;
 }
 
-.project-list-item-content {
+.project-menu-list-item-content {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.project-list-item-icon {
+.project-menu-list-item-icon {
     width: 30px;
     height: 30px;
     background-color: #D9EDFE;
@@ -343,11 +343,11 @@
     justify-content: center;
 }
 
-.project-list-item.active .project-list-item-icon {
+.project-menu-list-item.active .project-menu-list-item-icon {
     background-color: white;
 }
 
-.project-list-item-title {
+.project-menu-list-item-title {
     font-family: "Ruberoid Semi Bold";
     font-size: 16px;
     color: #333;

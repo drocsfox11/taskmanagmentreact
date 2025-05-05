@@ -68,7 +68,7 @@
     color:#969595;
 }
 
-.modal-overlay {
+.project-card-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -78,14 +78,14 @@
     z-index: 1000;
 }
 
-.modal-container {
+.project-card-modal-container {
     position: absolute;
     top: 34px;
     right: 8px;
     z-index: 100;
 }
 
-.modal-content-custom {
+.project-card-modal-content {
     background-color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border-radius: 8px;
@@ -93,35 +93,35 @@
     min-width: 130px;
 }
 
-.modal-option {
+.project-card-modal-option {
     padding: 8px 16px;
     cursor: pointer;
     font-size: 14px;
     color: #333;
 }
 
-.modal-option:hover {
+.project-card-modal-option:hover {
     background-color: #f5f5f5;
 }
 
-.modal-edit {
+.project-card-modal-edit {
     padding: 8px 16px;
     cursor: pointer;
     font-size: 14px;
     color: #333;
 }
 
-.modal-edit:hover {
+.project-card-modal-edit:hover {
     background-color: #f5f5f5;
 }
 
-.modal-delete {
+.project-card-modal-delete {
     padding: 8px 16px;
     cursor: pointer;
     font-size: 14px;
     color: #ff4d4f;
 }
 
-.modal-delete:hover {
+.project-card-modal-delete:hover {
     background-color: #fff1f0;
 }

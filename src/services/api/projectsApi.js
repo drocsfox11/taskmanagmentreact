@@ -1,4 +1,5 @@
 import { baseApi } from './baseApi';
+import { projectParticipantsApi } from './projectParticipantsApi';
 
 const apiPrefix = 'api/projects';
 
@@ -19,7 +20,6 @@ export const projectsApi = baseApi.injectEndpoints({
         return response;
       },
       keepUnusedDataFor: 2,
-
     }),
     createProject: builder.mutation({
       query: (project) => ({
@@ -36,6 +36,23 @@ export const projectsApi = baseApi.injectEndpoints({
         body: data,
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Projects', id }],
+      async onQueryStarted({ id, ...updates }, { dispatch, queryFulfilled }) {
+        // Оптимистично обновляем UI
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
+            const project = draft.find(p => p.id === id);
+            if (project) {
+              Object.assign(project, updates);
+            }
+          })
+        );
+        
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      }
     }),
     deleteProject: builder.mutation({
       query: (id) => ({
@@ -53,4 +70,10 @@ export const {
   useCreateProjectMutation,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
-} = projectsApi; 
+} = projectsApi;
+
+// Re-export project participants mutations
+export const {
+  useAddProjectParticipantMutation,
+  useRemoveProjectParticipantMutation,
+} = projectParticipantsApi; 

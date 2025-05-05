@@ -252,43 +252,24 @@ function ProjectMenu() {
 
             {/* Modal for "Show more" projects */}
             {isProjectModalOpen && (
-                <div className="create-project-modal-overlay">
-                    <div className="create-project-modal projects-list-modal" ref={modalRef}>
-                        <div className="create-task-modal-header">
-                            <div className="create-project-modal-title">Все проекты</div>
-                            <img src={CloseCross} alt="close" className="create-task-modal-close" onClick={() => setIsProjectModalOpen(false)}/>
-                        </div>
-                        
-                        <div className="projects-list-container">
-                            {projects.map((project) => (
-                                <div 
-                                    key={project.id}
-                                    className={`project-list-item ${project.id === currentProjectId ? 'active' : ''}`}
-                                    onClick={() => handleProjectClick(project.id)}
-                                >
-                                    <div className="project-list-item-content">
-                                        <div className="project-list-item-icon">
-                                            <EmojiProvider data={emojiData}>
-                                                <Emoji name="teacher-light-skin-tone" width={16}/>
-                                            </EmojiProvider>
-                                        </div>
-                                        <div className="project-list-item-title">{project.title}</div>
+                <div className="project-menu-list-modal">
+                    <div className="project-menu-list-container">
+                        {moreProjects.map(project => (
+                            <div 
+                                key={project.id}
+                                className={`project-menu-list-item ${currentProjectId === project.id ? 'active' : ''}`}
+                                onClick={() => handleProjectClick(project.id)}
+                            >
+                                <div className="project-menu-list-item-content">
+                                    <div className="project-menu-list-item-icon">
+                                        <EmojiProvider data={emojiData}>
+                                            <Emoji name="teacher-light-skin-tone" width={16}/>
+                                        </EmojiProvider>
                                     </div>
-                                    <div 
-                                        className="project-list-options dropdown-container"
-                                        onClick={(e) => toggleDropdown(`modal-${project.id}`, e)}
-                                    >
-                                        <img src={OptionsPassive} alt="Options" />
-                                        {openDropdownId === `modal-${project.id}` && (
-                                            <div className="dropdown-menu">
-                                                <div className="dropdown-item" onClick={(e) => handleProjectTasksClick(project.id, e)}>Задачи</div>
-                                                <div className="dropdown-item" onClick={(e) => handleProjectCalendarClick(project.id, e)}>Календарь</div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <div className="project-menu-list-item-title">{project.title}</div>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}

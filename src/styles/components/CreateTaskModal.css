@@ -98,54 +98,41 @@
 }
 
 .create-task-modal-add-button:hover {
-    background: #4345cc;
+    background: #4245cc;
 }
 
 /* Checklist styles */
-.create-task-modal-checklist-container {
+.create-task-modal-checklist {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.create-task-modal-checklist-items {
-    background: #FDFDFD;
-    border: 1px solid #E1E1E1;
-    border-radius: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 4px;
+    gap: 8px;
 }
 
 .create-task-modal-checklist-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
+    gap: 8px;
+    padding: 8px;
     background: #F5F5F5;
-    border-radius: 4px;
-    margin: 4px 0;
+    border-radius: 8px;
 }
 
-.create-task-modal-checklist-item-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.create-task-modal-checklist-item-text {
+    flex: 1;
     font-family: 'Ruberoid Regular', sans-serif;
     font-size: 14px;
 }
 
-.create-task-modal-checklist-icon {
-    width: 16px;
-    height: 16px;
+.create-task-modal-checklist-item-remove {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
 }
 
-.create-task-modal-checklist-remove {
-    color: #FF0000;
-    font-size: 20px;
-    cursor: pointer;
-    font-weight: bold;
+.create-task-modal-checklist-item-remove:hover {
+    opacity: 1;
 }
 
 /* Timeline styles */
@@ -206,35 +193,48 @@
 /* Participant styles */
 .create-task-modal-participants {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 8px;
-    margin-top: 8px;
-    margin-bottom: 8px;
 }
 
-.create-task-modal-participant {
+.create-task-modal-participant-item {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 8px;
     background: #F5F5F5;
-    border-radius: 20px;
-    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.create-task-modal-participant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.create-task-modal-participant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.create-task-modal-participant-name {
+    flex: 1;
     font-family: 'Ruberoid Regular', sans-serif;
     font-size: 14px;
 }
 
-.create-task-modal-participant-avatar {
+.create-task-modal-participant-remove {
     width: 24px;
     height: 24px;
-    border-radius: 50%;
-    object-fit: cover;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
 }
 
-.create-task-modal-participant-remove {
-    color: #969595;
-    font-size: 18px;
-    cursor: pointer;
-    font-weight: bold;
+.create-task-modal-participant-remove:hover {
+    opacity: 1;
 }
 
 /* Аватары участников в стиле проектов */
@@ -262,122 +262,85 @@
 }
 
 /* Files section */
-.create-task-modal-files-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.create-task-modal-file-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #F5F5F5;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-family: 'Ruberoid Medium', sans-serif;
-    font-size: 14px;
-    cursor: pointer;
-    width: fit-content;
-}
-
-.create-task-modal-file-icon {
-    width: 18px;
-    height: 18px;
-}
-
-.create-task-modal-files-list {
+.create-task-modal-files {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    background: #FDFDFD;
-    border: 1px solid #E1E1E1;
-    border-radius: 8px;
-    padding: 8px;
 }
 
 .create-task-modal-file-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: 8px;
+    padding: 8px;
     background: #F5F5F5;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
-.create-task-modal-file-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.create-task-modal-file-icon {
+    width: 24px;
+    height: 24px;
 }
 
 .create-task-modal-file-name {
-    font-family: 'Ruberoid Medium', sans-serif;
+    flex: 1;
+    font-family: 'Ruberoid Regular', sans-serif;
     font-size: 14px;
 }
 
-.create-task-modal-file-size {
-    font-family: 'Ruberoid Regular', sans-serif;
-    font-size: 12px;
-    color: #969595;
+.create-task-modal-file-remove {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
 }
 
-.create-task-modal-file-remove {
-    color: #FF0000;
-    font-size: 20px;
-    cursor: pointer;
-    font-weight: bold;
+.create-task-modal-file-remove:hover {
+    opacity: 1;
 }
 
 /* Submit button */
 .create-task-modal-submit {
-    padding: 14px 24px;
+    margin-top: 16px;
+    padding: 12px 24px;
     border-radius: 8px;
     border: none;
     background: #5558FF;
     color: white;
-    font-family: 'Ruberoid Bold', sans-serif;
+    font-family: 'Ruberoid Medium', sans-serif;
     font-size: 16px;
     cursor: pointer;
     transition: background 0.2s;
-    margin-top: 16px;
-    width: 100%;
 }
 
 .create-task-modal-submit:hover {
-    background: #4345cc;
+    background: #4245cc;
 }
 
-.create-task-modal-tags-container {
+.create-task-modal-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 16px;
 }
 
 .create-task-modal-tag {
-    padding: 6px 12px;
+    padding: 4px 8px;
     border-radius: 4px;
-    cursor: pointer;
-    color: white;
+    background: #F5F5F5;
+    font-family: 'Ruberoid Regular', sans-serif;
     font-size: 14px;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-}
-
-.create-task-modal-tag.selected {
-    border: 2px solid #000;
-    transform: scale(1.05);
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .create-task-modal-tag:hover {
-    transform: scale(1.05);
-    opacity: 0.9;
+    background: #E5E5E5;
+}
+
+.create-task-modal-tag.selected {
+    background: #5558FF;
+    color: white;
 }
 
 .create-task-modal-tags-preview {

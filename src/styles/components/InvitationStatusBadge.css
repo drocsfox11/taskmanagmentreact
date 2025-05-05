@@ -1,0 +1,33 @@
+.invitation-status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.invitation-status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.invitation-status-badge.accepted {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.invitation-status-badge.rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.invitation-status-badge.expired {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.invitation-status-badge.unknown {
+    background-color: #f8f9fa;
+    color: #6c757d;
+} 

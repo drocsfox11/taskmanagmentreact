@@ -52,7 +52,13 @@ function ProjectCard({ project, onClick, onEdit }) {
     const participants = project.participants || [];
     
     return (
-        <div id='project-card-container' onClick={onClick} style={{ position: 'relative' }}>
+        <div id='project-card-container' onClick={(e) => {
+            // Prevent navigation if clicking on modal or its children
+            if (e.target.closest('.project-management-modal') || e.target.closest('.project-card-modal-container')) {
+                return;
+            }
+            onClick();
+        }} style={{ position: 'relative' }}>
             <div id='project-card-icon-row-container'>
                 <div id='project-card-icon-container'>
                     <EmojiProvider data={emojiData}>
@@ -72,11 +78,11 @@ function ProjectCard({ project, onClick, onEdit }) {
                 <div id='project-card-progress-text'>13% завершено</div>
             </div>
             {isModalOpen && (
-                <div ref={modalRef} className="modal-container">
-                    <div className="modal-content-custom">
-                        <div className="modal-option" onClick={handleManage}>Управление</div>
-                        <div className="modal-option" onClick={e => { e.stopPropagation(); setIsModalOpen(false); onEdit && onEdit(project); }}>Редактировать</div>
-                        <div className="modal-delete" onClick={e => { e.stopPropagation(); handleDelete(); }}>Удалить</div>
+                <div ref={modalRef} className="project-card-modal-container">
+                    <div className="project-card-modal-content">
+                        <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
+                        <div className="project-card-modal-option" onClick={e => { e.stopPropagation(); setIsModalOpen(false); onEdit && onEdit(project); }}>Редактировать</div>
+                        <div className="project-card-modal-delete" onClick={e => { e.stopPropagation(); handleDelete(); }}>Удалить</div>
                     </div>
                 </div>
             )}
