@@ -1,45 +1,52 @@
 import { baseApi } from './baseApi';
 
+/**
+ * @deprecated Используйте вместо этого соответствующие хуки из boardsApi.js
+ * ВАЖНО: Эти хуки теперь экспортируются из boardsApi.js и не должны использоваться напрямую отсюда
+ * Для получения тегов используйте результат из запроса board/full
+ */
 export const tagsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTags: builder.query({
-      query: () => 'tags',
+      query: (boardId) => `boards/${boardId}/tags`,
       providesTags: ['Tags'],
     }),
     getTag: builder.query({
-      query: (id) => `tags/${id}`,
+      query: (tagId) => `tags/${tagId}`,
       providesTags: (result, error, id) => [{ type: 'Tags', id }],
     }),
+    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     createTag: builder.mutation({
       query: (tag) => ({
         url: 'tags',
         method: 'POST',
-        body: tag,
+        body: { ...tag, socketEvent: true },
       }),
-      invalidatesTags: ['Tags'],
+      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
+    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     updateTag: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `tags/${id}`,
         method: 'PUT',
-        body: data,
+        body: { ...data, socketEvent: true },
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Tags', id }],
+      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
+    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     deleteTag: builder.mutation({
       query: (id) => ({
         url: `tags/${id}`,
         method: 'DELETE',
+        body: { socketEvent: true },
       }),
-      invalidatesTags: ['Tags'],
+      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
   }),
 });
 
+// Экспортируем только хуки для чтения, мутации теперь доступны из boardsApi
 export const {
   useGetTagsQuery,
   useGetTagQuery,
-  useCreateTagMutation,
-  useUpdateTagMutation,
-  useDeleteTagMutation,
 } = tagsApi; 

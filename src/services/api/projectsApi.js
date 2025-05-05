@@ -10,6 +10,7 @@ export const projectsApi = baseApi.injectEndpoints({
       transformResponse: (response) => {
         return response;
       },
+      keepUnusedDataFor: 2,
     }),
     getProject: builder.query({
       query: (id) => ({url:`${apiPrefix}/${id}`}),
@@ -17,6 +18,8 @@ export const projectsApi = baseApi.injectEndpoints({
       transformResponse: (response) => {
         return response;
       },
+      keepUnusedDataFor: 2,
+
     }),
     createProject: builder.mutation({
       query: (project) => ({

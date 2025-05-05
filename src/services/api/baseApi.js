@@ -30,7 +30,6 @@ const customBaseQuery = async (args, api, extraOptions) => {
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
 
-    const rawUrl = args.url;
     if (response.status === 401) {
       window.location.href = '/login';
       return { error: { status: 401, data: 'Срок авторизации истек' } };
@@ -54,5 +53,5 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: customBaseQuery,
   endpoints: () => ({}),
-  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags'],
+  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags', 'CurrentUser'],
 }); 

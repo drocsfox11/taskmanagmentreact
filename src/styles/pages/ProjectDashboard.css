@@ -208,3 +208,38 @@
 .remove-participant:hover {
     color: #ff4d4f;
 }
+
+.create-project-modal-description {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #666;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f5f7fa;
+    border-radius: 6px;
+    border-left: 3px solid #5558FF;
+}
+
+.create-project-modal-submit-button {
+    width: 100%;
+    background-color: #5558FF;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.2s;
+}
+
+.create-project-modal-submit-button:hover {
+    background-color: #4245cc;
+}
+
+.create-project-modal-submit-button:disabled {
+    background-color: #9b9dff;
+    cursor: not-allowed;
+}

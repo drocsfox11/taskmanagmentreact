@@ -1,4 +1,4 @@
-#task-dashboards-dashboard-container{
+.task-dashboards-dashboard-container{
     display: flex;
     justify-content: flex-start;
     height: 100vh;
@@ -6,16 +6,16 @@
 }
 
 
-#task-dashboard-container{
+.task-dashboard-container{
     background: #F3F3F3;
-    width: 100%;
+    width: calc(100vw - 70px - 250px);
     display: flex;
     flex-direction: column;
     flex: 1;
 }
 
 
-#task-dashboard-add-bar-container{
+.task-dashboard-add-bar-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -30,14 +30,14 @@
     border-right: none;
 }
 
-#task-dashboard-add-bar-label{
+.task-dashboard-add-bar-label{
 
     font-family: 'Ruberoid Bold';
     font-size: 28px;
 
 }
 
-#task-dashboard-add-bar-add-button{
+.task-dashboard-add-bar-add-button{
     background-color: #5558FF;
     border-radius: 5px;
     padding: 18px 15px;
@@ -50,7 +50,7 @@
 
 
 
-#task-dashboard-cards-containeres{
+.task-dashboard-cards-containeres{
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
@@ -58,9 +58,11 @@
     gap: 25px;
     overflow-x: auto;
     width: 100%;
+    min-height: 100%;
+    overflow: auto;
 }
 
-#task-dashboard-card-column{
+.task-dashboard-card-column{
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -69,7 +71,7 @@
     gap: 20px;
 }
 
-#task-dashboard-card-column-topbar{
+.task-dashboard-card-column-topbar{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -78,7 +80,7 @@
     position: relative;
 }
 
-#task-dashboard-card-column-topbar-label-container{
+.task-dashboard-card-column-topbar-label-container{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -86,26 +88,26 @@
     gap: 10px;
 }
 
-#task-dashboard-card-column-topbar-label-name-container{
+.task-dashboard-card-column-topbar-label-name-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 2px;
 }
 
-#task-dashboard-card-column-topbar-label-name-circle{
+.task-dashboard-card-column-topbar-label-name-circle{
     width: 7px;
     height: 7px;
     background-color: #E58466;
     border-radius: 360px;
 }
 
-#task-dashboard-card-column-topbar-label-name-text{
+.task-dashboard-card-column-topbar-label-name-text{
     font-family: 'Ruberoid Bold';
     font-size: 12px;
 }
 
-#task-dashboard-card-column-topbar-label-name-task-counter{
+.task-dashboard-card-column-topbar-label-name-task-counter{
     padding: 5px 8px;
     background-color: #FFFFFF;
     border-radius: 15px;
@@ -159,7 +161,7 @@
 }
 
 
-#task-dashboard-icon-container{
+.task-dashboard-icon-container{
     background-color: #D9EDFE;
     width: 40px;
     height: 40px;
@@ -169,7 +171,7 @@
     border-radius: 5px;
 }
 
-#task-dashboard-icon-row-container{
+.task-dashboard-icon-row-container{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -177,7 +179,7 @@
     gap: 20px;
 }
 
-#task-dashboard-label-container{
+.task-dashboard-label-container{
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -186,27 +188,27 @@
 
 
 
-#task-dashboard-progress-container{
+.task-dashboard-progress-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 20px;
 }
 
-#task-dashboard-progress-bar{
+.task-dashboard-progress-bar{
     background: linear-gradient(270deg, #ECECEC 79.88%, #5558FF 79.89%);
     border-radius: 5px;
     height: 7px;
     width: 30%;
 }
 
-#task-dashboard-progress-text{
+.task-dashboard-progress-text{
     font-family: "Ruberoid Regular";
     font-size: 10px;
     color:#969595;
 }
 
-#task-dashboard-label-container-header{
+.task-dashboard-label-container-header{
 
     font-family: "Ruberoid Semi Bold";
     font-size: 14px;
@@ -214,26 +216,26 @@
 
 }
 
-#task-dashboard-button-and-people-container{
+.task-dashboard-button-and-people-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 30px;
 }
 
-#task-dashboard-people{
+.task-dashboard-people{
     display: flex;
     flex-direction: row;
     align-items: center;
 }
 
-#task-dashboard-people > * {
+.task-dashboard-people > * {
     margin-left: -13px;
 }
 
 
 
-#task-dashboard-people-item{
+.task-dashboard-people-item{
     width: 35px;
     height: 35px;
     display: flex;
@@ -246,7 +248,7 @@
     border-style: solid;
 }
 
-#task-dashboard-people-item-more{
+.task-dashboard-people-item-more{
     width: 35px;
     height: 35px;
     display: flex;
@@ -263,7 +265,7 @@
     text-align: center;
 }
 
-#task-dashboard-add-task-button{
+.task-dashboard-add-task-button{
     width: 100%;
     background: #FFFFFF;
     border-width: 0.7px;
@@ -274,14 +276,14 @@
 
 
 }
-#task-dashboard-add-task-button-text{
+.task-dashboard-add-task-button-text{
     color:#5558FF;
     font-family: 'Ruberoid Bold';
     font-size: 12px;
     margin: 18px 15px;
 }
 
-#task-dashboard-cards-container{
+.task-dashboard-cards-container{
     display: flex;
     flex-direction: column;
     gap: 20px;

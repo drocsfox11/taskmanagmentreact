@@ -59,22 +59,16 @@ function ProjectDashboard() {
     }, [isModalOpen]);
 
     // Форма создания/редактирования
-    const [form, setForm] = useState({ title: '', description: '', participantUsernames: [] });
+    const [form, setForm] = useState({ title: '', description: '' });
     
     useEffect(() => {
         if (modalMode === 'edit' && editProject) {
-            // Extract usernames from participant objects
-            const participantUsernames = editProject.participants 
-                ? editProject.participants.map(user => user.username)
-                : [];
-                
             setForm({
                 title: editProject.title || '',
                 description: editProject.description || '',
-                participantUsernames,
             });
         } else {
-            setForm({ title: '', description: '', participantUsernames: [] });
+            setForm({ title: '', description: '' });
         }
     }, [modalMode, editProject, isModalOpen]);
 
@@ -89,8 +83,6 @@ function ProjectDashboard() {
         const projectData = {
             title: form.title,
             description: form.description,
-            // The backend expects just an array of usernames for participants
-            participants: form.participantUsernames
         };
         
         if (modalMode === 'create') {
@@ -107,25 +99,6 @@ function ProjectDashboard() {
             }
         }
         setIsModalOpen(false);
-    };
-
-    const [participantInput, setParticipantInput] = useState('');
-    
-    const handleAddParticipant = () => {
-        if (participantInput && !form.participantUsernames.includes(participantInput)) {
-            setForm({ 
-                ...form, 
-                participantUsernames: [...form.participantUsernames, participantInput] 
-            });
-            setParticipantInput('');
-        }
-    };
-    
-    const handleRemoveParticipant = (username) => {
-        setForm({
-            ...form,
-            participantUsernames: form.participantUsernames.filter(p => p !== username)
-        });
     };
 
     return (
@@ -180,62 +153,13 @@ function ProjectDashboard() {
                             placeholder="Введите описание"
                         />
                         
-                        <div className="create-project-modal-label">Участники</div>
-                        <div className="create-project-modal-participants-row">
-                            <input 
-                                className="create-project-modal-input-participant" 
-                                value={participantInput} 
-                                onChange={e => setParticipantInput(e.target.value)} 
-                                placeholder="username"
-                            />
-                            <button 
-                                type="button" 
-                                className="create-project-modal-add-participant" 
-                                onClick={handleAddParticipant}
-                            >
-                                Добавить участника
-                            </button>
+                        <div className="create-project-modal-description">
+                            Управление участниками проекта будет доступно после создания.
                         </div>
-                        
-                        {/* Список добавленных участников */}
-                        {form.participantUsernames.length > 0 && (
-                            <div className="create-project-modal-participants-list">
-                                {form.participantUsernames.map(username => (
-                                    <div key={username} className="participant-tag">
-                                        <span>{username}</span>
-                                        <button 
-                                            type="button" 
-                                            className="remove-participant"
-                                            onClick={() => handleRemoveParticipant(username)}
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        
-                        {/* Аватары участников (для редактирования существующего проекта) */}
-                        {modalMode === 'edit' && editProject?.participants && editProject.participants.length > 0 && (
-                            <div className="create-project-modal-avatars-row">
-                                {editProject.participants.slice(0, 3).map((user, idx) => (
-                                    <img
-                                        key={user.username || idx}
-                                        src={user.avatarURL || Girl}
-                                        alt={user.username}
-                                        className="create-project-modal-avatar"
-                                    />
-                                ))}
-                                {editProject.participants.length > 3 && (
-                                    <span className="create-project-modal-avatars-more">+{editProject.participants.length - 3}</span>
-                                )}
-                            </div>
-                        )}
                         
                         <button 
                             type="submit" 
-                            className="create-project-modal-add-participant" 
-                            style={{marginTop: 16}}
+                            className="create-project-modal-submit-button"
                             disabled={isCreating || isUpdating}
                         >
                             {modalMode === 'edit' 

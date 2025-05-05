@@ -5,9 +5,11 @@ import OptionsPassive from "../assets/icons/options_passive.svg";
 import { useState, useRef, useEffect } from "react";
 import { useDeleteProjectMutation } from '../services/api/projectsApi';
 import Girl from '../assets/icons/girl.svg';
+import ProjectManagementModal from './ProjectManagementModal';
 
 function ProjectCard({ project, onClick, onEdit }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
@@ -40,6 +42,12 @@ function ProjectCard({ project, onClick, onEdit }) {
         }
     };
 
+    const handleManage = (e) => {
+        e.stopPropagation();
+        setIsModalOpen(false);
+        setIsManagementModalOpen(true);
+    };
+
     // Get the first few participants to display (if any)
     const participants = project.participants || [];
     
@@ -66,10 +74,18 @@ function ProjectCard({ project, onClick, onEdit }) {
             {isModalOpen && (
                 <div ref={modalRef} className="modal-container">
                     <div className="modal-content-custom">
-                        <div className="modal-edit" onClick={e => { e.stopPropagation(); setIsModalOpen(false); onEdit && onEdit(project); }}>Редактировать</div>
+                        <div className="modal-option" onClick={handleManage}>Управление</div>
+                        <div className="modal-option" onClick={e => { e.stopPropagation(); setIsModalOpen(false); onEdit && onEdit(project); }}>Редактировать</div>
                         <div className="modal-delete" onClick={e => { e.stopPropagation(); handleDelete(); }}>Удалить</div>
                     </div>
                 </div>
+            )}
+            
+            {isManagementModalOpen && (
+                <ProjectManagementModal 
+                    project={project} 
+                    onClose={() => setIsManagementModalOpen(false)}
+                />
             )}
         </div>
     );
