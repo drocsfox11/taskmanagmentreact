@@ -61,6 +61,42 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Projects'],
     }),
+    grantProjectRight: builder.mutation({
+      query: ({ projectId, username, rightName }) => ({
+        url: `${apiPrefix}/${projectId}/rights/grant`,
+        method: 'POST',
+        body: { username, rightName },
+      }),
+      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
+    }),
+    revokeProjectRight: builder.mutation({
+      query: ({ projectId, username, rightName }) => ({
+        url: `${apiPrefix}/${projectId}/rights/revoke`,
+        method: 'POST',
+        body: { username, rightName },
+      }),
+      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
+    }),
+    getUserRights: builder.query({
+      query: ({ projectId, username }) => ({
+        url: `${apiPrefix}/${projectId}/rights/users/username/${username}`,
+      }),
+      providesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
+    }),
+    addUserToAllBoards: builder.mutation({
+      query: ({ projectId, username }) => ({
+        url: `${apiPrefix}/${projectId}/boards/add-user/username/${username}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
+    }),
+    removeUserFromAllBoards: builder.mutation({
+      query: ({ projectId, username }) => ({
+        url: `${apiPrefix}/${projectId}/boards/remove-user/username/${username}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
+    }),
   }),
 });
 
@@ -70,6 +106,11 @@ export const {
   useCreateProjectMutation,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
+  useGrantProjectRightMutation,
+  useRevokeProjectRightMutation,
+  useGetUserRightsQuery,
+  useAddUserToAllBoardsMutation,
+  useRemoveUserFromAllBoardsMutation,
 } = projectsApi;
 
 // Re-export project participants mutations

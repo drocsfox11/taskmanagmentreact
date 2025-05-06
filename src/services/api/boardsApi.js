@@ -408,17 +408,52 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body: { ...data, socketEvent: true },
       }),
-      // Не инвалидируем кеш, вместо этого делаем оптимистичное обновление
+      // Добавляем инвалидацию нужных тегов
+      invalidatesTags: (result, error, arg) => [
+        { type: 'Board', id: arg.id },
+        'Boards',
+        'Tags'
+      ],
+      // Делаем оптимистичное обновление
       async onQueryStarted({ id, ...updates }, { dispatch, queryFulfilled }) {
+        console.log('Starting board update with data:', updates);
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', id, (draft) => {
-            Object.assign(draft, updates);
+            // Обновляем основные поля доски
+            Object.assign(draft, {
+              ...draft,
+              ...updates,
+            });
+            
+            // Обрабатываем обновление тегов отдельно, если они есть
+            if (updates.tags) {
+              draft.tags = updates.tags;
+            }
           })
         );
         
         try {
-          await queryFulfilled;
-        } catch {
+          const result = await queryFulfilled;
+          console.log('Board update response:', result);
+          
+          if (result && result.data) {
+            console.log('Updating cache with server data:', result.data);
+            // Принудительно обновляем кэш с данными с сервера, полностью заменяя локальные данные
+            dispatch(
+              baseApi.util.updateQueryData('getBoardWithData', id, (draft) => {
+                // Сохраняем колонки и задачи, так как они отдельно обрабатываются
+                const columns = draft.columns ? [...draft.columns] : []; 
+                
+                // Полная замена данных доски с сервера
+                Object.assign(draft, result.data);
+                
+                // Восстанавливаем колонки и задачи, так как их нет в ответе updateBoard
+                draft.columns = columns;
+              })
+            );
+          }
+        } catch (error) {
+          console.error('Error updating board:', error);
           patchResult.undo();
         }
       }
@@ -562,7 +597,14 @@ export const boardsApi = baseApi.injectEndpoints({
         try {
           // Отправляем событие через STOMP
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('REORDER_COLUMNS', { boardId, columnIds });
+          
+          // Отправляем данные в корректном формате для сервера
+          const columns = columnIds.map(id => ({ id }));
+          
+          const success = stompConn.sendAction('REORDER_COLUMNS', { 
+            boardId, 
+            columns: columns  // Отправляем массив объектов с id для соответствия ожиданиям сервера
+          });
           
           if (!success) {
             throw new Error('Failed to send STOMP message');

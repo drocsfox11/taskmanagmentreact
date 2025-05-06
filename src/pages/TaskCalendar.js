@@ -30,37 +30,10 @@ function TaskDashboard() {
 
     return (
         <div id='task-calendars-dashboard-container'>
-            <ProjectMenu />
             <div id='task-calendar-container'>
                 <TopBar></TopBar>
                 {isLoading && <LoadingSpinner />}
-                <div id='task-calendar-add-bar-container'>
-                    <div id='task-calendar-icon-row-container'>
-                        <div id='task-calendar-icon-container'>
-                            <EmojiProvider data={emojiData}>
-                                <Emoji name="teacher-light-skin-tone" width={22}/>
-                            </EmojiProvider>
-                        </div>
 
-                        <div id='task-calendar-label-container'>
-                            <div id='task-calendar-label-container-header'>Курсы языков - Дизайн</div>
-                            <div id='task-calendar-progress-container'>
-
-                                <div id='task-calendar-progress-bar'>
-
-                                </div>
-
-                                <div id='task-calendar-progress-text'>
-                                    13% завершено
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
 
                 <div id='task-calendar-weekpicker-bar-container'>
 

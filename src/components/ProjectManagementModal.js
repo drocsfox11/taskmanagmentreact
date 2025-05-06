@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUpdateProjectMutation, useAddProjectParticipantMutation, useRemoveProjectParticipantMutation } from '../services/api/projectsApi';
 import InvitationStatusBadge from './InvitationStatusBadge';
+import ProjectPermissionsTab from './ProjectPermissionsTab';
 import '../styles/components/ProjectManagementModal.css';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
@@ -53,11 +54,11 @@ function ProjectManagementModal({ project, onClose }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Format the data for the API
+        // Format the data for the API - only include title and description
         const projectData = {
             title: form.title,
-            description: form.description,
-            participants: form.participantUsernames
+            description: form.description
+            // Не отправляем participants при сохранении общей информации проекта
         };
         
         try {
@@ -65,12 +66,13 @@ function ProjectManagementModal({ project, onClose }) {
             const optimisticUpdate = {
                 ...project,
                 ...projectData
+                // При оптимистичном обновлении сохраняем текущих участников
             };
             
             // Вызываем мутацию с оптимистичным обновлением
             await updateProject({ 
                 id: project.id, 
-                ...projectData,
+                ...projectData, // Отправляем только title и description
                 optimisticUpdate // Передаем оптимистичное обновление
             }).unwrap();
             
@@ -89,14 +91,18 @@ function ProjectManagementModal({ project, onClose }) {
     const handleAddParticipant = async () => {
         if (participantInput && !form.participantUsernames.includes(participantInput)) {
             try {
-                // Оптимистично обновляем UI
+                // Создаем оптимистичное обновление на основе структуры данных с сервера
                 const optimisticUpdate = {
                     ...project,
-                    participants: [...(project.participants || []), { username: participantInput }],
-                    pendingInvitations: {
-                        ...project.pendingInvitations,
-                        [participantInput]: 'PENDING'
-                    }
+                    participants: [
+                        ...(project.participants || []),
+                        {
+                            username: participantInput,
+                            name: null, // Будет обновлено с сервера
+                            avatarURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${participantInput}`, // Временный аватар
+                            status: "PENDING" // Статус приглашения
+                        }
+                    ]
                 };
                 
                 // Вызываем мутацию для добавления участника
@@ -105,6 +111,12 @@ function ProjectManagementModal({ project, onClose }) {
                     userId: participantInput,
                     optimisticUpdate
                 }).unwrap();
+                
+                // Обновляем локальное состояние формы
+                setForm(prevForm => ({
+                    ...prevForm,
+                    participantUsernames: [...prevForm.participantUsernames, participantInput]
+                }));
                 
                 setParticipantInput('');
             } catch (err) {
@@ -115,14 +127,10 @@ function ProjectManagementModal({ project, onClose }) {
 
     const handleRemoveParticipant = async (username) => {
         try {
-            // Оптимистично обновляем UI
+            // Оптимистично обновляем UI на основе структуры данных с сервера
             const optimisticUpdate = {
                 ...project,
-                participants: project.participants.filter(user => user.username !== username),
-                pendingInvitations: {
-                    ...project.pendingInvitations,
-                    [username]: undefined
-                }
+                participants: project.participants.filter(user => user.username !== username)
             };
             
             // Вызываем мутацию для удаления участника
@@ -131,21 +139,15 @@ function ProjectManagementModal({ project, onClose }) {
                 userId: username,
                 optimisticUpdate
             }).unwrap();
+            
+            // Обновляем локальное состояние формы
+            setForm(prevForm => ({
+                ...prevForm,
+                participantUsernames: prevForm.participantUsernames.filter(name => name !== username)
+            }));
         } catch (err) {
             console.error('Failed to remove participant:', err);
         }
-    };
-
-    const getInvitationStatus = (username) => {
-        // Сначала проверяем статус приглашения
-        if (project.pendingInvitations?.[username]) {
-            return project.pendingInvitations[username];
-        }
-        // Если нет приглашения, но есть в участниках - значит принял
-        if (project.participants?.some(user => user.username === username)) {
-            return 'ACCEPTED';
-        }
-        return null;
     };
 
     return (
@@ -169,6 +171,12 @@ function ProjectManagementModal({ project, onClose }) {
                         onClick={() => setActiveTab('participants')}
                     >
                         Участники
+                    </button>
+                    <button 
+                        className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('permissions')}
+                    >
+                        Права доступа
                     </button>
                 </div>
                 <div className="project-management-modal-content">
@@ -198,7 +206,7 @@ function ProjectManagementModal({ project, onClose }) {
                                 Сохранить
                             </button>
                         </form>
-                    ) : (
+                    ) : activeTab === 'participants' ? (
                         <div className="participants-section">
                             <div className="add-participant">
                                 <input
@@ -210,13 +218,13 @@ function ProjectManagementModal({ project, onClose }) {
                                 <button onClick={handleAddParticipant}>Добавить</button>
                             </div>
                             <div className="participants-list">
-                                {/* Показываем участников */}
+                                {/* Показываем всех участников и приглашенных */}
                                 {project.participants?.map((user) => (
-                                    <div key={user.id} className="participant-item">
+                                    <div key={user.id || user.username} className="participant-item">
                                         <div className="participant-info">
-                                            <img src={user.avatar || Girl} alt="avatar" />
+                                            <img src={user.avatarURL || user.avatar || Girl} alt="avatar" />
                                             <span>{user.username}</span>
-                                            {/* Не показываем статус для участников */}
+                                            <InvitationStatusBadge status={user.status} />
                                         </div>
                                         <button 
                                             className="remove-button"
@@ -226,30 +234,16 @@ function ProjectManagementModal({ project, onClose }) {
                                         </button>
                                     </div>
                                 ))}
-                                {/* Показываем ожидающих подтверждения */}
-                                {Object.entries(project.pendingInvitations || {}).map(([username, status]) => {
-                                    // Пропускаем, если пользователь уже в participants
-                                    if (project.participants?.some(user => user.username === username)) {
-                                        return null;
-                                    }
-                                    return (
-                                        <div key={username} className="participant-item">
-                                            <div className="participant-info">
-                                                <img src={Girl} alt="avatar" />
-                                                <span>{username}</span>
-                                                <InvitationStatusBadge status={status} />
-                                            </div>
-                                            <button 
-                                                className="remove-button"
-                                                onClick={() => handleRemoveParticipant(username)}
-                                            >
-                                                Удалить
-                                            </button>
-                                        </div>
-                                    );
-                                })}
+                                {/* Если нет участников, показываем сообщение */}
+                                {(!project.participants || project.participants.length === 0) && (
+                                    <div className="project-management-no-participants-message">
+                                        Нет участников
+                                    </div>
+                                )}
                             </div>
                         </div>
+                    ) : (
+                        <ProjectPermissionsTab project={project} />
                     )}
                 </div>
             </div>

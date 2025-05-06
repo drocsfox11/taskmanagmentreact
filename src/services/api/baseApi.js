@@ -53,5 +53,5 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: customBaseQuery,
   endpoints: () => ({}),
-  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags', 'CurrentUser'],
+  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags', 'CurrentUser', 'ProjectRights'],
 }); 

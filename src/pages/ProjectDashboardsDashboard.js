@@ -91,13 +91,22 @@ function ProjectDashBoardsDashboard() {
             id: editBoard?.id,
         };
         
+        console.log('Submitting board with payload:', payload);
+        
         try {
+            let result;
             if (boardModalMode === 'create') {
-                await createBoard(payload);
+                result = await createBoard(payload).unwrap();
+                console.log('Created board result:', result);
             } else if (boardModalMode === 'edit') {
-                await updateBoard(payload);
+                result = await updateBoard(payload).unwrap();
+                console.log('Updated board result:', result);
             }
-            handleCloseBoardModal();
+            
+            // Добавляем задержку для обновления UI
+            setTimeout(() => {
+                handleCloseBoardModal();
+            }, 500);
         } catch (error) {
             console.error('Error saving board:', error);
         }

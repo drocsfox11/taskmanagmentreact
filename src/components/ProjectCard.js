@@ -81,7 +81,6 @@ function ProjectCard({ project, onClick, onEdit }) {
                 <div ref={modalRef} className="project-card-modal-container">
                     <div className="project-card-modal-content">
                         <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
-                        <div className="project-card-modal-option" onClick={e => { e.stopPropagation(); setIsModalOpen(false); onEdit && onEdit(project); }}>Редактировать</div>
                         <div className="project-card-modal-delete" onClick={e => { e.stopPropagation(); handleDelete(); }}>Удалить</div>
                     </div>
                 </div>

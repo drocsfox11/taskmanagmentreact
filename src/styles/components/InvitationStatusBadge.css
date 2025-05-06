@@ -5,10 +5,11 @@
     font-size: 0.8rem;
     font-weight: 500;
     margin-left: 8px;
+    font-family: 'Ruberoid Medium', sans-serif;
 }
 
 .invitation-status-badge.pending {
-    background-color: #fff3cd;
+    background-color: #FFEB3B;
     color: #856404;
 }
 
@@ -25,6 +26,11 @@
 .invitation-status-badge.expired {
     background-color: #e2e3e5;
     color: #383d41;
+}
+
+.invitation-status-badge.member {
+    background-color: #4CAF50;
+    color: white;
 }
 
 .invitation-status-badge.unknown {

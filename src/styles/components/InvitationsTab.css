@@ -1,11 +1,49 @@
 .invitations-tab {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.invitations-tab-header {
+    display: flex;
+    border-bottom: 1px solid #DBDBDB;
+    margin-bottom: 20px;
+}
+
+.invitations-tab-button {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    color: #333;
+    transition: background-color 0.3s;
+    border-bottom: 2px solid transparent;
+}
+
+.invitations-tab-button:hover {
+    background-color: #F5F5F5;
+}
+
+.invitations-tab-button.active {
+    font-family: 'Ruberoid Medium', sans-serif;
+    color: #5558FF;
+    border-bottom: 2px solid #5558FF;
+}
+
+.invitations-tab-content {
+    flex: 1;
+    overflow-y: auto;
 }
 
 .invitations-title {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     margin-bottom: 20px;
     color: #333;
+    font-family: 'Ruberoid Medium', sans-serif;
 }
 
 .invitations-list {
@@ -18,7 +56,7 @@
     background-color: #fff;
     border-radius: 8px;
     padding: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #DBDBDB;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -31,16 +69,19 @@
 .invitation-project {
     font-weight: bold;
     margin-bottom: 5px;
+    font-family: 'Ruberoid Medium', sans-serif;
 }
 
 .invitation-sender {
     color: #666;
     margin-bottom: 5px;
+    font-family: 'Ruberoid Regular', sans-serif;
 }
 
 .invitation-status {
     font-style: italic;
     color: #888;
+    font-family: 'Ruberoid Regular', sans-serif;
 }
 
 .invitation-actions {
@@ -49,17 +90,19 @@
 }
 
 .accept-button {
-    background-color: #4CAF50;
+    background-color: #5558FF;
     color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.3s;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
 }
 
 .accept-button:hover {
-    background-color: #45a049;
+    background-color: #4245cc;
 }
 
 .reject-button {
@@ -67,9 +110,11 @@
     color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.3s;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
 }
 
 .reject-button:hover {
@@ -78,9 +123,12 @@
 
 .no-invitations {
     text-align: center;
-    color: #666;
+    color: #969595;
     font-style: italic;
     padding: 20px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    font-family: 'Ruberoid Regular', sans-serif;
 }
 
 .invitations-loading,
@@ -88,4 +136,5 @@
     text-align: center;
     padding: 20px;
     color: #666;
+    font-family: 'Ruberoid Regular', sans-serif;
 } 

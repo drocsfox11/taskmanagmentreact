@@ -20,19 +20,25 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
 }
 
 .project-management-modal-header {
     padding: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #DBDBDB;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .project-management-modal-header h2 {
     margin: 0;
     font-size: 1.5rem;
+    font-family: 'Ruberoid Bold', sans-serif;
+    color: #000000;
 }
 
 .close-button {
@@ -49,7 +55,9 @@
 
 .project-management-modal-tabs {
     display: flex;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #DBDBDB;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tab-button {
@@ -58,41 +66,57 @@
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 14px;
+    font-family: 'Ruberoid Regular', sans-serif;
     transition: background-color 0.3s;
+    color: #333;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .tab-button:hover {
-    background-color: #f5f5f5;
+    background-color: #F5F5F5;
 }
 
 .tab-button.active {
-    background-color: #e0e0e0;
-    font-weight: bold;
+    background-color: #5558FF;
+    color: white;
+    font-family: 'Ruberoid Semi Bold', sans-serif;
 }
 
 .project-management-modal-content {
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group {
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333;
+    box-sizing: border-box;
 }
 
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: 10px 12px;
+    border: 1px solid #DBDBDB;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    background-color: #F5F5F5;
+    box-sizing: border-box;
 }
 
 .form-group textarea {
@@ -101,76 +125,112 @@
 }
 
 .save-button {
-    background-color: #4CAF50;
+    background-color: #5558FF;
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 14px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    transition: background-color 0.3s;
+    box-sizing: border-box;
 }
 
 .save-button:hover {
-    background-color: #45a049;
+    background-color: #4245cc;
 }
 
 .participants-section {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .add-participant {
     display: flex;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .add-participant input {
     flex: 1;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: 10px 12px;
+    border: 1px solid #DBDBDB;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    background-color: #F5F5F5;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .add-participant button {
-    background-color: #4CAF50;
+    background-color: #5558FF;
     color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .add-participant button:hover {
-    background-color: #45a049;
+    background-color: #4245cc;
 }
 
 .participants-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .participant-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+    padding: 12px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    border: 1px solid #DBDBDB;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .participant-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .participant-info img {
     width: 32px;
     height: 32px;
     border-radius: 50%;
+    border: 1px solid #DBDBDB;
+    flex-shrink: 0;
+}
+
+.participant-info span {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .remove-button {
@@ -178,8 +238,14 @@
     color: white;
     border: none;
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 12px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .remove-button:hover {
@@ -190,17 +256,19 @@
     font-family: 'Ruberoid Medium', sans-serif;
     font-size: 16px;
     margin-top: 5px;
+    color: #333;
+    box-sizing: border-box;
 }
 
 .project-management-modal-input,
 .project-management-modal-input-participant {
     width: 100%;
     background: #F5F5F5;
-    border: none;
-    border-radius: 8px;
+    border: 1px solid #DBDBDB;
+    border-radius: 6px;
     padding: 12px 16px;
     font-family: 'Ruberoid Regular', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     outline: none;
     box-sizing: border-box;
 }
@@ -211,10 +279,12 @@
     align-items: center;
     width: 100%;
     margin-bottom: 20px;
+    box-sizing: border-box;
 }
 
 .project-management-modal-input-participant {
     flex: 1;
+    min-width: 0;
 }
 
 .project-management-add-participant {
@@ -227,6 +297,9 @@
     cursor: pointer;
     border: none;
     white-space: nowrap;
+    transition: background-color 0.3s;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .project-management-add-participant:hover {
@@ -238,27 +311,34 @@
     flex-direction: column;
     gap: 10px;
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .project-management-participant-item {
     display: flex;
     align-items: center;
     padding: 12px;
-    border-radius: 8px;
-    background-color: #f8f8f8;
+    border-radius: 6px;
+    background-color: #F5F5F5;
     transition: background-color 0.2s;
+    border: 1px solid #DBDBDB;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .project-management-participant-item:hover {
-    background-color: #f0f0f0;
+    background-color: #ECECEC;
 }
 
 .project-management-participant-avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     overflow: hidden;
     margin-right: 12px;
+    border: 1px solid #DBDBDB;
+    flex-shrink: 0;
 }
 
 .project-management-participant-avatar img {
@@ -271,46 +351,59 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .project-management-participant-username {
-    font-family: 'Ruberoid Semi Bold', sans-serif;
-    font-size: 16px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .project-management-participant-role {
     font-family: 'Ruberoid Regular', sans-serif;
-    font-size: 14px;
-    color: #666;
+    font-size: 12px;
+    color: #969595;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .project-management-remove-participant-button {
-    background: none;
-    border: 1px solid #ff4d4f;
-    color: #ff4d4f;
+    background-color: #f44336;
+    color: white;
+    border: none;
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-family: 'Ruberoid Medium', sans-serif;
-    font-size: 14px;
-    transition: all 0.2s;
+    font-size: 12px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .project-management-remove-participant-button:hover {
-    background-color: #fff1f0;
+    background-color: #da190b;
 }
 
 .project-management-save-button {
+    padding: 10px 20px;
+    border-radius: 6px;
     background: #5558FF;
     color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 6px;
     font-family: 'Ruberoid Medium', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
+    border: none;
+    transition: background-color 0.3s;
     margin-top: 20px;
-    transition: background 0.2s;
+    box-sizing: border-box;
 }
 
 .project-management-save-button:hover {
@@ -318,23 +411,30 @@
 }
 
 .project-management-no-participants-message {
-    padding: 20px;
     text-align: center;
-    color: #666;
-    background-color: #f8f8f8;
-    border-radius: 8px;
+    padding: 20px;
+    color: #969595;
     font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .project-management-settings-section {
-    background-color: #f8f8f8;
-    padding: 20px;
-    border-radius: 8px;
+    border-top: 1px solid #DBDBDB;
+    margin-top: 20px;
+    padding-top: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .project-management-settings-section h3 {
-    font-family: 'Ruberoid Semi Bold', sans-serif;
-    font-size: 18px;
-    margin-top: 0;
-    margin-bottom: 10px;
+    font-family: 'Ruberoid Bold', sans-serif;
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #333;
+    box-sizing: border-box;
 } 

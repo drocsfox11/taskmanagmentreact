@@ -20,63 +20,80 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
 }
 
 .user-profile-modal-header {
     padding: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #DBDBDB;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .user-profile-modal-title {
+    font-family: 'Ruberoid Bold', sans-serif;
     font-size: 1.5rem;
-    font-weight: bold;
+    color: #000000;
 }
 
 .user-profile-modal-close {
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: #969595;
 }
 
 .user-profile-modal-close:hover {
-    color: #333;
+    color: #5558FF;
 }
 
 .user-profile-modal-content {
     display: flex;
     flex: 1;
     overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .user-profile-modal-sidebar {
     width: 200px;
-    background-color: #f5f5f5;
+    background-color: #F5F5F5;
     padding: 20px 0;
-    border-right: 1px solid #eee;
+    border-right: 1px solid #DBDBDB;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .user-profile-modal-tab {
     padding: 15px 20px;
     cursor: pointer;
     transition: background-color 0.3s;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #333;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .user-profile-modal-tab:hover {
-    background-color: #eee;
+    background-color: #ECECEC;
 }
 
 .user-profile-modal-tab.active {
-    background-color: #e0e0e0;
-    font-weight: bold;
+    background-color: #5558FF;
+    color: white;
+    font-family: 'Ruberoid Semi Bold', sans-serif;
 }
 
 .user-profile-modal-main {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .user-profile-modal-avatar-section {
@@ -84,6 +101,8 @@
     flex-direction: column;
     align-items: center;
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .user-profile-modal-avatar {
@@ -91,21 +110,30 @@
     height: 100px;
     border-radius: 50%;
     margin-bottom: 10px;
+    border: 2px solid #DBDBDB;
 }
 
 .user-profile-modal-edit-button,
 .user-profile-modal-delete-button {
     padding: 8px 16px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     margin: 5px 0;
     width: 150px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    box-sizing: border-box;
 }
 
 .user-profile-modal-edit-button {
-    background-color: #4CAF50;
+    background-color: #5558FF;
     color: white;
+}
+
+.user-profile-modal-edit-button:hover {
+    background-color: #4245cc;
 }
 
 .user-profile-modal-delete-button {
@@ -113,20 +141,32 @@
     color: white;
 }
 
+.user-profile-modal-delete-button:hover {
+    background-color: #da190b;
+}
+
 .user-profile-modal-field {
     margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .user-profile-modal-label {
-    font-weight: bold;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
     margin-bottom: 5px;
     color: #333;
+    box-sizing: border-box;
 }
 
 .user-profile-modal-input {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #f9f9f9;
+    padding: 10px 12px;
+    border: 1px solid #DBDBDB;
+    border-radius: 6px;
+    background-color: #F5F5F5;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #333;
+    box-sizing: border-box;
 } 

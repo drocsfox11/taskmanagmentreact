@@ -5,13 +5,15 @@ function InvitationStatusBadge({ status }) {
     const getStatusInfo = () => {
         switch (status) {
             case 'PENDING':
-                return { text: 'Ожидает ответа', className: 'pending' };
+                return { text: 'Приглашен', className: 'pending' };
             case 'ACCEPTED':
                 return { text: 'Принято', className: 'accepted' };
             case 'REJECTED':
                 return { text: 'Отклонено', className: 'rejected' };
             case 'EXPIRED':
                 return { text: 'Истекло', className: 'expired' };
+            case null:
+                return { text: 'Участник', className: 'member' };
             default:
                 return { text: 'Неизвестно', className: 'unknown' };
         }
