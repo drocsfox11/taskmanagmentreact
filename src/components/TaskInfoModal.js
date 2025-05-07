@@ -8,7 +8,17 @@ import CheckIcon from "../assets/icons/task_list.svg";
 import Girl from "../assets/icons/profile_picture.svg";
 
 function TaskInfoModal({ isOpen, onClose, task }) {
-    const usersByUsername = useSelector(state => state.users.byUsername);
+    const usersByUsername = useSelector(state => state.users?.byUsername || {});
+
+    // Helper function to extract username from participant
+    const extractUsername = (participant) => {
+        if (typeof participant === 'string') {
+            return participant;
+        } else if (participant && participant.username) {
+            return participant.username;
+        }
+        return '';
+    };
 
     if (!isOpen || !task) return null;
 
@@ -29,7 +39,7 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                 <div className="create-task-modal-input" style={{ background: 'none', border: 'none', padding: 0 }}>{task.title}</div>
                 {/* Description */}
                 <div className="create-task-modal-label">Описание</div>
-                <div className="create-task-modal-textarea" style={{ background: 'none', border: 'none', padding: 0 }}>{task.description}</div>
+                <div className="create-task-modal-textarea" style={{ background: 'none', border: 'none', padding: 0 }}>{task.description || '-'}</div>
                 {/* Checklist */}
                 <div className="create-task-modal-label">Чеклист</div>
                 <div className="create-task-modal-checklist-items">
@@ -61,52 +71,70 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                 </div>
                 {/* Participants */}
                 <div className="create-task-modal-label">Участники</div>
-                <div className="create-project-modal-avatars-row">
-                    {task.participants && task.participants.length > 0 ? (
-                        task.participants.slice(0, 3).map((participant, idx) => {
-                            const username = typeof participant === 'string' ? participant : participant.username;
-                            const user = usersByUsername[username];
+                {task.participants && task.participants.length > 0 ? (
+                    <div className="create-task-modal-participants">
+                        {task.participants.map((participant, index) => {
+                            const username = extractUsername(participant);
+                            const user = usersByUsername ? usersByUsername[username] : null;
                             return (
-                                <img
-                                    key={username}
-                                    src={user?.avatarURL || Girl}
-                                    alt={username}
-                                    className="create-project-modal-avatar"
-                                    title={username}
-                                />
+                                <div key={index} className="create-task-modal-participant">
+                                    <img 
+                                        src={user?.avatarURL || Girl} 
+                                        alt={username} 
+                                        className="create-task-modal-participant-avatar"
+                                    />
+                                    <span>{user?.displayName || username}</span>
+                                </div>
                             );
-                        })
-                    ) : <span style={{ color: '#969595', fontSize: 14 }}>Нет участников</span>}
-                    {task.participants && task.participants.length > 3 && (
-                        <span className="create-project-modal-avatars-more">+{task.participants.length - 3}</span>
-                    )}
-                </div>
+                        })}
+                    </div>
+                ) : (
+                    <div style={{ color: '#969595', fontSize: 14 }}>Нет участников</div>
+                )}
+                
                 {/* Tags */}
                 <div className="create-task-modal-label">Тег</div>
-                <div className="create-task-modal-input" style={{ background: 'none', border: 'none', padding: 0 }}>{task.tags || '-'}</div>
+                {task.tagId && task.tagName ? (
+                    <div className="create-task-modal-tags-preview">
+                        <div 
+                            className="create-task-modal-tag-preview"
+                            style={{ backgroundColor: task.tagColor || '#EFEFEF' }}
+                        >
+                            {task.tagName}
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{ color: '#969595', fontSize: 14 }}>Без тега</div>
+                )}
+                
                 {/* Files */}
                 <div className="create-task-modal-label">Вложения</div>
                 <div className="create-task-modal-files-section">
                     {task.attachments && task.attachments.length > 0 ? (
                         <div className="create-task-modal-files-list">
-                            {task.attachments.map((file, index) => (
+                            {task.attachments.map((file) => (
                                 <div key={file.id} className="create-task-modal-file-item">
-                                    <a
-                                        href={`${process.env.REACT_APP_API_BASE_URL}/api/attachments/${file.id}/download`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="create-task-modal-file-name"
-                                    >
-                                        {file.fileName}
-                                    </a>
-                                    <div className="create-task-modal-file-size">
-                                        {(file.fileSize / 1024).toFixed(1)} KB
+                                    <div className="create-task-modal-file-icon-container">
+                                        <img src={ClipIcon} alt="file" className="create-task-modal-file-icon" />
+                                    </div>
+                                    <div className="create-task-modal-file-info">
+                                        <a
+                                            href={`${process.env.REACT_APP_API_BASE_URL}/api/attachments/${file.id}/download`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="create-task-modal-file-name"
+                                        >
+                                            {file.fileName}
+                                        </a>
+                                        <div className="create-task-modal-file-size">
+                                            {(file.fileSize / 1024).toFixed(1)} KB
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <span style={{ color: '#969595', fontSize: 14 }}>Нет вложений</span>
+                        <div style={{ color: '#969595', fontSize: 14 }}>Нет вложений</div>
                     )}
                 </div>
             </div>

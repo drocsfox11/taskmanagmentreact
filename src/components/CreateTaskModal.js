@@ -12,8 +12,27 @@ import { fetchBoardTagsRequest } from '../store/features/tags/tagsActions';
 
 function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     const dispatch = useDispatch();
-    const usersByUsername = useSelector(state => state.users.byUsername);
+    const usersByUsername = useSelector(state => state.users?.byUsername || {});
     const boardTags = useSelector(state => state.tags?.boardTags || []);
+    
+    // Get board participants from store
+    const boardData = useSelector(state => 
+        state.boards?.entities?.find(board => board.id === boardId) || 
+        state.api?.queries?.[`getBoardWithData(${boardId})`]?.data
+    );
+    
+    // Normalize board participants to ensure they are in a consistent format
+    const normalizedBoardParticipants = React.useMemo(() => {
+        const participants = boardData?.participants || [];
+        return participants.map(participant => {
+            if (typeof participant === 'string') {
+                return participant;
+            } else if (participant && participant.username) {
+                return participant.username;
+            }
+            return null;
+        }).filter(Boolean); // Remove any null values
+    }, [boardData]);
     
     const [form, setForm] = useState({
         title: '',
@@ -25,7 +44,7 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     });
     
     const [checklistItem, setChecklistItem] = useState('');
-    const [participantInput, setParticipantInput] = useState('');
+    const [selectedParticipant, setSelectedParticipant] = useState('');
     const [startDate, setStartDate] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -34,6 +53,7 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     
     const modalRef = useRef(null);
     const fileInputRef = useRef(null);
+    const prevBoardTagsRef = useRef([]);
 
     // Handle clicking outside modal to close
     useEffect(() => {
@@ -57,7 +77,7 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     // Загружаем данные пользователей через Redux
     useEffect(() => {
         form.participants.forEach(username => {
-            if (!usersByUsername[username]) {
+            if (username && (!usersByUsername || !usersByUsername[username])) {
                 dispatch({ type: 'users/fetchUser', payload: username });
             }
         });
@@ -92,16 +112,52 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         });
     };
 
+    // Add participant from dropdown
     const handleAddParticipant = () => {
-        if (participantInput.trim() && !form.participants.includes(participantInput)) {
-            // Загружаем данные пользователя из API
-            dispatch({ type: 'users/fetchUser', payload: participantInput });
+        console.log('Adding participant:', selectedParticipant);
+        console.log('Current participants:', form.participants);
+        
+        if (selectedParticipant && !form.participants.includes(selectedParticipant)) {
+            // Load user data from API if needed
+            dispatch({ type: 'users/fetchUser', payload: selectedParticipant });
             
-            setForm({
-                ...form,
-                participants: [...form.participants, participantInput]
+            // Создаем новый массив с добавленным участником
+            const updatedParticipants = [...form.participants, selectedParticipant];
+            console.log('Updated participants list:', updatedParticipants);
+            
+            // Используем функциональную форму setState для гарантированного доступа к актуальному состоянию
+            setForm(prevForm => {
+                const newForm = {
+                    ...prevForm,
+                    participants: [...prevForm.participants, selectedParticipant]
+                };
+                console.log('New form state:', newForm);
+                
+                // Сразу логируем для проверки
+                console.group('🧑‍💻 Обновление списка участников');
+                console.log('✅ Участник добавлен:', selectedParticipant);
+                console.log('👥 Новый список:', newForm.participants);
+                console.groupEnd();
+                
+                return newForm;
             });
-            setParticipantInput('');
+            
+            // Сбрасываем выбранного участника
+            setSelectedParticipant('');
+            
+            // Выводим для отладки текущее состояние через таймаут
+            setTimeout(() => {
+                console.log('Form state after update:', form);
+                console.log('Participants after update:', form.participants);
+                
+                // Проверяем, есть ли участники в DOM
+                const participantsEl = document.querySelector('.create-task-modal-participants');
+                if (participantsEl) {
+                    console.log('✅ Участники в DOM:', participantsEl.childElementCount);
+                } else {
+                    console.log('❌ Контейнер участников не найден в DOM');
+                }
+            }, 100);
         }
     };
 
@@ -135,6 +191,68 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         });
     };
 
+    // Сбрасываем состояние формы при закрытии модального окна
+    useEffect(() => {
+        if (!isOpen) {
+            setForm({
+                title: '',
+                description: '',
+                checklist: [],
+                participants: [],
+                tagId: null,
+                files: []
+            });
+            setSelectedParticipant('');
+            setStartDate('');
+            setStartTime('');
+            setEndDate('');
+            setEndTime('');
+        }
+    }, [isOpen]);
+
+    // Fetch board data when modal opens
+    useEffect(() => {
+        if (isOpen && boardId) {
+            console.log('Fetching board tags and participants for boardId:', boardId);
+            
+            // Always fetch fresh data when modal opens
+            dispatch(fetchBoardTagsRequest(boardId));
+            
+            // Force fetch board data to get updated participants list
+            dispatch({
+                type: 'api/invalidateTags',
+                payload: [{ type: 'Board', id: boardId }]
+            });
+            dispatch({
+                type: 'api/executeQuery',
+                payload: {
+                    endpointName: 'getBoardWithData',
+                    originalArgs: boardId
+                }
+            });
+        }
+    }, [isOpen, boardId, dispatch]);
+
+    // Update availableTags only when boardTags changes
+    useEffect(() => {
+        // Don't update if boardTags is the same as what we already set
+        const prevTagsJSON = JSON.stringify(prevBoardTagsRef.current);
+        const currentTagsJSON = JSON.stringify(boardTags);
+        
+        if (prevTagsJSON !== currentTagsJSON) {
+            setAvailableTags(boardTags);
+            prevBoardTagsRef.current = boardTags;
+        }
+    }, [boardTags]);
+
+    // Handle tag selection
+    const handleTagSelect = (tagId) => {
+        setForm({
+            ...form,
+            tagId: tagId
+        });
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         // Преобразуем временные метки в нужный формат для сервера
@@ -156,6 +274,8 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         delete taskData.timeline;
         // Передаем только данные задачи и файлы отдельно
         onSubmit({ ...taskData, files: form.files });
+        
+        // Сбрасываем форму после отправки
         setForm({
             title: '',
             description: '',
@@ -164,10 +284,12 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
             tagId: null,
             files: []
         });
+        setSelectedParticipant('');
         setStartDate('');
         setStartTime('');
         setEndDate('');
         setEndTime('');
+        
         onClose();
     };
 
@@ -179,34 +301,14 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         }
     };
 
-    // Handle keypress for participant input
-    const handleParticipantKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAddParticipant();
-        }
-    };
-
-    useEffect(() => {
-        if (isOpen && boardId) {
-            console.log('Fetching board tags for boardId:', boardId);
-            dispatch(fetchBoardTagsRequest(boardId));
-        }
-    }, [isOpen, boardId, dispatch]);
-
-    useEffect(() => {
-        setAvailableTags(boardTags);
-    }, [boardTags]);
-
-    // Handle tag selection
-    const handleTagSelect = (tagId) => {
-        setForm({
-            ...form,
-            tagId: tagId
-        });
-    };
-
     if (!isOpen) return null;
+    
+    // Debug output
+    console.log("CreateTaskModal rendering with state:", {
+        selectedParticipant,
+        formParticipants: form.participants,
+        boardParticipants: normalizedBoardParticipants
+    });
 
     return (
         <div className="create-task-modal-overlay">
@@ -271,8 +373,9 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                                     <span>{item.text}</span>
                                 </div>
                                 <span 
-                                    className="create-task-modal-checklist-remove"
+                                    className="create-task-modal-remove-button"
                                     onClick={() => handleRemoveChecklistItem(index)}
+                                    title="Удалить пункт"
                                 >
                                     ×
                                 </span>
@@ -325,63 +428,69 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                 
                 {/* Participants */}
                 <div className="create-task-modal-label">Участники</div>
+                
+                {/* Список добавленных участников - всегда отображается */}
+                <div className="create-task-modal-participants-section">
+                    <div className="create-task-modal-participants-header">
+                        Выбранные участники ({form.participants ? form.participants.length : 0})
+                    </div>
+                    
+                    {form.participants && form.participants.length > 0 ? (
+                        <div className="create-task-modal-participants">
+                            {form.participants.map((participant, index) => (
+                                <div key={index} className="create-task-modal-participant">
+                                    <img 
+                                        src={usersByUsername && usersByUsername[participant]?.avatarURL || Girl} 
+                                        alt={participant} 
+                                        className="create-task-modal-participant-avatar"
+                                    />
+                                    <span title={participant}>
+                                        {usersByUsername[participant]?.displayName || participant}
+                                    </span>
+                                    <span 
+                                        className="create-task-modal-remove-button"
+                                        onClick={() => handleRemoveParticipant(index)}
+                                        title="Удалить участника"
+                                    >
+                                        ×
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="create-task-modal-no-participants">
+                            <div>Список участников пуст</div>
+                            <div style={{fontSize: '12px', marginTop: '4px', opacity: '0.7'}}>Используйте форму ниже для добавления участников</div>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Добавление участника */}
                 <div className="create-task-modal-input-row">
-                    <input 
-                        className="create-task-modal-input" 
-                        value={participantInput} 
-                        onChange={(e) => setParticipantInput(e.target.value)} 
-                        onKeyPress={handleParticipantKeyPress}
-                        placeholder="email@example.com"
-                    />
+                    <select
+                        className="create-task-modal-input"
+                        value={selectedParticipant}
+                        onChange={(e) => setSelectedParticipant(e.target.value)}
+                    >
+                        <option value="">Выберите участника</option>
+                        {normalizedBoardParticipants
+                            .filter(username => !form.participants.includes(username))
+                            .map(username => (
+                                <option key={username} value={username}>
+                                    {usersByUsername[username]?.displayName || username}
+                                </option>
+                            ))
+                        }
+                    </select>
                     <button 
                         type="button" 
                         className="create-task-modal-add-button"
                         onClick={handleAddParticipant}
+                        disabled={!selectedParticipant}
                     >
                         Добавить участника
                     </button>
                 </div>
-                
-                {/* Участники - аватары */}
-                <div className="create-project-modal-avatars-row">
-                    {form.participants.slice(0, 3).map((username, idx) => {
-                        const user = usersByUsername[username];
-                        return (
-                            <img
-                                key={username}
-                                src={user?.avatarURL || Girl}
-                                alt={username}
-                                className="create-project-modal-avatar"
-                                title={username}
-                            />
-                        );
-                    })}
-                    {form.participants.length > 3 && (
-                        <span className="create-project-modal-avatars-more">+{form.participants.length - 3}</span>
-                    )}
-                </div>
-                
-                {/* Список участников с возможностью удаления */}
-                {form.participants.length > 0 && (
-                    <div className="create-task-modal-participants">
-                        {form.participants.map((participant, index) => (
-                            <div key={index} className="create-task-modal-participant">
-                                <img 
-                                    src={usersByUsername[participant]?.avatarURL || Girl} 
-                                    alt={participant} 
-                                    className="create-task-modal-participant-avatar"
-                                />
-                                <span>{participant}</span>
-                                <span 
-                                    className="create-task-modal-participant-remove"
-                                    onClick={() => handleRemoveParticipant(index)}
-                                >
-                                    ×
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                )}
                 
                 {/* Tags */}
                 <div className="create-task-modal-label">Тег</div>
@@ -391,14 +500,18 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     onChange={(e) => handleTagSelect(e.target.value ? Number(e.target.value) : null)}
                 >
                     <option value="">Выберите тег</option>
-                    {availableTags.map(tag => (
-                        <option key={tag.id} value={tag.id} style={{backgroundColor: tag.color}}>
-                            {tag.name}
-                        </option>
-                    ))}
+                    {availableTags && availableTags.length > 0 ? (
+                        availableTags.map(tag => (
+                            <option key={tag.id} value={tag.id}>
+                                {tag.name}
+                            </option>
+                        ))
+                    ) : (
+                        <option disabled>Загрузка тегов...</option>
+                    )}
                 </select>
                 <div className="create-task-modal-tags-preview">
-                    {form.tagId && availableTags.find(tag => tag.id === form.tagId) && (
+                    {form.tagId && availableTags && availableTags.find(tag => tag.id === form.tagId) && (
                         <div 
                             className="create-task-modal-tag-preview"
                             style={{ backgroundColor: availableTags.find(tag => tag.id === form.tagId).color }}
@@ -428,24 +541,32 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     />
                     
                     {form.files.length > 0 && (
-                        <div className="create-task-modal-files-list">
-                            {form.files.map((file, index) => (
-                                <div key={index} className="create-task-modal-file-item">
-                                    <img src={ClipIcon} alt="file" className="create-task-modal-file-icon" />
-                                    <div className="create-task-modal-file-info">
-                                        <div className="create-task-modal-file-name">{file.name}</div>
-                                        <div className="create-task-modal-file-size">
-                                            {(file.size / 1024).toFixed(1)} KB
+                        <div className="create-task-modal-files-container">
+                            <div className="create-task-modal-participants-header">
+                                Выбранные файлы ({form.files.length})
+                            </div>
+                            <div className="create-task-modal-files-list">
+                                {form.files.map((file, index) => (
+                                    <div key={index} className="create-task-modal-file-item">
+                                        <div className="create-task-modal-file-icon-container">
+                                            <img src={ClipIcon} alt="file" className="create-task-modal-file-icon" />
                                         </div>
+                                        <div className="create-task-modal-file-info">
+                                            <div className="create-task-modal-file-name" title={file.name}>{file.name}</div>
+                                            <div className="create-task-modal-file-size">
+                                                {(file.size / 1024).toFixed(1)} KB
+                                            </div>
+                                        </div>
+                                        <span 
+                                            className="create-task-modal-remove-button"
+                                            onClick={() => handleRemoveFile(index)}
+                                            title="Удалить файл"
+                                        >
+                                            ×
+                                        </span>
                                     </div>
-                                    <span 
-                                        className="create-task-modal-file-remove"
-                                        onClick={() => handleRemoveFile(index)}
-                                    >
-                                        ×
-                                    </span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

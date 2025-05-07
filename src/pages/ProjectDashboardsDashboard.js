@@ -3,7 +3,7 @@ import '../styles/pages/ProjectDashboardsDashboard.css'
 import ProjectMenu from "../components/ProjectMenu";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { useGetBoardsQuery, useCreateBoardMutation, useUpdateBoardMutation, useDeleteBoardMutation } from "../services/api/boardsApi";
+import { useGetBoardsQuery, useCreateBoardMutation } from "../services/api/boardsApi";
 import { useGetProjectQuery } from "../services/api/projectsApi";
 import CloseCross from '../assets/icons/close_cross.svg';
 import DashboardCard from "../components/DashboardCard";
@@ -17,12 +17,8 @@ function ProjectDashBoardsDashboard() {
     const { data: project, isLoading: isProjectLoading } = useGetProjectQuery(numericProjectId);
     const { data: boards = [], isLoading: isBoardsLoading } = useGetBoardsQuery(numericProjectId);
     const [createBoard] = useCreateBoardMutation();
-    const [updateBoard] = useUpdateBoardMutation();
-    const [deleteBoard] = useDeleteBoardMutation();
     
     const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
-    const [boardModalMode, setBoardModalMode] = useState('create');
-    const [editBoard, setEditBoard] = useState(null);
     const [boardForm, setBoardForm] = useState({ title: '', description: '', tags: [] });
     const [tagTitle, setTagTitle] = useState('');
     const [tagColor, setTagColor] = useState('#FFD700');
@@ -31,20 +27,13 @@ function ProjectDashBoardsDashboard() {
     
     const isLoading = isProjectLoading || isBoardsLoading;
 
-    const handleOpenBoardModal = (board = null) => {
-        setEditBoard(board);
-        setBoardModalMode(board ? 'edit' : 'create');
-        setBoardForm(board ? {
-            title: board.title,
-            description: board.description,
-            tags: Array.isArray(board.tags) ? [...board.tags] : []
-        } : { title: '', description: '', tags: [] });
+    const handleOpenBoardModal = () => {
+        setBoardForm({ title: '', description: '', tags: [] });
         setIsBoardModalOpen(true);
     };
     
     const handleCloseBoardModal = () => {
         setIsBoardModalOpen(false);
-        setEditBoard(null);
         setBoardForm({ title: '', description: '', tags: [] });
     };
     
@@ -88,61 +77,21 @@ function ProjectDashBoardsDashboard() {
             ...boardForm,
             projectId: numericProjectId,
             participantIds,
-            id: editBoard?.id,
         };
         
         console.log('Submitting board with payload:', payload);
         
         try {
-            let result;
-            if (boardModalMode === 'create') {
-                result = await createBoard(payload).unwrap();
-                console.log('Created board result:', result);
-            } else if (boardModalMode === 'edit') {
-                result = await updateBoard(payload).unwrap();
-                console.log('Updated board result:', result);
-            }
+            await createBoard(payload).unwrap();
             
             // Добавляем задержку для обновления UI
             setTimeout(() => {
                 handleCloseBoardModal();
             }, 500);
         } catch (error) {
-            console.error('Error saving board:', error);
+            console.error('Error creating board:', error);
         }
     };
-    
-    const handleDeleteBoard = async (boardId) => {
-        try {
-            await deleteBoard(boardId);
-        } catch (error) {
-            console.error('Error deleting board:', error);
-        }
-    };
-    
-    // If there's an error loading the project
-    if (!project && !isLoading) {
-        return (
-            <div style={{ textAlign: 'center', padding: '50px 20px' }}>
-                <h2>Проект не найден</h2>
-                <p>Возможно, он был удален или у вас нет прав доступа.</p>
-                <button 
-                    onClick={() => navigate('/system/project')}
-                    style={{
-                        padding: '10px 20px',
-                        background: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        marginTop: '20px'
-                    }}
-                >
-                    Вернуться к проектам
-                </button>
-            </div>
-        );
-    }
     
     return (
         <div id='project-dashboards-dashboard-container'>
@@ -166,8 +115,6 @@ function ProjectDashBoardsDashboard() {
                                         key={board.id}
                                         boardId={board.id}
                                         projectId={numericProjectId}
-                                        onEdit={() => handleOpenBoardModal(board)}
-                                        onDelete={() => handleDeleteBoard(board.id)}
                                         title={board.title}
                                         description={board.description}
                                     />
@@ -180,50 +127,42 @@ function ProjectDashBoardsDashboard() {
                         <LoadingSpinner /> <span style={{ marginLeft: '10px' }}>Загрузка данных проекта...</span>
                     </div>
                 )}
+                
+                {isBoardModalOpen && project && (
+                    <div className="create-project-modal-overlay">
+                        <form className="create-project-modal" ref={modalRef} onSubmit={handleBoardSubmit}>
+                            <div className="create-task-modal-header">
+                                <div className="create-project-modal-title">Создать доску</div>
+                                <img src={CloseCross} alt="close" className="create-task-modal-close" onClick={handleCloseBoardModal}/>
+                            </div>
+                            <div className="create-project-modal-label">Название доски</div>
+                            <input className="create-project-modal-input" name="title" value={boardForm.title} onChange={handleBoardFormChange} placeholder="Введите название доски"/>
+                            <div className="create-project-modal-label">Описание доски</div>
+                            <input className="create-project-modal-input" name="description" value={boardForm.description} onChange={handleBoardFormChange} placeholder="Введите описание доски"/>
+                            <div className="create-project-modal-label">Теги</div>
+                            
+                            <div className="create-project-modal-tag-row">
+                                <input className="create-project-modal-input" value={tagTitle} onChange={(e) => setTagTitle(e.target.value)} placeholder="Название тега"/>
+                                <input type="color" value={tagColor} onChange={(e) => setTagColor(e.target.value)} className="create-project-modal-color-picker" />
+                                <button type="button" className="create-project-modal-add-button" onClick={handleAddTag}>Добавить</button>
+                            </div>
+                            <div className="create-project-modal-tags">
+                                {boardForm.tags && boardForm.tags.length > 0 ? (
+                                    boardForm.tags.map((tag, idx) => (
+                                        <div key={idx} className="create-project-modal-tag" style={{ backgroundColor: tag.color }}>
+                                            {tag.name}
+                                            <button type="button" className="create-project-modal-remove-tag" onClick={() => handleRemoveTag(idx)}>×</button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="create-project-modal-no-tags">Нет тегов</p>
+                                )}
+                            </div>
+                            <button type="submit" className="create-project-modal-submit">Создать</button>
+                        </form>
+                    </div>
+                )}
             </div>
-            
-            {isBoardModalOpen && project && (
-                <div className="create-project-modal-overlay">
-                    <form className="create-project-modal" ref={modalRef} onSubmit={handleBoardSubmit}>
-                        <div className="create-task-modal-header">
-                            <div className="create-project-modal-title">{boardModalMode === 'edit' ? 'Редактировать доску' : 'Создать доску'}</div>
-                            <img src={CloseCross} alt="close" className="create-task-modal-close" onClick={handleCloseBoardModal}/>
-                        </div>
-                        <div className="create-project-modal-label">Название доски</div>
-                        <input className="create-project-modal-input" name="title" value={boardForm.title} onChange={handleBoardFormChange} placeholder="Введите название доски"/>
-                        <div className="create-project-modal-label">Описание доски</div>
-                        <input className="create-project-modal-input" name="description" value={boardForm.description} onChange={handleBoardFormChange} placeholder="Введите описание доски"/>
-                        <div className="create-project-modal-label">Теги</div>
-                        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                            <input 
-                                className="create-project-modal-input" 
-                                style={{ flex: 2 }}
-                                value={tagTitle}
-                                onChange={e => setTagTitle(e.target.value)}
-                                placeholder="Название тега"
-                            />
-                            <input 
-                                type="color" 
-                                value={tagColor}
-                                onChange={e => setTagColor(e.target.value)}
-                                style={{ width: 40, height: 40, border: 'none', background: 'none', cursor: 'pointer' }}
-                            />
-                            <button type="button" className="create-project-modal-add-participant" style={{ minWidth: 80 }} onClick={handleAddTag}>Добавить</button>
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                            {(boardForm.tags || []).map((tag, idx) => (
-                                <div key={idx} style={{ display: 'flex', alignItems: 'center', background: tag.color, borderRadius: 8, padding: '4px 10px', color: '#222', fontWeight: 500 }}>
-                                    <span>{tag.name}</span>
-                                    <span style={{ marginLeft: 8, cursor: 'pointer', fontWeight: 'bold' }} onClick={() => handleRemoveTag(idx)}>×</span>
-                                </div>
-                            ))}
-                        </div>
-                        <button type="submit" className="create-project-modal-add-participant" style={{marginTop: 16}}>
-                            {boardModalMode === 'edit' ? 'Сохранить' : 'Создать'}
-                        </button>
-                    </form>
-                </div>
-            )}
         </div>
     );
 }

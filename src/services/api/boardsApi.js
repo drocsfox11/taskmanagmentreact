@@ -321,7 +321,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 
               case 'TASK_MOVED':
                 updateCachedData((draft) => {
-                  const { taskId, sourceColumnId, destColumnId, newPosition } = data.payload;
+                  const { taskId, sourceColumnId, targetColumnId, newPosition } = data.payload;
                   
                   // Находим исходную колонку
                   const sourceColIndex = draft.columns.findIndex(col => col.id === sourceColumnId);
@@ -338,13 +338,13 @@ export const boardsApi = baseApi.injectEndpoints({
                   draft.columns[sourceColIndex].tasks.splice(taskIndex, 1);
                   
                   // Если перемещение в другую колонку
-                  if (sourceColumnId !== destColumnId) {
+                  if (sourceColumnId !== targetColumnId) {
                     // Находим целевую колонку
-                    const destColIndex = draft.columns.findIndex(col => col.id === destColumnId);
+                    const destColIndex = draft.columns.findIndex(col => col.id === targetColumnId);
                     if (destColIndex === -1) return;
                     
                     // Обновляем columnId задачи
-                    task.columnId = destColumnId;
+                    task.columnId = targetColumnId;
                     
                     // Вставляем задачу в новую позицию в целевой колонке
                     draft.columns[destColIndex].tasks.splice(newPosition, 0, task);
@@ -354,14 +354,14 @@ export const boardsApi = baseApi.injectEndpoints({
                   }
                   
                   // Обновляем позиции всех задач в затронутых колонках
-                  if (sourceColumnId !== destColumnId) {
+                  if (sourceColumnId !== targetColumnId) {
                     // Обновляем позиции в исходной колонке
                     draft.columns[sourceColIndex].tasks.forEach((task, index) => {
                       task.position = index;
                     });
                     
                     // Находим индекс целевой колонки
-                    const destColIndex = draft.columns.findIndex(col => col.id === destColumnId);
+                    const destColIndex = draft.columns.findIndex(col => col.id === targetColumnId);
                     if (destColIndex !== -1) {
                       // Обновляем позиции в целевой колонке
                       draft.columns[destColIndex].tasks.forEach((task, index) => {
@@ -374,6 +374,38 @@ export const boardsApi = baseApi.injectEndpoints({
                       task.position = index;
                     });
                   }
+                });
+                break;
+                
+              case 'TASKS_REORDERED':
+                updateCachedData((draft) => {
+                  // Находим колонку, для которой изменился порядок задач
+                  const columnIndex = draft.columns.findIndex(col => col.id === data.payload.columnId);
+                  if (columnIndex === -1) return;
+                  
+                  // Получаем колонку
+                  const column = draft.columns[columnIndex];
+                  
+                  // Создаем карту текущих задач для сохранения всех данных
+                  const taskMap = {};
+                  column.tasks.forEach(task => {
+                    taskMap[task.id] = task;
+                  });
+                  
+                  // Создаем новый массив задач в соответствии с полученным порядком
+                  const newTasks = [];
+                  data.payload.tasks.forEach((taskData, index) => {
+                    if (taskMap[taskData.id]) {
+                      // Добавляем задачу с обновленной позицией
+                      newTasks.push({
+                        ...taskMap[taskData.id],
+                        position: index
+                      });
+                    }
+                  });
+                  
+                  // Обновляем задачи в колонке
+                  column.tasks = newTasks;
                 });
                 break;
                 
@@ -580,12 +612,12 @@ export const boardsApi = baseApi.injectEndpoints({
             const newColumns = [];
             
             // Для каждого id в новом порядке находим соответствующую колонку
-            columnIds.forEach(columnId => {
+            columnIds.forEach((columnId, index) => {
               const column = currentColumns.find(col => col.id === columnId);
               if (column) {
                 newColumns.push({
                   ...column,
-                  position: newColumns.length
+                  position: index
                 });
               }
             });
@@ -599,11 +631,11 @@ export const boardsApi = baseApi.injectEndpoints({
           const stompConn = getStompConnection(boardId);
           
           // Отправляем данные в корректном формате для сервера
-          const columns = columnIds.map(id => ({ id }));
+          const columns = columnIds.map((id, index) => ({ id, position: index }));
           
           const success = stompConn.sendAction('REORDER_COLUMNS', { 
             boardId, 
-            columns: columns  // Отправляем массив объектов с id для соответствия ожиданиям сервера
+            columns: columns  // Отправляем массив объектов с id и position для соответствия ожиданиям сервера
           });
           
           if (!success) {
@@ -621,9 +653,13 @@ export const boardsApi = baseApi.injectEndpoints({
     }),
     createTask: builder.mutation({
       // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async (task, { dispatch }) => {
+      queryFn: async (task, { dispatch, getState }) => {
         const { boardId } = task;
         const tempId = `temp-${Date.now()}`;
+        
+        // Получаем текущего пользователя
+        const state = getState();
+        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
         
         // Оптимистично обновляем UI
         const patchResult = dispatch(
@@ -633,16 +669,33 @@ export const boardsApi = baseApi.injectEndpoints({
               column.tasks.push({
                 ...task,
                 id: tempId,
-                position: column.tasks.length
+                position: column.tasks.length,
+                initiatedBy: username
               });
             }
           })
         );
         
         try {
-          // Отправляем событие через STOMP
+          // Отправляем событие через STOMP согласно спецификации
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('CREATE_TASK', task);
+          
+          // Формируем правильную структуру данных для отправки
+          const payload = {
+            columnId: task.columnId,
+            title: task.title,
+            description: task.description || '',
+            tagIds: task.tagIds || [],
+            position: task.position || 0,
+            checklist: task.checklist || [],
+            participants: task.participants || [],
+            startDate: task.startDate,
+            dueDate: task.dueDate,
+            priority: task.priority || 'NORMAL',
+            socketEvent: true
+          };
+          
+          const success = stompConn.sendAction('CREATE_TASK', payload);
           
           if (!success) {
             throw new Error('Failed to send STOMP message');
@@ -659,7 +712,11 @@ export const boardsApi = baseApi.injectEndpoints({
     }),
     updateTask: builder.mutation({
       // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ id, boardId, columnId, ...updates }, { dispatch }) => {
+      queryFn: async ({ id, boardId, columnId, ...updates }, { dispatch, getState }) => {
+        // Получаем текущего пользователя
+        const state = getState();
+        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
+        
         // Оптимистично обновляем UI
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
@@ -667,16 +724,36 @@ export const boardsApi = baseApi.injectEndpoints({
             if (column) {
               const taskIndex = column.tasks.findIndex(t => t.id === id);
               if (taskIndex !== -1) {
-                Object.assign(column.tasks[taskIndex], updates);
+                Object.assign(column.tasks[taskIndex], {
+                  ...updates,
+                  initiatedBy: username
+                });
               }
             }
           })
         );
         
         try {
-          // Отправляем событие через STOMP
+          // Отправляем событие через STOMP согласно спецификации
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('UPDATE_TASK', { id, columnId, ...updates });
+          
+          // Формируем правильную структуру данных для отправки
+          const payload = {
+            taskId: id, // Используем taskId вместо id
+            title: updates.title,
+            description: updates.description || '',
+            tagIds: updates.tagIds || [],
+            position: updates.position,
+            checklist: updates.checklist || [],
+            participants: updates.participants || [],
+            startDate: updates.startDate,
+            dueDate: updates.dueDate,
+            priority: updates.priority || 'NORMAL',
+            attachments: updates.attachments || [],
+            socketEvent: true
+          };
+          
+          const success = stompConn.sendAction('UPDATE_TASK', payload);
           
           if (!success) {
             throw new Error('Failed to send STOMP message');
@@ -693,7 +770,11 @@ export const boardsApi = baseApi.injectEndpoints({
     }),
     deleteTask: builder.mutation({
       // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ id, boardId }, { dispatch }) => {
+      queryFn: async ({ id, boardId }, { dispatch, getState }) => {
+        // Получаем текущего пользователя
+        const state = getState();
+        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
+        
         // Оптимистично обновляем UI
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
@@ -710,9 +791,16 @@ export const boardsApi = baseApi.injectEndpoints({
         );
         
         try {
-          // Отправляем событие через STOMP
+          // Отправляем событие через STOMP согласно спецификации
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('DELETE_TASK', { id });
+          
+          // Формируем правильную структуру данных для отправки
+          const payload = {
+            taskId: id, // Используем taskId вместо id
+            socketEvent: true
+          };
+          
+          const success = stompConn.sendAction('DELETE_TASK', payload);
           
           if (!success) {
             throw new Error('Failed to send STOMP message');
@@ -729,7 +817,11 @@ export const boardsApi = baseApi.injectEndpoints({
     }),
     moveTask: builder.mutation({
       // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ taskId, sourceColumnId, destColumnId, newPosition, boardId }, { dispatch }) => {
+      queryFn: async ({ taskId, sourceColumnId, destColumnId, newPosition, boardId }, { dispatch, getState }) => {
+        // Получаем текущего пользователя
+        const state = getState();
+        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
+        
         // Оптимистично обновляем UI
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
@@ -773,14 +865,20 @@ export const boardsApi = baseApi.injectEndpoints({
         );
         
         try {
-          // Отправляем событие через STOMP
+          // Отправляем событие через STOMP согласно спецификации
           const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('MOVE_TASK', { 
-            taskId, 
-            sourceColumnId, 
-            destColumnId, 
-            newPosition 
-          });
+          
+          // Формируем правильную структуру данных для отправки
+          const payload = {
+            taskId,
+            sourceColumnId,
+            targetColumnId: destColumnId, // targetColumnId вместо destColumnId согласно спецификации
+            newPosition,
+            boardId,
+            socketEvent: true
+          };
+          
+          const success = stompConn.sendAction('MOVE_TASK', payload);
           
           if (!success) {
             throw new Error('Failed to send STOMP message');
@@ -788,6 +886,61 @@ export const boardsApi = baseApi.injectEndpoints({
           
           // Возвращаем успешный результат
           return { data: { taskId, sourceColumnId, destColumnId, newPosition } };
+        } catch (error) {
+          // Откатываем оптимистичное обновление при ошибке
+          patchResult.undo();
+          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
+        }
+      }
+    }),
+    reorderTasks: builder.mutation({
+      // Используем пользовательский queryFn для STOMP-операций
+      queryFn: async ({ columnId, tasks, boardId }, { dispatch }) => {
+        // Оптимистично обновляем UI
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
+            // Находим колонку, в которой нужно обновить порядок задач
+            const column = draft.columns.find(col => col.id === columnId);
+            if (!column) return;
+            
+            // Создаем новый порядок задач, сохраняя полные объекты задач
+            const taskMap = {};
+            column.tasks.forEach(task => {
+              taskMap[task.id] = task;
+            });
+            
+            // Формируем новый массив задач в правильном порядке
+            const newTasks = [];
+            tasks.forEach((taskObj, index) => {
+              const taskId = taskObj.id;
+              if (taskMap[taskId]) {
+                // Сохраняем полный объект задачи, обновляя только позицию
+                newTasks.push({
+                  ...taskMap[taskId],
+                  position: index
+                });
+              }
+            });
+            
+            // Обновляем задачи в колонке
+            column.tasks = newTasks;
+          })
+        );
+        
+        try {
+          // Отправляем событие через STOMP
+          const stompConn = getStompConnection(boardId);
+          const success = stompConn.sendAction('REORDER_TASKS', { 
+            columnId, 
+            tasks 
+          });
+          
+          if (!success) {
+            throw new Error('Failed to send STOMP message');
+          }
+          
+          // Возвращаем успешный результат
+          return { data: { columnId, tasks } };
         } catch (error) {
           // Откатываем оптимистичное обновление при ошибке
           patchResult.undo();
@@ -877,6 +1030,86 @@ export const boardsApi = baseApi.injectEndpoints({
         }
       }
     }),
+    getBoardUserRights: builder.query({
+      query: ({ boardId, userId }) => ({
+        url: `${apiPrefix}/${boardId}/rights/users/${userId}`,
+      }),
+      providesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    getBoardUserRightsByUsername: builder.query({
+      query: ({ boardId, username }) => ({
+        url: `${apiPrefix}/${boardId}/rights/users/username/${username}`,
+      }),
+      providesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    addUserToBoard: builder.mutation({
+      query: ({ boardId, userId }) => ({
+        url: `${apiPrefix}/${boardId}/rights/users`,
+        method: 'POST',
+        body: { userId },
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    addUserToBoardByUsername: builder.mutation({
+      query: ({ boardId, username }) => ({
+        url: `${apiPrefix}/${boardId}/rights/users/username`,
+        method: 'POST',
+        body: { username },
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    grantBoardRight: builder.mutation({
+      query: ({ boardId, userId, rightName }) => ({
+        url: `${apiPrefix}/${boardId}/rights/grant`,
+        method: 'POST',
+        body: { userId, rightName },
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    grantBoardRightByUsername: builder.mutation({
+      query: ({ boardId, username, rightName }) => ({
+        url: `${apiPrefix}/${boardId}/rights/grant`,
+        method: 'POST',
+        body: { username, rightName },
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    revokeBoardRight: builder.mutation({
+      query: ({ boardId, userId, rightName }) => ({
+        url: `${apiPrefix}/${boardId}/rights/revoke`,
+        method: 'POST',
+        body: { userId, rightName },
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    revokeBoardRightByUsername: builder.mutation({
+      query: ({ boardId, username, rightName }) => ({
+        url: `${apiPrefix}/${boardId}/rights/revoke`,
+        method: 'POST',
+        body: { username, rightName },
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    removeUserFromBoard: builder.mutation({
+      query: ({ boardId, userId }) => ({
+        url: `${apiPrefix}/${boardId}/rights/users/${userId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    removeUserFromBoardByUsername: builder.mutation({
+      query: ({ boardId, username }) => ({
+        url: `${apiPrefix}/${boardId}/rights/users/username/${username}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+    }),
+    getVisibleBoards: builder.query({
+      query: (projectId) => ({
+        url: `${apiPrefix}/visible?projectId=${projectId}`,
+      }),
+      providesTags: ['Boards'],
+    }),
   }),
 });
 
@@ -894,7 +1127,19 @@ export const {
   useUpdateTaskMutation,
   useDeleteTaskMutation,
   useMoveTaskMutation,
+  useReorderTasksMutation,
   useCreateTagMutation,
   useUpdateTagMutation,
   useDeleteTagMutation,
+  useGetBoardUserRightsQuery,
+  useGetBoardUserRightsByUsernameQuery,
+  useAddUserToBoardMutation,
+  useAddUserToBoardByUsernameMutation,
+  useGrantBoardRightMutation,
+  useGrantBoardRightByUsernameMutation,
+  useRevokeBoardRightMutation,
+  useRevokeBoardRightByUsernameMutation,
+  useRemoveUserFromBoardMutation,
+  useRemoveUserFromBoardByUsernameMutation,
+  useGetVisibleBoardsQuery,
 } = boardsApi; 

@@ -273,8 +273,8 @@
     border-style: solid;
     text-align: center;
     border-radius: 5px;
-
-
+    cursor: pointer;
+    pointer-events: all;
 }
 .task-dashboard-add-task-button-text{
     color:#5558FF;

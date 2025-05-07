@@ -12,6 +12,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import AddSectionModal from "../components/AddSectionModal";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import CreateTaskModal from "../components/CreateTaskModal";
+import TaskInfoModal from "../components/TaskInfoModal";
 
 // Import RTK Query hooks
 import { 
@@ -341,13 +343,13 @@ function TaskDashboard() {
                 </DragDropContext>
             </div>
             
-            {/* Task Creation Modal
+            {/* Task Creation Modal */}
             <CreateTaskModal 
                 isOpen={isTaskModalOpen} 
                 onClose={handleCloseTaskModal} 
                 onSubmit={handleCreateTask} 
                 boardId={Number(boardId)}
-            /> */}
+            />
             
             {/* Add Section Modal */}
             <AddSectionModal 
@@ -356,12 +358,12 @@ function TaskDashboard() {
                 onAddSection={handleAddSection}
             />
 
-            {/* Task Info Modal
+            {/* Task Info Modal */}
             <TaskInfoModal 
                 isOpen={isTaskInfoOpen} 
                 onClose={() => setIsTaskInfoOpen(false)} 
                 task={selectedTask} 
-            /> */}
+            />
             
             {/* Participants Modal */}
             {isParticipantsModalOpen && (

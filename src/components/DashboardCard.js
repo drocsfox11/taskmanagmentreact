@@ -4,12 +4,21 @@ import '../styles/components/ProjectAndDashboardCard.css'
 import OptionsPassive from "../assets/icons/options_passive.svg";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDeleteBoardMutation, useGetBoardWithDataQuery } from "../services/api/boardsApi";
+import BoardManagementModal from "./BoardManagementModal";
 
-function DashboardCard({ boardId, projectId, onClick, onEdit, onDelete, title, description }) {
+function DashboardCard({ boardId, projectId, onClick, title, description }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     const navigate = useNavigate();
+    const [deleteBoard] = useDeleteBoardMutation();
+    
+    // Fetch board data when management modal is opened
+    const { data: board } = useGetBoardWithDataQuery(boardId, {
+        skip: !isManagementModalOpen,
+    });
 
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -23,12 +32,35 @@ function DashboardCard({ boardId, projectId, onClick, onEdit, onDelete, title, d
         }
     };
 
-    const handleCardClick = () => {
+    const handleCardClick = (e) => {
+        // Если клик был внутри модалки, то не выполняем навигацию
+        if (isManagementModalOpen || 
+            e.target.closest('.project-management-modal-overlay') || 
+            e.target.closest('.project-card-modal-container')) {
+            return;
+        }
+        
         if (boardId && projectId) {
             navigate(`/system/project/${projectId}/board/${boardId}/tasks`);
         } else if (onClick) {
             onClick();
         }
+    };
+    
+    const handleDelete = async (e) => {
+        e.stopPropagation();
+        try {
+            await deleteBoard(boardId);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Error deleting board:', error);
+        }
+    };
+    
+    const handleManage = (e) => {
+        e.stopPropagation();
+        setIsModalOpen(false);
+        setIsManagementModalOpen(true);
     };
 
     useEffect(() => {
@@ -66,12 +98,20 @@ function DashboardCard({ boardId, projectId, onClick, onEdit, onDelete, title, d
                 </div>
             </div>
             {isModalOpen && (
-                <div ref={modalRef} className="modal-container">
-                    <div className="modal-content-custom">
-                        <div className="modal-edit" onClick={(e) => { e.stopPropagation(); setIsModalOpen(false); onEdit && onEdit(); }}>Редактировать</div>
-                        <div className="modal-delete" onClick={(e) => { e.stopPropagation(); setIsModalOpen(false); onDelete && onDelete(); }}>Удалить</div>
+                <div ref={modalRef} className="project-card-modal-container" onClick={(e) => e.stopPropagation()}>
+                    <div className="project-card-modal-content">
+                        <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
+                        <div className="project-card-modal-delete" onClick={handleDelete}>Удалить</div>
                     </div>
                 </div>
+            )}
+            
+            {isManagementModalOpen && board && (
+                <BoardManagementModal 
+                    board={board} 
+                    onClose={() => setIsManagementModalOpen(false)}
+                    isOpen={isManagementModalOpen}
+                />
             )}
         </div>
     );

@@ -9,6 +9,7 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    pointer-events: all;
 }
 
 .project-management-modal {
@@ -22,6 +23,7 @@
     flex-direction: column;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     box-sizing: border-box;
+    pointer-events: all;
 }
 
 .project-management-modal-header {
@@ -135,6 +137,9 @@
     font-family: 'Ruberoid Medium', sans-serif;
     transition: background-color 0.3s;
     box-sizing: border-box;
+    margin-top: 20px;
+    width: auto;
+    display: inline-block;
 }
 
 .save-button:hover {
@@ -144,9 +149,17 @@
 .participants-section {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 0;
     width: 100%;
     box-sizing: border-box;
+}
+
+.participants-section h3 {
+    font-family: 'Ruberoid Bold', sans-serif;
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 5px;
+    margin-top: 0;
 }
 
 .add-participant {
@@ -384,6 +397,7 @@
     font-size: 12px;
     transition: background-color 0.3s;
     white-space: nowrap;
+    min-width: 80px;
     flex-shrink: 0;
     box-sizing: border-box;
 }
@@ -437,4 +451,265 @@
     margin-bottom: 15px;
     color: #333;
     box-sizing: border-box;
+}
+
+.project-management-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.project-management-tag-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #FFD700;
+    color: #333;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.project-management-remove-tag {
+    background: none;
+    border: none;
+    color: #333;
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 4px;
+    box-sizing: border-box;
+}
+
+.project-management-remove-tag:hover {
+    color: #000;
+}
+
+.create-project-modal-tag-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.create-project-modal-color-picker {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.create-project-modal-add-button {
+    padding: 8px 12px;
+    background-color: #5558FF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.create-project-modal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.create-project-modal-tag {
+    display: flex;
+    align-items: center;
+    background-color: #FFD700;
+    color: #333;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-weight: 500;
+    box-sizing: border-box;
+}
+
+.create-project-modal-remove-tag {
+    background: none;
+    border: none;
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.create-project-modal-no-tags {
+    color: #969595;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.create-project-modal-submit {
+    padding: 10px 20px;
+    background-color: #5558FF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    margin-top: 16px;
+    box-sizing: border-box;
+}
+
+.create-project-modal-submit:hover {
+    background-color: #4245cc;
+}
+
+.project-management-add-button {
+    padding: 10px 16px;
+    background-color: #5558FF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 100px;
+    box-sizing: border-box;
+}
+
+.project-management-add-button:hover {
+    background-color: #4245cc;
+}
+
+/* Общие стили для кнопки */
+button.project-management-add-button,
+button.create-project-modal-add-button {
+    padding: 8px 12px;
+    background-color: #5558FF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+button.project-management-add-button:hover,
+button.create-project-modal-add-button:hover {
+    background-color: #4245cc;
+}
+
+/* Стили для контейнеров ввода */
+.project-management-participants-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.project-management-modal-input-participant {
+    flex: 1;
+    min-width: 0;
+    background: #F5F5F5;
+    border: 1px solid #DBDBDB;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.project-management-participants {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.section-description {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+
+/* Стили для вкладки прав доступа в модальном окне BoardManagementModal */
+.project-management-modal-content .project-permissions-tab {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.project-management-modal-content .permissions-container {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+}
+
+.project-management-modal-content .select-user-section {
+    flex: 0 0 180px;
+    border-right: 1px solid #eaeaea;
+    padding-right: 15px;
+}
+
+.project-management-modal-content .user-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.project-management-modal-content .user-item {
+    padding: 8px 10px;
+    height: auto;
+    min-height: 40px;
+}
+
+.project-management-modal-content .user-item img {
+    width: 24px;
+    height: 24px;
+}
+
+.project-management-modal-content .user-rights-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.project-management-modal-content .rights-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.project-management-modal-content .right-item {
+    padding: 10px 12px;
+    min-height: auto;
+}
+
+.project-management-modal-content .project-permissions-tab h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
 } 
