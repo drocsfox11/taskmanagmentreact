@@ -8,17 +8,17 @@ import { baseApi } from './baseApi';
 export const tagsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTags: builder.query({
-      query: (boardId) => `boards/${boardId}/tags`,
+      query: (boardId) => ({url: `api/tags/board/${boardId}`}),
       providesTags: ['Tags'],
     }),
     getTag: builder.query({
-      query: (tagId) => `tags/${tagId}`,
+      query: (tagId) => ({url: `api/tags/${tagId}`}),
       providesTags: (result, error, id) => [{ type: 'Tags', id }],
     }),
     // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     createTag: builder.mutation({
       query: (tag) => ({
-        url: 'tags',
+        url: 'api/tags',
         method: 'POST',
         body: { ...tag, socketEvent: true },
       }),
@@ -27,7 +27,7 @@ export const tagsApi = baseApi.injectEndpoints({
     // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     updateTag: builder.mutation({
       query: ({ id, ...data }) => ({
-        url: `tags/${id}`,
+        url: `api/tags/${id}`,
         method: 'PUT',
         body: { ...data, socketEvent: true },
       }),
@@ -36,7 +36,7 @@ export const tagsApi = baseApi.injectEndpoints({
     // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     deleteTag: builder.mutation({
       query: (id) => ({
-        url: `tags/${id}`,
+        url: `api/tags/${id}`,
         method: 'DELETE',
         body: { socketEvent: true },
       }),

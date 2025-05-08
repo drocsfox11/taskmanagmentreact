@@ -1,4 +1,4 @@
-#left-menu-messenger-container{
+.left-menu-messenger-container{
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -15,7 +15,7 @@
 
 }
 
-#left-menu-messenger-search-and-title-container{
+.left-menu-messenger-search-and-title-container{
     padding: 30px 15px;
     background-color: #FFFFFF;
 
@@ -28,14 +28,14 @@
 
 }
 
-#left-menu-messenger-search-and-title-title{
+.left-menu-messenger-search-and-title-title{
     font-size: 22px;
     color: black;
     font-family: "Ruberoid Semi Bold", sans-serif;
     margin-bottom: 25px;
 }
 
-#left-menu-messenger-chats-container{
+.left-menu-messenger-chats-container{
     padding: 20px 10px;
     background-color: #F5F5F5;
 
@@ -48,7 +48,7 @@
 
 }
 
-#left-menu-messenger-chat-card{
+.left-menu-messenger-chat-card{
     padding: 10px 10px;
     background-color: #FFFFFF;
     border-radius: 8px;
@@ -62,11 +62,11 @@
 
 }
 
-#left-menu-messenger-chat-card-image{
+.left-menu-messenger-chat-card-image{
     width: 40px;
 }
 
-#left-menu-messenger-chat-card-text-container{
+.left-menu-messenger-chat-card-text-container{
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -74,14 +74,14 @@
 
 }
 
-#left-menu-messenger-chat-card-chat-name{
+.left-menu-messenger-chat-card-chat-name{
     font-size: 14px;
     color: black;
     font-family: "Ruberoid Semi Bold", sans-serif;
 
 }
 
-#left-menu-messenger-chat-card-chat-message-container{
+.left-menu-messenger-chat-card-chat-message-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -89,13 +89,13 @@
 
 }
 
-#left-menu-messenger-chat-card-chat-message{
+.left-menu-messenger-chat-card-chat-message{
     font-size: 10px;
     color: #969595;
     font-family: "Ruberoid Regular", sans-serif;
 }
 
-#left-menu-messenger-chat-card-chat-message-date{
+.left-menu-messenger-chat-card-chat-message-date{
     font-size: 10px;
     color: #969595;
     font-family: "Ruberoid Regular", sans-serif;

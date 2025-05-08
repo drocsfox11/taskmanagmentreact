@@ -5,52 +5,55 @@ const apiPrefix = 'api/projects';
 export const projectParticipantsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     addProjectParticipant: builder.mutation({
-      query: ({ projectId, userId }) => ({
-        url: `${apiPrefix}/${projectId}/participants/${userId}`,
+      query: ({ projectId, user }) => ({
+        url: `${apiPrefix}/${projectId}/participants/${user.id}`,
         method: 'POST',
       }),
-      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
-      async onQueryStarted({ projectId, userId, optimisticUpdate }, { dispatch, queryFulfilled }) {
-        // Оптимистично обновляем UI
+      async onQueryStarted({ projectId, user }, { dispatch, queryFulfilled, getState }) {
+
         const patchResult = dispatch(
-          baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
+          baseApi.util.updateQueryData('getProjects', undefined,(draft) => {
+            console.log('Inside update draft before:', draft);
             const project = draft.find(p => p.id === projectId);
-            if (project) {
-              project.participants = optimisticUpdate.participants;
+            if (project && !project.participants.some(p => p.id === user.id)) {
+              project.participants.push(user);
             }
+            console.log('Inside update draft after:', draft);
           })
         );
-        
+
         try {
           await queryFulfilled;
-        } catch {
+        } catch (error) {
           patchResult.undo();
         }
-      }
+      },
     }),
     removeProjectParticipant: builder.mutation({
       query: ({ projectId, userId }) => ({
         url: `${apiPrefix}/${projectId}/participants/${userId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
-      async onQueryStarted({ projectId, userId, optimisticUpdate }, { dispatch, queryFulfilled }) {
-        // Оптимистично обновляем UI
+      async onQueryStarted({ projectId, userId }, { dispatch, queryFulfilled, getState }) {
+
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
             const project = draft.find(p => p.id === projectId);
-            if (project) {
-              project.participants = optimisticUpdate.participants;
+            if (project && project.participants) {
+              project.participants = project.participants.filter(p => p.id !== userId);
             }
           })
         );
-        
+
         try {
           await queryFulfilled;
         } catch {
           patchResult.undo();
         }
-      }
+      },
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Projects', id: projectId }
+      ],
     }),
   }),
 });
@@ -58,4 +61,4 @@ export const projectParticipantsApi = baseApi.injectEndpoints({
 export const {
   useAddProjectParticipantMutation,
   useRemoveProjectParticipantMutation,
-} = projectParticipantsApi; 
+} = projectParticipantsApi;

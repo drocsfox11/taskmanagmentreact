@@ -102,18 +102,18 @@ function ProjectDashboard() {
     };
 
     return (
-        <div id='project-dashboard-container'>
+        <div className='project-dashboard-container'>
             <TopBar/>
-            <div id='project-dashboard-add-bar-container'>
-                <div id='project-dashboard-add-bar-label'>Мои проекты</div>
-                <div id='project-dashboard-add-bar-add-button' onClick={handleAddProjectClick}>
+            <div className='project-dashboard-add-bar-container'>
+                <div className='project-dashboard-add-bar-label'>Мои проекты</div>
+                <div className='project-dashboard-add-bar-add-button' onClick={handleAddProjectClick}>
                     + Добавить проект
                 </div>
             </div>
-            <div id='project-dashboard-cards-container'>
+            <div className='project-dashboard-cards-container'>
                 {(isLoading || isCreating || isUpdating) && <LoadingSpinner />}
 
-                <div id='project-dashboard-card-row'>
+                <div className='project-dashboard-card-row'>
                     {projects.map(project => (
                         <ProjectCard
                             key={project.id}

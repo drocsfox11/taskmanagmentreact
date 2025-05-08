@@ -94,22 +94,22 @@ function ProjectDashBoardsDashboard() {
     };
     
     return (
-        <div id='project-dashboards-dashboard-container'>
+        <div className='project-dashboards-dashboard-container'>
             <ProjectMenu />
-            <div id='project-dashboard-container'>
+            <div className='project-dashboard-container'>
                 <TopBar />
                 {isLoading && <LoadingSpinner />}
                 
                 {project ? (
                     <>
-                        <div id='project-dashboard-add-bar-container'>
-                            <div id='project-dashboard-add-bar-label'>{project.title || 'Загрузка проекта...'}</div>
-                            <div id='project-dashboard-add-bar-add-button' onClick={() => handleOpenBoardModal()}>
+                        <div className='project-dashboard-add-bar-container'>
+                            <div className='project-dashboard-add-bar-label'>{project.title || 'Загрузка проекта...'}</div>
+                            <div className='project-dashboard-add-bar-add-button' onClick={() => handleOpenBoardModal()}>
                                 + Добавить доску
                             </div>
                         </div>
-                        <div id='project-dashboard-cards-container'>
-                            <div id='project-dashboard-card-row'>
+                        <div className='project-dashboard-cards-container'>
+                            <div className='project-dashboard-card-row'>
                                 {boards.map(board => (
                                     <DashboardCard
                                         key={board.id}

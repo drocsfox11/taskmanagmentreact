@@ -62,37 +62,37 @@ export const projectsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Projects'],
     }),
     grantProjectRight: builder.mutation({
-      query: ({ projectId, username, rightName }) => ({
+      query: ({ projectId, userId, rightName }) => ({
         url: `${apiPrefix}/${projectId}/rights/grant`,
         method: 'POST',
-        body: { username, rightName },
+        body: { userId, rightName },
       }),
       invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
     revokeProjectRight: builder.mutation({
-      query: ({ projectId, username, rightName }) => ({
+      query: ({ projectId, userId, rightName }) => ({
         url: `${apiPrefix}/${projectId}/rights/revoke`,
         method: 'POST',
-        body: { username, rightName },
+        body: { userId, rightName },
       }),
       invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
     getUserRights: builder.query({
-      query: ({ projectId, username }) => ({
-        url: `${apiPrefix}/${projectId}/rights/users/username/${username}`,
+      query: ({ projectId, userId }) => ({
+        url: `${apiPrefix}/${projectId}/rights/users/${userId}`,
       }),
       providesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
     addUserToAllBoards: builder.mutation({
-      query: ({ projectId, username }) => ({
-        url: `${apiPrefix}/${projectId}/boards/add-user/username/${username}`,
+      query: ({ projectId, userId }) => ({
+        url: `${apiPrefix}/${projectId}/boards/add-user/${userId}`,
         method: 'POST',
       }),
       invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
     removeUserFromAllBoards: builder.mutation({
-      query: ({ projectId, username }) => ({
-        url: `${apiPrefix}/${projectId}/boards/remove-user/username/${username}`,
+      query: ({ projectId, userId }) => ({
+        url: `${apiPrefix}/${projectId}/boards/remove-user/${userId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],

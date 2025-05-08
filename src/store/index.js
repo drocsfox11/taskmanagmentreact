@@ -3,7 +3,7 @@ import { apiReducer, apiMiddleware } from '../services/api';
 
 const store = configureStore({
   reducer: {
-    ...apiReducer, // RTK Query reducers
+    ...apiReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiMiddleware)

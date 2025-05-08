@@ -1,4 +1,4 @@
-#task-card-container{
+.task-card-container{
     background: #FFFFFF;
     padding: 10px;
     display: flex;
@@ -11,14 +11,14 @@
     margin-bottom: 15px;
 }
 
-#task-card-label-container{
+.task-card-label-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 }
 
-#task-card-label-background{
+.task-card-label-background{
 
     background: #FFF1D6;
     padding: 8px 20px;
@@ -28,24 +28,24 @@
     color: #EA9236;
 }
 
-#task-card-text-info-container{
+.task-card-text-info-container{
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-#task-card-text-info-header{
+.task-card-text-info-header{
     font-family: "Ruberoid Bold";
     font-size: 16px;
 }
 
-#task-card-text-info-text{
+.task-card-text-info-text{
     font-family: "Ruberoid Regular";
     font-size: 12px;
     color: #969595;
 }
 
-#task-card-points-list{
+.task-card-points-list{
     background: #FDFDFD;
     border-width: 0.7px;
     border-color: #E1E1E1;
@@ -61,30 +61,30 @@
 
 }
 
-#task-card-points-list-counter{
+.task-card-points-list-counter{
     font-family: "Ruberoid Bold";
     font-size: 12px;
     color:#969595;
 }
 
-#task-card-delimiter{
+.task-card-delimiter{
     height: 1px;
     width: 100%;
     background: #E1E1E1;
 
 }
 
-#task-card-people{
+.task-card-people{
     display: flex;
     flex-direction: row;
     align-items: center;
 }
 
-#task-card-people > * {
+.task-card-people > * {
     margin-left: -13px;
 }
 
-#task-card-people-item{
+.task-card-people-item{
     width: 35px;
     height: 35px;
     display: flex;
@@ -97,7 +97,7 @@
     border-style: solid;
 }
 
-#task-card-people-item-more{
+.task-card-people-item-more{
     width: 35px;
     height: 35px;
     display: flex;
@@ -114,7 +114,7 @@
     text-align: center;
 }
 
-#task-card-down-container{
+.task-card-down-container{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -123,21 +123,21 @@
 
 }
 
-#task-card-misc-info-container{
+.task-card-misc-info-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 15px;
 }
 
-#task-card-misc-info-row{
+.task-card-misc-info-row{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 2px;
 }
 
-#task-card-misc-info-row-text{
+.task-card-misc-info-row-text{
     font-family: "Ruberoid Regular";
     font-size: 10px;
     color: #969595;

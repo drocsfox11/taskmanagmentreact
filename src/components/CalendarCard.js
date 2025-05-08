@@ -8,53 +8,53 @@ import Clip from "../assets/icons/clip.svg";
 
 function CalendarCard({ startDate, endDate, style }) {
     return (
-        <div id='calendar-card-container' style={style}>
+        <div className='calendar-card-container' style={style}>
 
 
-            <div id='calendar-card-text-info-container'>
+            <div className='calendar-card-text-info-container'>
 
-                <div id='calendar-card-text-info-header'>Сетка страницы</div>
-                <div id='calendar-card-text-info-text'>Нужно сделать основную сетку страницы без смысловых блоков. Сетка должна быть адаптивной под все девайсы</div>
+                <div className='calendar-card-text-info-header'>Сетка страницы</div>
+                <div className='calendar-card-text-info-text'>Нужно сделать основную сетку страницы без смысловых блоков. Сетка должна быть адаптивной под все девайсы</div>
 
 
             </div>
 
-            <div id='calendar-card-points-list'>
+            <div className='calendar-card-points-list'>
 
-                <img src={TaskListIcon} id='calendar-card-points-list-icon'/>
-                <div id='calendar-card-points-list-counter'>0/8</div>
+                <img src={TaskListIcon} className='calendar-card-points-list-icon'/>
+                <div className='calendar-card-points-list-counter'>0/8</div>
 
             </div>
 
-            <div id='calendar-card-delimiter'></div>
+            <div className='calendar-card-delimiter'></div>
 
-            <div id='calendar-card-down-container'>
+            <div className='calendar-card-down-container'>
 
-                <div id="calendar-card-people">
+                <div className="calendar-card-people">
 
-                    <div id="calendar-card-people-item">
+                    <div className="calendar-card-people-item">
                         <img src={Girl}/>
                     </div>
 
-                    <div id="calendar-card-people-item">
+                    <div className="calendar-card-people-item">
                         <img src={Girl}/>
                     </div>
 
-                    <div id="calendar-card-people-item">
+                    <div className="calendar-card-people-item">
                         <img src={Girl}/>
                     </div>
 
-                    <div id="calendar-card-people-item">
+                    <div className="calendar-card-people-item">
                         <img src={Girl}/>
                     </div>
 
-                    <div id="calendar-card-people-item-more">
+                    <div className="calendar-card-people-item-more">
                         +3
                     </div>
 
                 </div>
 
-                <div id='calendar-card-misc-info-container'>
+                <div className='calendar-card-misc-info-container'>
                     {startDate} - {endDate}
                 </div>
 

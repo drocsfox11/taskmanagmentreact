@@ -71,9 +71,9 @@ function DashboardCard({ boardId, projectId, onClick, title, description }) {
     }, []);
 
     return (
-        <div id='project-card-container' onClick={handleCardClick} style={{ position: 'relative' }}>
-            <div id='project-card-icon-row-container'>
-                <div id='project-card-icon-container'>
+        <div className='project-card-container' onClick={handleCardClick} style={{ position: 'relative' }}>
+            <div className='project-card-icon-row-container'>
+                <div className='project-card-icon-container'>
                     <EmojiProvider data={emojiData}>
                         <Emoji name="teacher-light-skin-tone" width={22}/>
                     </EmojiProvider>
@@ -82,18 +82,18 @@ function DashboardCard({ boardId, projectId, onClick, title, description }) {
                     <img src={OptionsPassive} alt="Options Active"/>
                 </div>
             </div>
-            <div id='project-card-text-container'>
-                <div id='project-card-text-header'>
+            <div className='project-card-text-container'>
+                <div className='project-card-text-header'>
                     {title}
                 </div>
-                <div id='project-card-text-descr'>
+                <div className='project-card-text-descr'>
                     {description}
                 </div>
             </div>
-            <div id='project-card-progress-container'>
-                <div id='project-card-progress-bar'>
+            <div className='project-card-progress-container'>
+                <div className='project-card-progress-bar'>
                 </div>
-                <div id='project-card-progress-text'>
+                <div className='project-card-progress-text'>
                     13% завершено
                 </div>
             </div>

@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { 
-    useGrantBoardRightByUsernameMutation, 
-    useRevokeBoardRightByUsernameMutation, 
-    useGetBoardUserRightsByUsernameQuery
+    useGrantBoardRightMutation, 
+    useRevokeBoardRightMutation, 
+    useGetBoardUserRightsQuery
 } from '../services/api/boardsApi';
 import { BOARD_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css'; // Reuse the same styles
 import Girl from '../assets/icons/girl.svg';
 
 function BoardPermissionsTab({ board }) {
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [userRights, setUserRights] = useState([]);
     
-    const [grantRight] = useGrantBoardRightByUsernameMutation();
-    const [revokeRight] = useRevokeBoardRightByUsernameMutation();
+    const [grantRight] = useGrantBoardRightMutation();
+    const [revokeRight] = useRevokeBoardRightMutation();
     
-    const { data: fetchedUserRights, isLoading, refetch } = useGetBoardUserRightsByUsernameQuery(
-        { boardId: board?.id, username: selectedUser },
-        { skip: !selectedUser || !board }
+    const { data: fetchedUserRights, isLoading, refetch } = useGetBoardUserRightsQuery(
+        { boardId: board?.id, userId: selectedUserId },
+        { skip: !selectedUserId || !board }
     );
     
     useEffect(() => {
@@ -26,26 +26,26 @@ function BoardPermissionsTab({ board }) {
         }
     }, [fetchedUserRights]);
     
-    const handleUserSelect = (username, e) => {
+    const handleUserSelect = (userId, e) => {
         if (e) e.stopPropagation();
-        setSelectedUser(username);
+        setSelectedUserId(userId);
     };
 
     const handleToggleRight = async (rightName, hasRight, e) => {
         if (e) e.stopPropagation();
-        if (!selectedUser) return;
+        if (!selectedUserId) return;
         
         try {
             if (hasRight) {
                 await revokeRight({
                     boardId: board.id,
-                    username: selectedUser,
+                    userId: selectedUserId,
                     rightName,
                 }).unwrap();
             } else {
                 await grantRight({
                     boardId: board.id,
-                    username: selectedUser,
+                    userId: selectedUserId,
                     rightName,
                 }).unwrap();
             }
@@ -70,12 +70,12 @@ function BoardPermissionsTab({ board }) {
                         {board?.participants && board.participants.length > 0 ? (
                             board.participants.map((user) => (
                                 <div 
-                                    key={user.username || user.id} 
-                                    className={`user-item ${selectedUser === user.username ? 'selected' : ''}`}
-                                    onClick={(e) => handleUserSelect(user.username, e)}
+                                    key={user.id} 
+                                    className={`user-item ${selectedUserId === user.id ? 'selected' : ''}`}
+                                    onClick={(e) => handleUserSelect(user.id, e)}
                                 >
-                                    <img src={user.avatarURL || Girl} alt={user.username} />
-                                    <span>{user.username}</span>
+                                    <img src={user.avatarURL || Girl} alt={user.name} />
+                                    <span>{user.name}</span>
                                 </div>
                             ))
                         ) : (
@@ -86,46 +86,38 @@ function BoardPermissionsTab({ board }) {
                     </div>
                 </div>
                 
-                {selectedUser && (
-                    <div className="user-rights-section">
-                        <h4>Права пользователя {selectedUser}</h4>
-                        
-                        {isLoading ? (
-                            <div className="loading-rights">Загрузка прав...</div>
-                        ) : (
-                            <>
-                                <div className="rights-list-header">Права доски</div>
-                                <div className="rights-list">
-                                    {boardRightsToDisplay.map((rightName) => {
-                                        const hasRight = userRights.includes(rightName);
-                                        return (
-                                            <div key={rightName} className="right-item" onClick={(e) => e.stopPropagation()}>
-                                                <div className="right-info">
-                                                    <div className="right-name">{rightName}</div>
-                                                    <div className="right-description">{RIGHT_DESCRIPTIONS[rightName]}</div>
-                                                </div>
-                                                <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={hasRight}
-                                                        onChange={(e) => handleToggleRight(rightName, hasRight, e)}
-                                                    />
-                                                    <span className="toggle-slider"></span>
-                                                </label>
+                <div className="user-rights-section">
+                    <h4>Права пользователя {board?.participants?.find(p => p.id === selectedUserId)?.name}</h4>
+                    
+                    {isLoading ? (
+                        <div className="loading-rights">Загрузка прав...</div>
+                    ) : (
+                        <>
+                            <div className="rights-list-header">Права доски</div>
+                            <div className="rights-list">
+                                {boardRightsToDisplay.map((rightName) => {
+                                    const hasRight = userRights.includes(rightName);
+                                    return (
+                                        <div key={rightName} className="right-item" onClick={(e) => e.stopPropagation()}>
+                                            <div className="right-info">
+                                                <div className="right-name">{rightName}</div>
+                                                <div className="right-description">{RIGHT_DESCRIPTIONS[rightName]}</div>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-                
-                {!selectedUser && (
-                    <div className="select-user-prompt">
-                        Выберите участника для управления правами
-                    </div>
-                )}
+                                            <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={hasRight}
+                                                    onChange={(e) => handleToggleRight(rightName, hasRight, e)}
+                                                />
+                                                <span className="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -137,10 +137,7 @@ export const boardsApi = baseApi.injectEndpoints({
     getBoardWithData: builder.query({
       query: (boardId) => ({url:`${apiPrefix}/${boardId}`}),
       providesTags: (result, error, id) => [
-        { type: 'Board', id },
-        'Columns',
-        'Tasks',
-        'Tags'
+        { type: 'Board', id }
       ],
       
       // STOMP-подписка для обновлений в режиме реального времени
@@ -160,9 +157,9 @@ export const boardsApi = baseApi.injectEndpoints({
             // Получаем данные о текущем пользователе из store
             const state = getState();
             const currentUsername = state.api.queries['getCurrentUser(undefined)'].data?.username;
-            console.log("из стейста достал",currentUsername);
+            console.log("из стейста достал",currentUsername, "отправил", data.payload.initiatedBy );
             // Проверяем, инициировано ли это событие текущим пользователем
-            if (data.payload && data.payload.initiatedBy === currentUsername && data.payload.socketEvent === true) {
+            if (data.payload && data.payload.initiatedBy === currentUsername) {
               console.log(`Игнорируем собственное действие: ${data.type}`);
               return; // Пропускаем обработку своих событий
             }
@@ -260,13 +257,13 @@ export const boardsApi = baseApi.injectEndpoints({
                   const newColumns = [];
                   
                   // Для каждого id в новом порядке находим соответствующую колонку
-                  data.payload.columnIds.forEach(columnId => {
-                    const column = currentColumns.find(col => col.id === columnId);
+                  data.payload.columns.forEach(({ id, position }) => {
+                    const column = currentColumns.find(col => col.id === id);
                     if (column) {
                       // Обновляем позицию и добавляем в новый массив
                       newColumns.push({
                         ...column,
-                        position: newColumns.length
+                        position
                       });
                     }
                   });
@@ -377,38 +374,6 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
                 
-              case 'TASKS_REORDERED':
-                updateCachedData((draft) => {
-                  // Находим колонку, для которой изменился порядок задач
-                  const columnIndex = draft.columns.findIndex(col => col.id === data.payload.columnId);
-                  if (columnIndex === -1) return;
-                  
-                  // Получаем колонку
-                  const column = draft.columns[columnIndex];
-                  
-                  // Создаем карту текущих задач для сохранения всех данных
-                  const taskMap = {};
-                  column.tasks.forEach(task => {
-                    taskMap[task.id] = task;
-                  });
-                  
-                  // Создаем новый массив задач в соответствии с полученным порядком
-                  const newTasks = [];
-                  data.payload.tasks.forEach((taskData, index) => {
-                    if (taskMap[taskData.id]) {
-                      // Добавляем задачу с обновленной позицией
-                      newTasks.push({
-                        ...taskMap[taskData.id],
-                        position: index
-                      });
-                    }
-                  });
-                  
-                  // Обновляем задачи в колонке
-                  column.tasks = newTasks;
-                });
-                break;
-                
               default:
                 console.log('Неизвестный тип события STOMP:', data.type);
                 break;
@@ -499,12 +464,14 @@ export const boardsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Boards'],
     }),
     createColumn: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async (column, { dispatch }) => {
-        const { boardId } = column;
+      query: ({ boardId, ...column }) => ({
+        url: `${apiPrefix}/${boardId}/columns`,
+        method: 'POST',
+        body: column,
+      }),
+      async onQueryStarted({ boardId, ...column }, { dispatch, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
         
-        // Оптимистично обновляем UI
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
             draft.columns.push({
@@ -514,449 +481,118 @@ export const boardsApi = baseApi.injectEndpoints({
             });
           })
         );
-        
+
         try {
-          // Отправляем событие через STOMP
-          const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('CREATE_COLUMN', column);
+          const { data: createdColumn } = await queryFulfilled;
           
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат с временными данными
-          // Фактическое обновление произойдет через STOMP-событие
-          return { data: { ...column, id: tempId } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
+          dispatch(
+            baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
+              const columnIndex = draft.columns.findIndex(col => col.id === tempId);
+              if (columnIndex !== -1) {
+                draft.columns[columnIndex] = createdColumn;
+              }
+            })
+          );
+        } catch {
           patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
         }
-      }
+      },
+      invalidatesTags: ['Columns']
     }),
     updateColumn: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ id, boardId, ...updates }, { dispatch }) => {
-        // Оптимистично обновляем UI
+      query: ({ boardId, columnId, ...updates }) => ({
+        url: `${apiPrefix}/${boardId}/columns/${columnId}`,
+        method: 'PUT',
+        body: updates,
+      }),
+      async onQueryStarted({ boardId, columnId, ...updates }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            const columnIndex = draft.columns.findIndex(col => col.id === id);
+            const columnIndex = draft.columns.findIndex(col => col.id === columnId);
             if (columnIndex !== -1) {
               Object.assign(draft.columns[columnIndex], updates);
             }
           })
         );
-        
+
         try {
-          // Отправляем событие через STOMP
-          const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('UPDATE_COLUMN', { 
-            columnId: id,  // Changed from id to columnId to match backend expectation
-            ...updates 
-          });
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { id, ...updates } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
+          await queryFulfilled;
+        } catch {
           patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
         }
-      }
+      },
+      invalidatesTags: ['Columns']
     }),
     deleteColumn: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ id, boardId }, { dispatch }) => {
-        // Оптимистично обновляем UI
+      query: ({ boardId, columnId }) => ({
+        url: `${apiPrefix}/${boardId}/columns/${columnId}`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted({ boardId, columnId }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            const columnIndex = draft.columns.findIndex(col => col.id === id);
+            const columnIndex = draft.columns.findIndex(col => col.id === columnId);
             if (columnIndex !== -1) {
               draft.columns.splice(columnIndex, 1);
             }
           })
         );
-        
+
         try {
-          // Отправляем событие через STOMP
-          const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('DELETE_COLUMN', { 
-            columnId: id  // Changed from id to columnId to match backend expectation
-          });
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { id } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
+          await queryFulfilled;
+        } catch {
           patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
         }
-      }
+      },
+      invalidatesTags: ['Columns']
     }),
     reorderColumns: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ boardId, columnIds }, { dispatch }) => {
-        // Оптимистично обновляем UI
-        const patchResult = dispatch(
-          baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            // Создаем новый порядок колонок
-            const currentColumns = [...draft.columns];
-            const newColumns = [];
-            
-            // Для каждого id в новом порядке находим соответствующую колонку
-            columnIds.forEach((columnId, index) => {
-              const column = currentColumns.find(col => col.id === columnId);
-              if (column) {
-                newColumns.push({
-                  ...column,
-                  position: index
-                });
-              }
-            });
-            
-            draft.columns = newColumns;
-          })
-        );
-        
-        try {
-          // Отправляем событие через STOMP
-          const stompConn = getStompConnection(boardId);
-          
-          // Отправляем данные в корректном формате для сервера
-          const columns = columnIds.map((id, index) => ({ id, position: index }));
-          
-          const success = stompConn.sendAction('REORDER_COLUMNS', { 
-            boardId, 
-            columns: columns  // Отправляем массив объектов с id и position для соответствия ожиданиям сервера
-          });
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { boardId, columnIds } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
-          patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
-        }
-      }
-    }),
-    createTask: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async (task, { dispatch, getState }) => {
-        const { boardId } = task;
-        const tempId = `temp-${Date.now()}`;
-        
-        // Получаем текущего пользователя
+      query: ({ boardId, columns }) => ({
+        url: `${apiPrefix}/${boardId}/columns/reorder`,
+        method: 'PUT',
+        body: { columns },
+      }),
+      async onQueryStarted({ boardId, columns }, { dispatch, queryFulfilled, getState }) {
+        // Получаем текущее состояние доски
         const state = getState();
-        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
+        const boardData = state.api.queries[`getBoardWithData(${boardId})`]?.data;
         
-        // Оптимистично обновляем UI
+        if (!boardData) return;
+
+        const newColumns = [...boardData.columns];
+        
+        const updatedColumns = newColumns.map(col => {
+          const update = columns.find(c => c.id === col.id);
+          if (update) {
+            return { ...col, position: update.position };
+          }
+          return col;
+        });
+
+
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            const column = draft.columns.find(col => col.id === task.columnId);
-            if (column) {
-              column.tasks.push({
-                ...task,
-                id: tempId,
-                position: column.tasks.length,
-                initiatedBy: username
-              });
-            }
+            draft.columns = updatedColumns;
           })
         );
-        
+
         try {
-          // Отправляем событие через STOMP согласно спецификации
-          const stompConn = getStompConnection(boardId);
-          
-          // Формируем правильную структуру данных для отправки
-          const payload = {
-            columnId: task.columnId,
-            title: task.title,
-            description: task.description || '',
-            tagIds: task.tagIds || [],
-            position: task.position || 0,
-            checklist: task.checklist || [],
-            participants: task.participants || [],
-            startDate: task.startDate,
-            dueDate: task.dueDate,
-            priority: task.priority || 'NORMAL',
-            socketEvent: true
-          };
-          
-          const success = stompConn.sendAction('CREATE_TASK', payload);
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат с временными данными
-          return { data: { ...task, id: tempId } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
+          await queryFulfilled;
+        } catch {
           patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
         }
       }
     }),
-    updateTask: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ id, boardId, columnId, ...updates }, { dispatch, getState }) => {
-        // Получаем текущего пользователя
-        const state = getState();
-        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
-        
-        // Оптимистично обновляем UI
-        const patchResult = dispatch(
-          baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            const column = draft.columns.find(col => col.id === columnId);
-            if (column) {
-              const taskIndex = column.tasks.findIndex(t => t.id === id);
-              if (taskIndex !== -1) {
-                Object.assign(column.tasks[taskIndex], {
-                  ...updates,
-                  initiatedBy: username
-                });
-              }
-            }
-          })
-        );
-        
-        try {
-          // Отправляем событие через STOMP согласно спецификации
-          const stompConn = getStompConnection(boardId);
-          
-          // Формируем правильную структуру данных для отправки
-          const payload = {
-            taskId: id, // Используем taskId вместо id
-            title: updates.title,
-            description: updates.description || '',
-            tagIds: updates.tagIds || [],
-            position: updates.position,
-            checklist: updates.checklist || [],
-            participants: updates.participants || [],
-            startDate: updates.startDate,
-            dueDate: updates.dueDate,
-            priority: updates.priority || 'NORMAL',
-            attachments: updates.attachments || [],
-            socketEvent: true
-          };
-          
-          const success = stompConn.sendAction('UPDATE_TASK', payload);
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { id, columnId, ...updates } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
-          patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
-        }
-      }
-    }),
-    deleteTask: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ id, boardId }, { dispatch, getState }) => {
-        // Получаем текущего пользователя
-        const state = getState();
-        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
-        
-        // Оптимистично обновляем UI
-        const patchResult = dispatch(
-          baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            draft.columns.forEach(column => {
-              const taskIndex = column.tasks.findIndex(t => t.id === id);
-              if (taskIndex !== -1) {
-                column.tasks.splice(taskIndex, 1);
-                column.tasks.forEach((task, index) => {
-                  task.position = index;
-                });
-              }
-            });
-          })
-        );
-        
-        try {
-          // Отправляем событие через STOMP согласно спецификации
-          const stompConn = getStompConnection(boardId);
-          
-          // Формируем правильную структуру данных для отправки
-          const payload = {
-            taskId: id, // Используем taskId вместо id
-            socketEvent: true
-          };
-          
-          const success = stompConn.sendAction('DELETE_TASK', payload);
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { id } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
-          patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
-        }
-      }
-    }),
-    moveTask: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ taskId, sourceColumnId, destColumnId, newPosition, boardId }, { dispatch, getState }) => {
-        // Получаем текущего пользователя
-        const state = getState();
-        const username = state.api.queries['getCurrentUser(undefined)']?.data?.username;
-        
-        // Оптимистично обновляем UI
-        const patchResult = dispatch(
-          baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            // Найти исходную колонку
-            const sourceColumn = draft.columns.find(col => col.id === sourceColumnId);
-            if (!sourceColumn) return;
-            
-            // Найти задачу в исходной колонке
-            const taskIndex = sourceColumn.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex === -1) return;
-            
-            // Копируем задачу перед удалением
-            const task = { ...sourceColumn.tasks[taskIndex] };
-            
-            // Удаляем задачу из исходной колонки
-            sourceColumn.tasks.splice(taskIndex, 1);
-            
-            // Если перемещение в другую колонку
-            if (sourceColumnId !== destColumnId) {
-              // Найти целевую колонку
-              const destColumn = draft.columns.find(col => col.id === destColumnId);
-              if (destColumn) {
-                // Обновляем columnId задачи
-                task.columnId = destColumnId;
-                
-                // Вставляем задачу в новую позицию
-                destColumn.tasks.splice(newPosition, 0, task);
-                
-                // Обновляем позиции всех задач в обеих колонках
-                sourceColumn.tasks.forEach((t, i) => { t.position = i; });
-                destColumn.tasks.forEach((t, i) => { t.position = i; });
-              }
-            } else {
-              // Вставляем задачу в новую позицию в той же колонке
-              sourceColumn.tasks.splice(newPosition, 0, task);
-              
-              // Обновляем позиции задач
-              sourceColumn.tasks.forEach((t, i) => { t.position = i; });
-            }
-          })
-        );
-        
-        try {
-          // Отправляем событие через STOMP согласно спецификации
-          const stompConn = getStompConnection(boardId);
-          
-          // Формируем правильную структуру данных для отправки
-          const payload = {
-            taskId,
-            sourceColumnId,
-            targetColumnId: destColumnId, // targetColumnId вместо destColumnId согласно спецификации
-            newPosition,
-            boardId,
-            socketEvent: true
-          };
-          
-          const success = stompConn.sendAction('MOVE_TASK', payload);
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { taskId, sourceColumnId, destColumnId, newPosition } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
-          patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
-        }
-      }
-    }),
-    reorderTasks: builder.mutation({
-      // Используем пользовательский queryFn для STOMP-операций
-      queryFn: async ({ columnId, tasks, boardId }, { dispatch }) => {
-        // Оптимистично обновляем UI
-        const patchResult = dispatch(
-          baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            // Находим колонку, в которой нужно обновить порядок задач
-            const column = draft.columns.find(col => col.id === columnId);
-            if (!column) return;
-            
-            // Создаем новый порядок задач, сохраняя полные объекты задач
-            const taskMap = {};
-            column.tasks.forEach(task => {
-              taskMap[task.id] = task;
-            });
-            
-            // Формируем новый массив задач в правильном порядке
-            const newTasks = [];
-            tasks.forEach((taskObj, index) => {
-              const taskId = taskObj.id;
-              if (taskMap[taskId]) {
-                // Сохраняем полный объект задачи, обновляя только позицию
-                newTasks.push({
-                  ...taskMap[taskId],
-                  position: index
-                });
-              }
-            });
-            
-            // Обновляем задачи в колонке
-            column.tasks = newTasks;
-          })
-        );
-        
-        try {
-          // Отправляем событие через STOMP
-          const stompConn = getStompConnection(boardId);
-          const success = stompConn.sendAction('REORDER_TASKS', { 
-            columnId, 
-            tasks 
-          });
-          
-          if (!success) {
-            throw new Error('Failed to send STOMP message');
-          }
-          
-          // Возвращаем успешный результат
-          return { data: { columnId, tasks } };
-        } catch (error) {
-          // Откатываем оптимистичное обновление при ошибке
-          patchResult.undo();
-          return { error: { status: 'CUSTOM_ERROR', error: error.message } };
-        }
-      }
-    }),
+
     createTag: builder.mutation({
       query: (tag) => ({
         url: `${apiPrefix}/tags`,
         method: 'POST',
-        body: { ...tag, socketEvent: true },
+        body: tag,
       }),
-      // Не инвалидируем кеш, вместо этого делаем оптимистичное обновление
       async onQueryStarted(tag, { dispatch, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
+        
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', tag.boardId, (draft) => {
             draft.tags.push({
@@ -965,30 +601,30 @@ export const boardsApi = baseApi.injectEndpoints({
             });
           })
         );
-        
+
         try {
           const { data: createdTag } = await queryFulfilled;
           
           dispatch(
             baseApi.util.updateQueryData('getBoardWithData', tag.boardId, (draft) => {
-              const tempIndex = draft.tags.findIndex(t => t.id === tempId);
-              if (tempIndex !== -1) {
-                draft.tags[tempIndex] = createdTag;
+              const tagIndex = draft.tags.findIndex(t => t.id === tempId);
+              if (tagIndex !== -1) {
+                draft.tags[tagIndex] = createdTag;
               }
             })
           );
         } catch {
           patchResult.undo();
         }
-      }
+      },
+      invalidatesTags: ['Tags']
     }),
     updateTag: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `${apiPrefix}/tags/${id}`,
         method: 'PUT',
-        body: { ...data, socketEvent: true },
+        body: data,
       }),
-      // Не инвалидируем кеш, вместо этого делаем оптимистичное обновление
       async onQueryStarted({ id, boardId, ...updates }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
@@ -998,21 +634,20 @@ export const boardsApi = baseApi.injectEndpoints({
             }
           })
         );
-        
+
         try {
           await queryFulfilled;
         } catch {
           patchResult.undo();
         }
-      }
+      },
+      invalidatesTags: ['Tags']
     }),
     deleteTag: builder.mutation({
       query: (id) => ({
         url: `${apiPrefix}/tags/${id}`,
         method: 'DELETE',
-        body: { socketEvent: true },
       }),
-      // Не инвалидируем кеш, вместо этого делаем оптимистичное обновление
       async onQueryStarted({ id, boardId }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
@@ -1022,23 +657,18 @@ export const boardsApi = baseApi.injectEndpoints({
             }
           })
         );
-        
+
         try {
           await queryFulfilled;
         } catch {
           patchResult.undo();
         }
-      }
+      },
+      invalidatesTags: ['Tags']
     }),
     getBoardUserRights: builder.query({
       query: ({ boardId, userId }) => ({
         url: `${apiPrefix}/${boardId}/rights/users/${userId}`,
-      }),
-      providesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
-    }),
-    getBoardUserRightsByUsername: builder.query({
-      query: ({ boardId, username }) => ({
-        url: `${apiPrefix}/${boardId}/rights/users/username/${username}`,
       }),
       providesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
     }),
@@ -1050,27 +680,11 @@ export const boardsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
     }),
-    addUserToBoardByUsername: builder.mutation({
-      query: ({ boardId, username }) => ({
-        url: `${apiPrefix}/${boardId}/rights/users/username`,
-        method: 'POST',
-        body: { username },
-      }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
-    }),
     grantBoardRight: builder.mutation({
       query: ({ boardId, userId, rightName }) => ({
         url: `${apiPrefix}/${boardId}/rights/grant`,
         method: 'POST',
         body: { userId, rightName },
-      }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
-    }),
-    grantBoardRightByUsername: builder.mutation({
-      query: ({ boardId, username, rightName }) => ({
-        url: `${apiPrefix}/${boardId}/rights/grant`,
-        method: 'POST',
-        body: { username, rightName },
       }),
       invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
     }),
@@ -1082,24 +696,9 @@ export const boardsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
     }),
-    revokeBoardRightByUsername: builder.mutation({
-      query: ({ boardId, username, rightName }) => ({
-        url: `${apiPrefix}/${boardId}/rights/revoke`,
-        method: 'POST',
-        body: { username, rightName },
-      }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
-    }),
     removeUserFromBoard: builder.mutation({
       query: ({ boardId, userId }) => ({
         url: `${apiPrefix}/${boardId}/rights/users/${userId}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
-    }),
-    removeUserFromBoardByUsername: builder.mutation({
-      query: ({ boardId, username }) => ({
-        url: `${apiPrefix}/${boardId}/rights/users/username/${username}`,
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
@@ -1123,23 +722,13 @@ export const {
   useUpdateColumnMutation,
   useDeleteColumnMutation,
   useReorderColumnsMutation,
-  useCreateTaskMutation,
-  useUpdateTaskMutation,
-  useDeleteTaskMutation,
-  useMoveTaskMutation,
-  useReorderTasksMutation,
   useCreateTagMutation,
   useUpdateTagMutation,
   useDeleteTagMutation,
   useGetBoardUserRightsQuery,
-  useGetBoardUserRightsByUsernameQuery,
   useAddUserToBoardMutation,
-  useAddUserToBoardByUsernameMutation,
   useGrantBoardRightMutation,
-  useGrantBoardRightByUsernameMutation,
   useRevokeBoardRightMutation,
-  useRevokeBoardRightByUsernameMutation,
   useRemoveUserFromBoardMutation,
-  useRemoveUserFromBoardByUsernameMutation,
   useGetVisibleBoardsQuery,
 } = boardsApi; 

@@ -1,6 +1,6 @@
 import { baseApi } from './baseApi';
 
-const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
+
 
 /**
  * @deprecated Используйте вместо этого соответствующие хуки из boardsApi.js
@@ -12,79 +12,9 @@ export const tasksApi = baseApi.injectEndpoints({
     getTasks: builder.query({
       query: (boardId) => `boards/${boardId}/tasks`,
       providesTags: ['Tasks'],
-      
-      // WebSocket-подписка для обновлений задач в реальном времени
-      async onCacheEntryAdded(
-        boardId,
-        { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
-      ) {
-        await cacheDataLoaded;
-        
-        // Соединяемся с каналом задач для конкретной доски
-        const ws = new WebSocket(`${WS_URL}/boards/${boardId}/tasks`);
-        
-        const listener = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            
-            switch (data.type) {
-              case 'TASK_CREATED':
-                updateCachedData((draft) => {
-                  draft.push(data.payload);
-                });
-                break;
-                
-              case 'TASK_UPDATED':
-                updateCachedData((draft) => {
-                  const index = draft.findIndex(task => task.id === data.payload.id);
-                  if (index !== -1) {
-                    draft[index] = { ...draft[index], ...data.payload };
-                  }
-                });
-                break;
-                
-              case 'TASK_DELETED':
-                updateCachedData((draft) => {
-                  const index = draft.findIndex(task => task.id === data.payload.id);
-                  if (index !== -1) {
-                    draft.splice(index, 1);
-                  }
-                });
-                break;
-                
-              case 'TASK_MOVED':
-                updateCachedData((draft) => {
-                  // Находим задачу, которую нужно переместить
-                  const taskIndex = draft.findIndex(task => task.id === data.payload.taskId);
-                  if (taskIndex !== -1) {
-                    // Обновляем columnId и позицию
-                    draft[taskIndex].columnId = data.payload.destColumnId;
-                    // Если нужно обновить позицию задачи
-                    if (data.payload.newPosition !== undefined) {
-                      draft[taskIndex].position = data.payload.newPosition;
-                    }
-                  }
-                });
-                break;
-                
-              default:
-                break;
-            }
-          } catch (error) {
-            console.error('WebSocket message error:', error);
-          }
-        };
-        
-        ws.addEventListener('message', listener);
-        
-        // Закрываем соединение, когда компонент размонтирован
-        await cacheEntryRemoved;
-        ws.removeEventListener('message', listener);
-        ws.close();
-      },
     }),
     getTask: builder.query({
-      query: (taskId) => `tasks/${taskId}`,
+      query: (taskId) => ({url: `tasks/${taskId}`}),
       providesTags: (result, error, id) => [{ type: 'Tasks', id }],
     }),
     getTasksByColumn: builder.query({
@@ -93,48 +23,192 @@ export const tasksApi = baseApi.injectEndpoints({
         { type: 'Tasks', id: `column-${id}` },
       ],
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     createTask: builder.mutation({
       query: (task) => ({
-        url: 'tasks',
+        url: 'api/tasks',
         method: 'POST',
-        body: { ...task, socketEvent: true },
+        body: task,
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+      async onQueryStarted(task, { dispatch, queryFulfilled }) {
+        // Генерируем временный ID для оптимистичного обновления
+        const tempId = `temp-${Date.now()}`;
+
+        // Оптимистично обновляем UI
+        const patchResult = dispatch(
+            baseApi.util.updateQueryData('getBoardWithData', task.boardId, (draft) => {
+              const column = draft.columns.find(col => col.id === task.columnId);
+              if (column) {
+                column.tasks.push({
+                  ...task,
+                  id: tempId,
+                  position: column.tasks.length
+                });
+              }
+            })
+        );
+
+        try {
+          // Ждем ответа от сервера
+          const { data: createdTask } = await queryFulfilled;
+
+          // Обновляем временный ID на реальный
+          dispatch(
+              baseApi.util.updateQueryData('getBoardWithData', task.boardId, (draft) => {
+                const column = draft.columns.find(col => col.id === task.columnId);
+                if (column) {
+                  const taskIndex = column.tasks.findIndex(t => t.id === tempId);
+                  if (taskIndex !== -1) {
+                    column.tasks[taskIndex] = createdTask;
+                  }
+                }
+              })
+          );
+        } catch {
+          // В случае ошибки откатываем изменения
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: (result, error, { boardId }) => [
+        { type: 'Board', id: boardId },
+        'Tasks'
+      ],
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     updateTask: builder.mutation({
-      query: ({ id, ...data }) => ({
-        url: `tasks/${id}`,
+      query: ({ id, ...updates }) => ({
+        url: `api/tasks/${id}`,
         method: 'PUT',
-        body: { ...data, socketEvent: true },
+        body: updates,
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+      async onQueryStarted({ id, boardId, columnId, ...updates }, { dispatch, queryFulfilled }) {
+        // Оптимистично обновляем UI
+        const patchResult = dispatch(
+            baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
+              const column = draft.columns.find(col => col.id === columnId);
+              if (column) {
+                const taskIndex = column.tasks.findIndex(t => t.id === id);
+                if (taskIndex !== -1) {
+                  Object.assign(column.tasks[taskIndex], updates);
+                }
+              }
+            })
+        );
+
+        try {
+          // Ждем ответа от сервера
+          await queryFulfilled;
+        } catch {
+          // В случае ошибки откатываем изменения
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: (result, error, { boardId }) => [
+        { type: 'Board', id: boardId },
+        'Tasks'
+      ],
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     deleteTask: builder.mutation({
       query: (id) => ({
-        url: `tasks/${id}`,
+        url: `api/tasks/${id}`,
         method: 'DELETE',
-        body: { socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+      async onQueryStarted({ id, boardId }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+            baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
+              draft.columns.forEach(column => {
+                const taskIndex = column.tasks.findIndex(t => t.id === id);
+                if (taskIndex !== -1) {
+                  column.tasks.splice(taskIndex, 1);
+                  column.tasks.forEach((task, index) => {
+                    task.position = index;
+                  });
+                }
+              });
+            })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: ['Tasks']
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     moveTask: builder.mutation({
-      query: (data) => ({
-        url: 'tasks/move',
-        method: 'POST',
-        body: { ...data, socketEvent: true },
+      query: ({ taskId, sourceColumnId, targetColumnId, newPosition }) => ({
+        url: `api/tasks/${taskId}/move`,
+        method: 'PUT',
+        body: {
+          sourceColumnId,
+          targetColumnId,
+          newPosition
+        },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+      async onQueryStarted({ taskId, sourceColumnId, targetColumnId, newPosition, boardId }, { dispatch, queryFulfilled }) {
+        // Оптимистично обновляем UI
+        const patchResult = dispatch(
+            baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
+              // Находим исходную колонку
+              const sourceColumn = draft.columns.find(col => col.id === sourceColumnId);
+              if (!sourceColumn) return;
+
+              // Находим задачу в исходной колонке
+              const taskIndex = sourceColumn.tasks.findIndex(t => t.id === taskId);
+              if (taskIndex === -1) return;
+
+              // Копируем задачу перед удалением
+              const task = { ...sourceColumn.tasks[taskIndex] };
+
+              // Удаляем задачу из исходной колонки
+              sourceColumn.tasks.splice(taskIndex, 1);
+
+              // Если перемещение в другую колонку
+              if (sourceColumnId !== targetColumnId) {
+                // Находим целевую колонку
+                const targetColumn = draft.columns.find(col => col.id === targetColumnId);
+                if (targetColumn) {
+                  // Обновляем columnId задачи
+                  task.columnId = targetColumnId;
+
+                  // Вставляем задачу в новую позицию
+                  targetColumn.tasks.splice(newPosition, 0, task);
+
+                  // Обновляем позиции всех задач в обеих колонках
+                  sourceColumn.tasks.forEach((t, i) => { t.position = i; });
+                  targetColumn.tasks.forEach((t, i) => { t.position = i; });
+                }
+              } else {
+                // Вставляем задачу в новую позицию в той же колонке
+                sourceColumn.tasks.splice(newPosition, 0, task);
+
+                // Обновляем позиции задач
+                sourceColumn.tasks.forEach((t, i) => { t.position = i; });
+              }
+            })
+        );
+
+        try {
+          // Ждем ответа от сервера
+          await queryFulfilled;
+        } catch {
+          // В случае ошибки откатываем изменения
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: (result, error, { boardId }) => [
+        { type: 'Board', id: boardId },
+        'Tasks'
+      ],
     }),
   }),
 });
 
 // Экспортируем только хуки для чтения, мутации теперь доступны из boardsApi
 export const {
-  useGetTasksQuery,
   useGetTaskQuery,
   useGetTasksByColumnQuery,
-} = tasksApi; 
+  useCreateTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
+  useMoveTaskMutation,
+} = tasksApi;

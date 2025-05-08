@@ -8,7 +8,7 @@ import ClipIcon from "../assets/icons/clip.svg";
 import CheckIcon from "../assets/icons/task_list.svg";
 import Girl from "../assets/icons/profile_picture.svg";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBoardTagsRequest } from '../store/features/tags/tagsActions';
+import { useGetTagsQuery } from '../services/api/tagsApi';
 import { useParams } from 'react-router-dom';
 
 function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }) {
@@ -16,7 +16,7 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
     const { boardId: urlBoardId } = useParams();
     const boardId = propBoardId || task?.boardId || urlBoardId;
     const usersByUsername = useSelector(state => state.users.byUsername);
-    const boardTags = useSelector(state => state.tags?.boardTags || []);
+    const { data: boardTags = [] } = useGetTagsQuery(boardId);
     
     // Инициализируем форму данными существующей задачи
     const [form, setForm] = useState({
@@ -95,8 +95,16 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
 
     useEffect(() => {
         if (isOpen && boardId) {
-            console.log('Fetching board tags for boardId:', boardId);
-            dispatch(fetchBoardTagsRequest(Number(boardId)));
+            console.log('Fetching board data for boardId:', boardId);
+            
+            // Force fetch board data to get updated participants list
+            dispatch({
+                type: 'api/executeQuery',
+                payload: {
+                    endpointName: 'getBoardWithData',
+                    originalArgs: boardId
+                }
+            });
         }
     }, [isOpen, boardId, dispatch]);
 

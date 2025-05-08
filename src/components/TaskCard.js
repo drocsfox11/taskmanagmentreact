@@ -7,7 +7,7 @@ import CommentIcon from "../assets/icons/comments.svg";
 import Clip from "../assets/icons/clip.svg";
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteTaskRequest, updateTaskRequest } from '../store/features/tasks/tasksActions';
+import { useDeleteTaskMutation, useUpdateTaskMutation } from '../services/api/tasksApi';
 import EditTaskModal from './EditTaskModal';
 
 function TaskCard({ task, onClick }) {
@@ -17,6 +17,9 @@ function TaskCard({ task, onClick }) {
     const optionsRef = useRef(null);
     const cardRef = useRef(null);
     const dispatch = useDispatch();
+    
+    const [deleteTask] = useDeleteTaskMutation();
+    const [updateTask] = useUpdateTaskMutation();
     
     // Получаем данные пользователей из Redux
     const usersByUsername = useSelector(state => state.users.byUsername);
@@ -60,7 +63,7 @@ function TaskCard({ task, onClick }) {
     }, []);
     
     const handleDeleteTask = () => {
-        dispatch(deleteTaskRequest(task.id));
+        deleteTask(task.id);
         setIsModalOpen(false);
     };
     
@@ -81,7 +84,7 @@ function TaskCard({ task, onClick }) {
             ...updatedTaskData
         };
         console.log('Отправка обновленных данных задачи:', updatedTask);
-        dispatch(updateTaskRequest(updatedTask));
+        updateTask(updatedTask);
         setIsEditModalOpen(false);
     };
     

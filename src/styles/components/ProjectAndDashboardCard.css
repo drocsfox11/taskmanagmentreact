@@ -1,4 +1,4 @@
-#project-card-container{
+.project-card-container{
     padding: 15px 20px;
     border-width: 0.7px;
     border-color: #DBDBDB;
@@ -14,7 +14,7 @@
     margin-bottom: 20px;
 }
 
-#project-card-icon-container{
+.project-card-icon-container{
     background-color: #D9EDFE;
     width: 40px;
     height: 40px;
@@ -24,45 +24,59 @@
     border-radius: 5px;
 }
 
-#project-card-icon-row-container{
+.project-card-icon-row-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    align-items: center;
 }
 
-#project-card-text-container{
+.project-card-icon-row-container-options{
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    width: 20px;
+    justify-content: center;
+    height: 40px;
+}
+
+.project-card-icon-row-container-options img{
+    height: 20px;
+}
+
+.project-card-text-container{
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-#project-card-text-header{
+.project-card-text-header{
     font-family: "Ruberoid Bold";
     font-size: 16px;
 }
 
-#project-card-text-descr{
+.project-card-text-descr{
     font-family: "Ruberoid Regular";
     font-size: 12px;
     color:#969595;
 }
 
-#project-card-progress-container{
+.project-card-progress-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
 }
 
-#project-card-progress-bar{
+.project-card-progress-bar{
     background: linear-gradient(270deg, #ECECEC 79.88%, #5558FF 79.89%);
     border-radius: 5px;
     height: 7px;
     width: 60%;
 }
 
-#project-card-progress-text{
+.project-card-progress-text{
     font-family: "Ruberoid Regular";
     font-size: 10px;
     color:#969595;

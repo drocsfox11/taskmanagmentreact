@@ -1,4 +1,4 @@
-#left-menu-container{
+.left-menu-container{
     width: 70px;
     justify-content: space-between;
     display: flex;
@@ -13,7 +13,7 @@
     border-top: none;
 }
 
-#left-menu-logo{
+.left-menu-logo{
     width:32px;
     height: 32px;
     display: flex;
@@ -25,13 +25,13 @@
 
 }
 
-#left-menu-logo-text{
+.left-menu-logo-text{
     font-family: "Ruberoid Semi Bold";
     font-size: 28px;
     color: #FFF;
 }
 
-#left-menu-main-icons-container{
+.left-menu-main-icons-container{
     display: flex;
     flex-direction: column;
     gap: 50px;
@@ -39,10 +39,10 @@
     justify-content: center;
 }
 
-#left-menu-main-icons-container img{
+.left-menu-main-icons-container img{
     cursor: pointer;
 }
 
-#left-menu-logout{
+.left-menu-logout{
     cursor: pointer;
 }

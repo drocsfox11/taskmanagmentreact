@@ -128,31 +128,30 @@ function ProjectMenu() {
     const projectParticipants = getProjectParticipants();
 
     return (
-        <div id='project-menu-container'>
-            <div id='project-menu-project-list-container'>
-                <div id='project-menu-project-list-label'>Проекты</div>
+        <div className='project-menu-container'>
+            <div className='project-menu-project-list-container'>
+                <div className='project-menu-project-list-label'>Проекты</div>
 
-                <div id='project-menu-project-list'>
+                <div className='project-menu-project-list'>
                     {displayedProjects.map((project) => (
                         <div 
                             key={project.id}
-                            id={project.id === currentProjectId ? 'project-menu-project-list-item-active' : 'project-menu-project-list-item-passive'}
+                            className={project.id === currentProjectId ? 'project-menu-project-list-item-active' : 'project-menu-project-list-item-passive'}
                             onClick={() => handleProjectClick(project.id)}
                         >
-                            <div id='project-menu-project-list-item-label-group'>
-                                <div id={project.id === currentProjectId ? 'project-menu-project-list-item-label-group-icon' : 'project-menu-project-list-item-label-group-icon-passive'}>
+                            <div className='project-menu-project-list-item-label-group'>
+                                <div className={project.id === currentProjectId ? 'project-menu-project-list-item-label-group-icon' : 'project-menu-project-list-item-label-group-icon-passive'}>
                                     <EmojiProvider data={emojiData}>
                                         <Emoji name="teacher-light-skin-tone" width={12}/>
                                     </EmojiProvider>
                                 </div>
-                                <div id={project.id === currentProjectId ? 'project-menu-project-list-item-label-group-label' : 'project-menu-project-list-item-label-group-label-passive'}>
+                                <div className={project.id === currentProjectId ? 'project-menu-project-list-item-label-group-label' : 'project-menu-project-list-item-label-group-label-passive'}>
                                     {project.title}
                                 </div>
                             </div>
                             <div 
-                                id='project-menu-project-list-item-options' 
+                                className='project-menu-project-list-item-options dropdown-container' 
                                 onClick={(e) => toggleDropdown(project.id, e)}
-                                className="dropdown-container"
                             >
                                 <img src={project.id === currentProjectId ? OptionsActive : OptionsPassive} alt="Options" />
                                 {openDropdownId === project.id && (
@@ -167,12 +166,11 @@ function ProjectMenu() {
 
                     {moreProjects.length > 0 && (
                         <div 
-                            id='project-menu-project-list-item-passive'
-                            className='project-menu-show-more'
+                            className='project-menu-project-list-item-passive project-menu-show-more'
                             onClick={() => setIsProjectModalOpen(true)}
                         >
-                            <div id='project-menu-project-list-item-label-group'>
-                                <div id='project-menu-project-list-item-label-group-label-passive'>
+                            <div className='project-menu-project-list-item-label-group'>
+                                <div className='project-menu-project-list-item-label-group-label-passive'>
                                     Показать еще ({moreProjects.length})
                                 </div>
                             </div>
@@ -182,34 +180,33 @@ function ProjectMenu() {
             </div>
 
             {currentProject && projectParticipants.length > 0 && (
-                <div id='project-menu-people-list-container'>
-                    <div id='project-menu-people-list-label'>Участники</div>
+                <div className='project-menu-people-list-container'>
+                    <div className='project-menu-people-list-label'>Участники</div>
 
-                    <div id='project-menu-people-list'>
+                    <div className='project-menu-people-list'>
                         {projectParticipants.map((user, index) => (
-                            <div id='project-menu-people-list-item' key={user.username || index}>
-                                <div id='project-menu-people-list-item-label-group'>
-                                    <div id='project-menu-people-list-item-label-group-icon'>
+                            <div className='project-menu-people-list-item' key={user.username || index}>
+                                <div className='project-menu-people-list-item-label-group'>
+                                    <div className='project-menu-people-list-item-label-group-icon'>
                                         <img 
                                             src={user.avatarURL || Girl} 
                                             alt={user.username}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                         />
                                     </div>
-                                    <div id='project-menu-people-list-item-label-group-label-container'>
-                                        <div id='project-menu-people-list-item-label-group-label-username'>
+                                    <div className='project-menu-people-list-item-label-group-label-container'>
+                                        <div className='project-menu-people-list-item-label-group-label-username'>
                                             {user.name || user.username}
                                         </div>
-                                        <div id='project-menu-people-list-item-label-group-label-status-container'>
-                                            <div id='project-menu-people-list-item-label-group-label-status-color-active'></div>
-                                            <div id='project-menu-people-list-item-label-group-label-status-text'>Онлайн</div>
+                                        <div className='project-menu-people-list-item-label-group-label-status-container'>
+                                            <div className='project-menu-people-list-item-label-group-label-status-color-active'></div>
+                                            <div className='project-menu-people-list-item-label-group-label-status-text'>Онлайн</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div 
-                                    id='project-menu-people-list-item-options'
-                                    className="dropdown-container"
+                                    className='project-menu-people-list-item-options dropdown-container'
                                     onClick={(e) => toggleDropdown(`user-${user.username}`, e)}
                                 >
                                     <img src={OptionsPassive} alt="Options"/>
@@ -226,28 +223,28 @@ function ProjectMenu() {
                 </div>
             )}
 
-            <div id='project-menu-events-container'>
-                <div id='project-menu-events-label'>События</div>
+            <div className='project-menu-events-container'>
+                <div className='project-menu-events-label'>События</div>
 
-                <div id='project-menu-events-window'>
-                    <div id='project-menu-events-window-all'>Всего</div>
+                <div className='project-menu-events-window'>
+                    <div className='project-menu-events-window-all'>Всего</div>
 
-                    <div id='project-menu-events-window-events'>
-                        <div id='project-menu-events-window-events-counter'>1087 событий</div>
-                        <div id='project-menu-people-list-item-options'>
+                    <div className='project-menu-events-window-events'>
+                        <div className='project-menu-events-window-events-counter'>1087 событий</div>
+                        <div className='project-menu-people-list-item-options'>
                             <img src={OptionsPassive} alt="Options Active"/>
                         </div>
                     </div>
 
-                    <div id='project-menu-events-window-events-added'>
-                        <div id='project-menu-events-window-events-added-text'>+25</div>
-                        <div id='project-menu-events-window-events-added-label'>новых событий</div>
+                    <div className='project-menu-events-window-events-added'>
+                        <div className='project-menu-events-window-events-added-text'>+25</div>
+                        <div className='project-menu-events-window-events-added-label'>новых событий</div>
                     </div>
                 </div>
             </div>
 
-            <div id='project-menu-add-project-button' onClick={handleAddProject}>
-                <div id='project-menu-add-project-button-text'>+ Добавить проект</div>
+            <div className='project-menu-add-project-button' onClick={handleAddProject}>
+                <div className='project-menu-add-project-button-text'>+ Добавить проект</div>
             </div>
 
             {/* Modal for "Show more" projects */}

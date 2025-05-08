@@ -24,6 +24,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     box-sizing: border-box;
     pointer-events: all;
+    min-height: 500px;
 }
 
 .project-management-modal-header {
@@ -656,7 +657,10 @@ button.create-project-modal-add-button:hover {
     margin-top: 10px;
 }
 
-/* Стили для вкладки прав доступа в модальном окне BoardManagementModal */
+.project-management-modal-content {
+    flex-grow: 1;
+}
+
 .project-management-modal-content .project-permissions-tab {
     width: 100%;
     padding: 0;
@@ -712,4 +716,89 @@ button.create-project-modal-add-button:hover {
     font-size: 16px;
     font-weight: 600;
     color: #333;
+}
+
+.project-management-modal-search {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.project-management-modal-search input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #DBDBDB;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #DBDBDB;
+    border-radius: 5px;
+    margin-top: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    gap: 10px;
+    height: 100px;
+}
+
+.search-result-item:hover {
+    background-color: #f5f5f5;
+}
+
+.search-result-item img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.search-result-item span {
+    font-family: "Ruberoid Regular";
+    font-size: 14px;
+    color: #333;
+}
+
+.search-loading,
+.search-no-results {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    font-family: "Ruberoid Regular";
+    font-size: 14px;
+}
+
+.search-load-more {
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    color: #1976d2;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.search-load-more:hover {
+    background-color: #e3f2fd;
+}
+
+.search-loading-more {
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    text-align: center;
 } 

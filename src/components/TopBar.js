@@ -14,19 +14,19 @@ function TopBar() {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     return (
-        <div id='top-bar-container'>
-            <div id='top-bar-search-container'>
-                <img src={Search} id='top-bar-search-icon'/>
-                <input id='top-bar-search-input' placeholder="Поиск"/>
+        <div className='top-bar-container'>
+            <div className='top-bar-search-container'>
+                <img src={Search} className='top-bar-search-icon'/>
+                <input className='top-bar-search-input' placeholder="Поиск"/>
             </div>
-            <div id='top-bar-profile-container'>
-                <img src={Settings} id='top-bar-profile-settings'/>
-                <img src={Notifications} id='top-bar-profile-notifications'/>
-                <div id='top-bar-profile-field-container'>
-                    <div id='top-bar-profile-icon-container' onClick={() => setIsProfileOpen(true)} style={{cursor:'pointer'}}>
-                        <img src={avatar || ProfilePicture} id='top-bar-profile-icon'/>
+            <div className='top-bar-profile-container'>
+                <img src={Settings} className='top-bar-profile-settings'/>
+                <img src={Notifications} className='top-bar-profile-notifications'/>
+                <div className='top-bar-profile-field-container'>
+                    <div className='top-bar-profile-icon-container' onClick={() => setIsProfileOpen(true)} style={{cursor:'pointer'}}>
+                        <img src={avatar || ProfilePicture} className='top-bar-profile-icon'/>
                     </div>
-                    <div id='top-bar-profile-name' onClick={() => setIsProfileOpen(true)} style={{cursor:'pointer'}}>
+                    <div className='top-bar-profile-name' onClick={() => setIsProfileOpen(true)} style={{cursor:'pointer'}}>
                         {isLoading ? "Загрузка..." : (name || "Пользователь")}
                     </div>
                 </div>

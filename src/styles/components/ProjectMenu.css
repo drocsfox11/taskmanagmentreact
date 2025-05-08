@@ -1,8 +1,7 @@
-#project-menu-container{
-
+.project-menu-container{
     display: flex;
     flex-direction: column;
-    min-width: 250px;
+    width: 250px; 
     padding: 30px 0;
     height: calc(100% - 60px);
     justify-content: space-between;
@@ -12,10 +11,10 @@
     border-top:none;
     border-left:none;
     border-bottom: none;
-
+    overflow-x: hidden; /* Предотвращаем горизонтальный скролл */
 }
 
-#project-menu-project-list-container{
+.project-menu-project-list-container{
     display: flex;
     flex-direction: column;
     padding: 0px 15px;
@@ -25,7 +24,7 @@
 
 /*----------------------------------------------------------*/
 
-#project-menu-project-list-label{
+.project-menu-project-list-label{
 
     font-family: "Ruberoid Semi Bold";
     font-size: 22px;
@@ -33,7 +32,7 @@
 
 }
 
-#project-menu-project-list{
+.project-menu-project-list{
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -41,7 +40,7 @@
 
 }
 
-#project-menu-project-list-item-active{
+.project-menu-project-list-item-active{
 
     background-color: #5558FF;
     border-radius: 5px;
@@ -53,7 +52,7 @@
     cursor: pointer;
 }
 
-#project-menu-project-list-item-label-group{
+.project-menu-project-list-item-label-group{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -61,7 +60,7 @@
 
 }
 
-#project-menu-project-list-item-label-group-icon{
+.project-menu-project-list-item-label-group-icon{
     background-color: #FFFFFF;
     width: 20px;
     height: 20px;
@@ -71,13 +70,13 @@
     border-radius: 5px;
 }
 
-#project-menu-project-list-item-label-group-label{
+.project-menu-project-list-item-label-group-label{
     font-family: "Ruberoid Semi Bold";
     font-size: 14px;
     color: white;
 }
 
-#project-menu-project-list-item-passive{
+.project-menu-project-list-item-passive{
 
     background-color: #FFFFFF;
     border-radius: 5px;
@@ -92,7 +91,7 @@
     cursor: pointer;
 }
 
-#project-menu-project-list-item-label-group-icon-passive{
+.project-menu-project-list-item-label-group-icon-passive{
     background-color: #D9EDFE;
     width: 20px;
     height: 20px;
@@ -102,7 +101,7 @@
     border-radius: 5px;
 }
 
-#project-menu-project-list-item-label-group-label-passive{
+.project-menu-project-list-item-label-group-label-passive{
     font-family: "Ruberoid Semi Bold";
     font-size: 14px;
     color: black;
@@ -111,27 +110,27 @@
 /*----------------------------------------------------------*/
 
 
-#project-menu-people-list-container{
+.project-menu-people-list-container{
     display: flex;
     flex-direction: column;
     padding: 0px 15px;
     gap: 25px;
 }
 
-#project-menu-people-list-label{
+.project-menu-people-list-label{
     font-family: "Ruberoid Semi Bold";
     font-size: 22px;
     color: black;
 }
 
-#project-menu-people-list{
+.project-menu-people-list{
     display: flex;
     flex-direction: column;
     gap: 16px;
     justify-content: center;
 }
 
-#project-menu-people-list-item{
+.project-menu-people-list-item{
     background-color: #FFFFFF;
     border-radius: 5px;
     display: flex;
@@ -144,14 +143,14 @@
     border-style: solid;
 }
 
-#project-menu-people-list-item-label-group{
+.project-menu-people-list-item-label-group{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 10px;
 }
 
-#project-menu-people-list-item-label-group-icon{
+.project-menu-people-list-item-label-group-icon{
     width: 27px;
     height: 27px;
     background-color: #FED9D9;
@@ -162,22 +161,22 @@
 
 }
 
-#project-menu-people-list-item-label-group-label-container{
+.project-menu-people-list-item-label-group-label-container{
 
 }
 
-#project-menu-people-list-item-label-group-label-username{
+.project-menu-people-list-item-label-group-label-username{
     font-family: "Ruberoid Semi Bold";
     font-size: 10px;
 }
-#project-menu-people-list-item-label-group-label-status-container{
+.project-menu-people-list-item-label-group-label-status-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 3px;
 }
 
-#project-menu-people-list-item-label-group-label-status-color-active{
+.project-menu-people-list-item-label-group-label-status-color-active{
 
     width: 7px;
     height: 7px;
@@ -186,7 +185,7 @@
     border-radius: 360px;
 }
 
-#project-menu-people-list-item-label-group-label-status-color-passive{
+.project-menu-people-list-item-label-group-label-status-color-passive{
 
     width: 7px;
     height: 7px;
@@ -196,27 +195,27 @@
 }
 
 
-#project-menu-people-list-item-label-group-label-status-text{
+.project-menu-people-list-item-label-group-label-status-text{
     font-family: "Ruberoid Regular";
     font-size: 8px;
     color:#969595;
 }
 
 /*----------------------------------------------------------*/
-#project-menu-events-container{
+.project-menu-events-container{
     display: flex;
     flex-direction: column;
     padding: 0px 15px;
     gap: 25px;
 }
 
-#project-menu-events-label{
+.project-menu-events-label{
     font-family: "Ruberoid Semi Bold";
     font-size: 22px;
     color: black;
 }
 
-#project-menu-events-window{
+.project-menu-events-window{
     background-color: #FFFFFF;
     border-radius: 5px;
     display: flex;
@@ -229,46 +228,46 @@
     gap: 10px;
 }
 
-#project-menu-events-window-all{
+.project-menu-events-window-all{
 
     font-family: "Ruberoid Semi Bold";
     font-size: 10px;
     color: #969595;
 }
 
-#project-menu-events-window-events{
+.project-menu-events-window-events{
     display: flex;
     justify-content: space-between;
 
 }
 
-#project-menu-events-window-events-counter{
+.project-menu-events-window-events-counter{
     font-family: "Ruberoid Bold";
     font-size: 18px;
     color: black;
 }
 
-#project-menu-events-window-events-added{
+.project-menu-events-window-events-added{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
 }
 
-#project-menu-events-window-events-added-text{
+.project-menu-events-window-events-added-text{
     font-family: "Ruberoid Bold";
     font-size: 18px;
     color: #5558FF;
 }
 
-#project-menu-events-window-events-added-label{
+.project-menu-events-window-events-added-label{
     font-family: "Ruberoid Regular";
     font-size: 10px;
     color: #969595;
 
 }
 
-#project-menu-add-project-button{
+.project-menu-add-project-button{
     margin: 0px 15px;
     background-color: #5558FF;
     border-radius: 5px;
@@ -280,11 +279,11 @@
     cursor: pointer;
 }
 
-#project-menu-add-project-button:hover {
+.project-menu-add-project-button:hover {
     background-color: #4245cc;
 }
 
-#project-menu-add-project-button-text{
+.project-menu-add-project-button-text{
     font-family: "Ruberoid Semi Bold";
     font-size: 14px;
     color: white;
@@ -362,7 +361,7 @@
     background-color: #f0f0f0;
 }
 
-.project-menu-show-more #project-menu-project-list-item-label-group-label-passive {
+.project-menu-show-more .project-menu-project-list-item-label-group-label-passive {
     color: #5558FF;
 }
 
@@ -400,11 +399,11 @@
     background-color: #f0f0f0;
 }
 
-#project-menu-project-list-item-active .dropdown-menu {
+.project-menu-project-list-item-active .dropdown-menu {
     background-color: white;
 }
 
-#project-menu-project-list-item-active .dropdown-item {
+.project-menu-project-list-item-active .dropdown-item {
     color: #333;
 }
 
@@ -426,12 +425,12 @@
     gap: 10px;
 }
 
-#project-menu-people-list-item-options {
+.project-menu-people-list-item-options {
     position: relative;
     cursor: pointer;
 }
 
-#project-menu-people-list-item-options .dropdown-menu {
+.project-menu-people-list-item-options .dropdown-menu {
     right: 0;
     top: 100%;
     z-index: 1000;

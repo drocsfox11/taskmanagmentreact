@@ -37,13 +37,13 @@ function LeftMenu() {
     }, [isSuccess, navigate]);
 
     return (
-        <div id="left-menu-container">
+        <div className="left-menu-container">
             <div>
-                <div id="left-menu-logo">
-                    <div id="left-menu-logo-text">T</div>
+                <div className="left-menu-logo">
+                    <div className="left-menu-logo-text">T</div>
                 </div>
 
-                <div id="left-menu-main-icons-container">
+                <div className="left-menu-main-icons-container">
                     <img
                         src={activeIcon === 'work' ? WorkActive : WorkPassive}
                         onClick={() => handleIconClick('work')}
@@ -62,7 +62,7 @@ function LeftMenu() {
                 </div>
             </div>
 
-            <div id="left-menu-logout">
+            <div className="left-menu-logout">
                 <img src={Logout} alt="Logout" onClick={handleLogout} style={{ cursor: 'pointer' }} />
             </div>
         </div>

@@ -8,12 +8,12 @@ import ClipIcon from "../assets/icons/clip.svg";
 import CheckIcon from "../assets/icons/task_list.svg";
 import Girl from "../assets/icons/profile_picture.svg";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBoardTagsRequest } from '../store/features/tags/tagsActions';
+import { useGetTagsQuery } from '../services/api/tagsApi';
 
 function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     const dispatch = useDispatch();
     const usersByUsername = useSelector(state => state.users?.byUsername || {});
-    const boardTags = useSelector(state => state.tags?.boardTags || []);
+    const { data: boardTags = [] } = useGetTagsQuery(boardId);
     
     // Get board participants from store
     const boardData = useSelector(state => 
@@ -213,16 +213,9 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     // Fetch board data when modal opens
     useEffect(() => {
         if (isOpen && boardId) {
-            console.log('Fetching board tags and participants for boardId:', boardId);
-            
-            // Always fetch fresh data when modal opens
-            dispatch(fetchBoardTagsRequest(boardId));
+            console.log('Fetching board data for boardId:', boardId);
             
             // Force fetch board data to get updated participants list
-            dispatch({
-                type: 'api/invalidateTags',
-                payload: [{ type: 'Board', id: boardId }]
-            });
             dispatch({
                 type: 'api/executeQuery',
                 payload: {

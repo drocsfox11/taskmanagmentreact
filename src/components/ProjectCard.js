@@ -7,7 +7,8 @@ import { useDeleteProjectMutation } from '../services/api/projectsApi';
 import Girl from '../assets/icons/girl.svg';
 import ProjectManagementModal from './ProjectManagementModal';
 
-function ProjectCard({ project, onClick, onEdit }) {
+function ProjectCard({ project, onClick }) {
+    console.log(project);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
     const modalRef = useRef(null);
@@ -48,34 +49,32 @@ function ProjectCard({ project, onClick, onEdit }) {
         setIsManagementModalOpen(true);
     };
 
-    // Get the first few participants to display (if any)
-    const participants = project.participants || [];
+
     
     return (
-        <div id='project-card-container' onClick={(e) => {
-            // Prevent navigation if clicking on modal or its children
+        <div className='project-card-container' onClick={(e) => {
             if (e.target.closest('.project-management-modal') || e.target.closest('.project-card-modal-container')) {
                 return;
             }
             onClick();
         }} style={{ position: 'relative' }}>
-            <div id='project-card-icon-row-container'>
-                <div id='project-card-icon-container'>
+            <div className='project-card-icon-row-container'>
+                <div className='project-card-icon-container'>
                     <EmojiProvider data={emojiData}>
                         <Emoji name="teacher-light-skin-tone" width={22}/>
                     </EmojiProvider>
                 </div>
-                <div ref={optionsRef} onClick={handleOptionsClick}>
+                <div className='project-card-icon-row-container-options' ref={optionsRef} onClick={handleOptionsClick}>
                     <img src={OptionsPassive} alt="Options Active"/>
                 </div>
             </div>
-            <div id='project-card-text-container'>
-                <div id='project-card-text-header'>{project.title}</div>
-                <div id='project-card-text-descr'>{project.description}</div>
+            <div className='project-card-text-container'>
+                <div className='project-card-text-header'>{project.title}</div>
+                <div className='project-card-text-descr'>{project.description}</div>
             </div>
-            <div id='project-card-progress-container'>
-                <div id='project-card-progress-bar'></div>
-                <div id='project-card-progress-text'>13% завершено</div>
+            <div className='project-card-progress-container'>
+                <div className='project-card-progress-bar'></div>
+                <div className='project-card-progress-text'>13% завершено</div>
             </div>
             {isModalOpen && (
                 <div ref={modalRef} className="project-card-modal-container">

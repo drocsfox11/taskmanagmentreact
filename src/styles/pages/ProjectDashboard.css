@@ -1,10 +1,10 @@
-#project-dashboard-container{
+.project-dashboard-container{
     height: 100%;
     background: #F3F3F3;
 }
 
 
-#project-dashboard-add-bar-container{
+.project-dashboard-add-bar-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -19,14 +19,14 @@
     border-right: none;
 }
 
-#project-dashboard-add-bar-label{
+.project-dashboard-add-bar-label{
 
     font-family: 'Ruberoid Bold';
     font-size: 28px;
 
 }
 
-#project-dashboard-add-bar-add-button{
+.project-dashboard-add-bar-add-button{
     background-color: #5558FF;
     border-radius: 5px;
     padding: 18px 15px;
@@ -38,7 +38,7 @@
 
 
 
-#project-dashboard-cards-container{
+.project-dashboard-cards-container{
     display: flex;
     position: relative;
     flex-direction: column;
@@ -48,7 +48,7 @@
     box-sizing: border-box;
 }
 
-#project-dashboard-card-row{
+.project-dashboard-card-row{
     display: flex;
     flex-direction: row;
     width: 100%;

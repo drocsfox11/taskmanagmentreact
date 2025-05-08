@@ -149,11 +149,18 @@ function TaskDashboard() {
             const [removed] = newColumns.splice(sourceIndex, 1);
             newColumns.splice(destIndex, 0, removed);
             
-            const columnIds = newColumns.map(col => Number(col.id)).filter(id => !isNaN(id));
+            // Обновляем позиции всех колонок
+            const updatedColumns = newColumns.map((col, index) => ({
+                id: col.id,
+                position: index
+            }));
             
-            console.log('Переупорядочивание колонок:', { columnIds, boardId: boardIdNum });
+            console.log('Переупорядочивание колонок:', { columns: updatedColumns, boardId: boardIdNum });
             
-            reorderColumns({ boardId: boardIdNum, columnIds })
+            reorderColumns({ 
+                boardId: boardIdNum, 
+                columns: updatedColumns
+            })
                 .unwrap()
                 .catch(error => {
                     console.error('Failed to reorder columns:', error);
@@ -429,6 +436,7 @@ function TaskDashboard() {
 }
 
 function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn }) {
+    console.log('Рендер колонки');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editColumnName, setEditColumnName] = useState('');

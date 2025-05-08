@@ -1,35 +1,144 @@
-import { useState, useEffect, useRef } from 'react';
-import { useUpdateProjectMutation, useAddProjectParticipantMutation, useRemoveProjectParticipantMutation } from '../services/api/projectsApi';
-import InvitationStatusBadge from './InvitationStatusBadge';
-import ProjectPermissionsTab from './ProjectPermissionsTab';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchUsersQuery } from '../services/api/usersApi';
+import { useAddProjectParticipantMutation, useRemoveProjectParticipantMutation } from '../services/api/projectParticipantsApi';
+import { useUpdateProjectMutation } from '../services/api/projectsApi';
 import '../styles/components/ProjectManagementModal.css';
+import ProjectPermissionsTab from './ProjectPermissionsTab';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
 
-function ProjectManagementModal({ project, onClose }) {
+function ProjectManagementModal({ project, onClose, isOpen = true }) {
     const [activeTab, setActiveTab] = useState('info');
     const [updateProject] = useUpdateProjectMutation();
     const [addParticipant] = useAddProjectParticipantMutation();
     const [removeParticipant] = useRemoveProjectParticipantMutation();
     const [form, setForm] = useState({
         title: project?.title || '',
-        description: project?.description || '',
-        participantUsernames: []
+        description: project?.description || ''
     });
-    const [participantInput, setParticipantInput] = useState('');
     const modalRef = useRef(null);
+    const [inputValue, setInputValue] = useState('');
+    
+    const [searchParams, setSearchParams] = useState({
+        query: '',
+        page: 0
+    });
+    
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const searchResultsRef = useRef(null);
+    const scrollableResultsRef = useRef(null);
+    const timeoutRef = useRef(null);
+    const [isScrollLoading, setIsScrollLoading] = useState(false);
+
+    const queryArg = {
+        name: searchParams.query,
+        page: searchParams.page,
+        size: 2
+    };
+
+    const { 
+        data: searchData, 
+        isLoading: isSearching, 
+        isFetching 
+    } = useSearchUsersQuery(
+        queryArg,
+        { 
+            skip: !searchParams.query,
+            refetchOnMountOrArgChange: true,
+            refetchOnFocus: false
+        }
+    );
+
+    console.log(searchData);
+    const users = searchData? searchData.users : [];
+    const hasNextPage = searchData? searchData.hasNext : true;
+
+    const filteredUsers = users.filter(user => 
+        !project?.participants?.some(participant => participant.id === user.id)
+    );
+
+    const handleScroll = useCallback(() => {
+        if (!scrollableResultsRef.current || !hasNextPage || isFetching || isScrollLoading) {
+            return;
+        }
+
+        const { scrollTop, scrollHeight, clientHeight } = scrollableResultsRef.current;
+        
+        if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+            setIsScrollLoading(true);
+            loadNextPage();
+        }
+    }, [hasNextPage, isFetching, isScrollLoading]);
+
+    useEffect(() => {
+        const scrollableElement = scrollableResultsRef.current;
+        if (scrollableElement) {
+            scrollableElement.addEventListener('scroll', handleScroll);
+            return () => {
+                scrollableElement.removeEventListener('scroll', handleScroll);
+            };
+        }
+    }, [handleScroll]);
+
+    useEffect(() => {
+        if (!isFetching) {
+            setIsScrollLoading(false);
+        }
+    }, [isFetching]);
+
+    useEffect(() => {
+        if (searchParams.query && 
+            !isSearching && 
+            !isFetching && 
+            filteredUsers.length === 0 && 
+            hasNextPage && 
+            !isScrollLoading) {
+            setIsScrollLoading(true);
+            loadNextPage();
+        }
+    }, [filteredUsers, searchParams.query, isSearching, isFetching, hasNextPage, isScrollLoading]);
+
+    const loadNextPage = useCallback(() => {
+        if (hasNextPage && !isFetching) {
+            setSearchParams(prev => ({
+                ...prev,
+                page: prev.page + 1
+            }));
+        }
+    }, [hasNextPage, isFetching]);
+
+    const setSearchQuery = useCallback((query) => {
+        setSearchParams({
+            query,
+            page: 0
+        });
+    }, []);
+
+    useEffect(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        
+        if (inputValue) {
+            timeoutRef.current = setTimeout(() => {
+                setSearchQuery(inputValue);
+            }, 1000);
+        } else {
+            setSearchQuery('');
+        }
+        
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [inputValue, setSearchQuery]);
 
     useEffect(() => {
         if (project) {
-            // Extract usernames from participant objects
-            const participantUsernames = project.participants 
-                ? project.participants.map(user => user.username)
-                : [];
-                
             setForm({
                 title: project.title || '',
-                description: project.description || '',
-                participantUsernames,
+                description: project.description || ''
             });
         }
     }, [project]);
@@ -41,118 +150,87 @@ function ProjectManagementModal({ project, onClose }) {
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [onClose]);
+    }, [onClose, isOpen]);
 
     const handleFormChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setForm({
+            ...form,
+            [name]: value
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Format the data for the API - only include title and description
-        const projectData = {
-            title: form.title,
-            description: form.description
-            // Не отправляем participants при сохранении общей информации проекта
-        };
-        
         try {
-            // Оптимистично обновляем UI
-            const optimisticUpdate = {
-                ...project,
-                ...projectData
-                // При оптимистичном обновлении сохраняем текущих участников
-            };
-            
-            // Вызываем мутацию с оптимистичным обновлением
-            await updateProject({ 
-                id: project.id, 
-                ...projectData, // Отправляем только title и description
-                optimisticUpdate // Передаем оптимистичное обновление
+            await updateProject({
+                id: project.id,
+                ...form
             }).unwrap();
-            
             onClose();
-        } catch (err) {
-            console.error('Failed to update project:', err);
-            // В случае ошибки форма вернется к предыдущему состоянию
-            setForm({
-                title: project.title || '',
-                description: project.description || '',
-                participantUsernames: project.participants ? project.participants.map(user => user.username) : []
-            });
+        } catch (error) {
+            console.error('Error updating project:', error);
+        }
+    };
+
+    const handleAddUser = async (user) => {
+        try {
+            await addParticipant({ projectId: project.id, user }).unwrap();
+            setInputValue('');
+            setSearchQuery('');
+            setShowSearchResults(false);
+        } catch (error) {
+            console.error('Failed to add participant:', error);
         }
     };
     
-    const handleAddParticipant = async () => {
-        if (participantInput && !form.participantUsernames.includes(participantInput)) {
-            try {
-                // Создаем оптимистичное обновление на основе структуры данных с сервера
-                const optimisticUpdate = {
-                    ...project,
-                    participants: [
-                        ...(project.participants || []),
-                        {
-                            username: participantInput,
-                            name: null, // Будет обновлено с сервера
-                            avatarURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${participantInput}`, // Временный аватар
-                            status: "PENDING" // Статус приглашения
-                        }
-                    ]
-                };
-                
-                // Вызываем мутацию для добавления участника
-                await addParticipant({ 
-                    projectId: project.id, 
-                    userId: participantInput,
-                    optimisticUpdate
-                }).unwrap();
-                
-                // Обновляем локальное состояние формы
-                setForm(prevForm => ({
-                    ...prevForm,
-                    participantUsernames: [...prevForm.participantUsernames, participantInput]
-                }));
-                
-                setParticipantInput('');
-            } catch (err) {
-                console.error('Failed to add participant:', err);
-            }
+    const handleRemoveParticipant = async (userId) => {
+        try {
+            await removeParticipant({
+                projectId: project.id,
+                userId: userId
+            }).unwrap();
+        } catch (error) {
+            console.error('Failed to remove participant:', error);
+        }
+    };
+    
+    const handleModalClick = (e) => {
+        e.stopPropagation();
+    };
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setInputValue(value);
+        setShowSearchResults(!!value);
+    };
+
+    const handleClickOutside = (event) => {
+        if (searchResultsRef.current && !searchResultsRef.current.contains(event.target)) {
+            setShowSearchResults(false);
         }
     };
 
-    const handleRemoveParticipant = async (username) => {
-        try {
-            // Оптимистично обновляем UI на основе структуры данных с сервера
-            const optimisticUpdate = {
-                ...project,
-                participants: project.participants.filter(user => user.username !== username)
-            };
-            
-            // Вызываем мутацию для удаления участника
-            await removeParticipant({ 
-                projectId: project.id, 
-                userId: username,
-                optimisticUpdate
-            }).unwrap();
-            
-            // Обновляем локальное состояние формы
-            setForm(prevForm => ({
-                ...prevForm,
-                participantUsernames: prevForm.participantUsernames.filter(name => name !== username)
-            }));
-        } catch (err) {
-            console.error('Failed to remove participant:', err);
-        }
-    };
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    if (!isOpen) return null;
 
     return (
-        <div className="project-management-modal-overlay">
-            <div className="project-management-modal" ref={modalRef}>
+        <div className="project-management-modal-overlay" onClick={handleModalClick}>
+            <div className="project-management-modal" ref={modalRef} onClick={handleModalClick}>
                 <div className="project-management-modal-header">
                     <h2>Управление проектом</h2>
                     <button className="close-button" onClick={onClose}>
@@ -208,34 +286,69 @@ function ProjectManagementModal({ project, onClose }) {
                         </form>
                     ) : activeTab === 'participants' ? (
                         <div className="participants-section">
-                            <div className="add-participant">
+                            <h3>Участники проекта</h3>
+                            <p className="section-description">
+                                Добавьте пользователей, которые смогут работать с этим проектом
+                            </p>
+                            <div className="project-management-modal-search" ref={searchResultsRef}>
                                 <input
                                     type="text"
-                                    value={participantInput}
-                                    onChange={(e) => setParticipantInput(e.target.value)}
-                                    placeholder="Введите имя пользователя"
+                                    className="project-management-modal-input-participant"
+                                    placeholder="Поиск пользователей..."
+                                    value={inputValue}
+                                    onChange={handleSearchChange}
                                 />
-                                <button onClick={handleAddParticipant}>Добавить</button>
-                            </div>
-                            <div className="participants-list">
-                                {/* Показываем всех участников и приглашенных */}
-                                {project.participants?.map((user) => (
-                                    <div key={user.id || user.username} className="participant-item">
-                                        <div className="participant-info">
-                                            <img src={user.avatarURL || user.avatar || Girl} alt="avatar" />
-                                            <span>{user.username}</span>
-                                            <InvitationStatusBadge status={user.status} />
-                                        </div>
-                                        <button 
-                                            className="remove-button"
-                                            onClick={() => handleRemoveParticipant(user.username)}
-                                        >
-                                            Удалить
-                                        </button>
+                                {showSearchResults && inputValue && (
+                                    <div className="search-results" ref={scrollableResultsRef}>
+                                        {isSearching && searchParams.page === 0 ? (
+                                            <div className="search-loading">Поиск...</div>
+                                        ) : filteredUsers.length > 0 ? (
+                                            <>
+                                                {filteredUsers.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="search-result-item"
+                                                        onClick={() => handleAddUser(user)}
+                                                    >
+                                                        <img src={user.avatarURL || Girl} alt={user.name} />
+                                                        <span>{user.name}</span>
+                                                    </div>
+                                                ))}
+                                                {(isFetching || isScrollLoading) && hasNextPage && (
+                                                    <div className="search-loading search-loading-more">
+                                                        Загрузка...
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : searchParams.query && !isFetching ? (
+                                            <div className="search-no-results">
+                                                Пользователи не найдены
+                                            </div>
+                                        ) : (
+                                            <div className="search-loading">
+                                                {isFetching ? "Загрузка пользователей..." : "Введите имя для поиска"}
+                                            </div>
+                                        )}
                                     </div>
-                                ))}
-                                {/* Если нет участников, показываем сообщение */}
-                                {(!project.participants || project.participants.length === 0) && (
+                                )}
+                            </div>
+                            <div className="project-management-participants">
+                                {project?.participants && project.participants.length > 0 ? (
+                                    project.participants.map((participant) => (
+                                        <div key={participant.id} className="participant-item">
+                                            <div className="participant-info">
+                                                <img src={participant.avatarURL || Girl} alt={participant.name} />
+                                                <span>{participant.name}</span>
+                                            </div>
+                                            <button
+                                                className="project-management-remove-participant-button"
+                                                onClick={() => handleRemoveParticipant(participant.id)}
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
                                     <div className="project-management-no-participants-message">
                                         Нет участников
                                     </div>

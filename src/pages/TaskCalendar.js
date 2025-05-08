@@ -29,30 +29,30 @@ function TaskDashboard() {
     const endCol = parseInt(task.endDate.split("-")[2], 10) + 1; // 5 + 1 = 6
 
     return (
-        <div id='task-calendars-dashboard-container'>
-            <div id='task-calendar-container'>
+        <div className='task-calendars-dashboard-container'>
+            <div className='task-calendar-container'>
                 <TopBar></TopBar>
                 {isLoading && <LoadingSpinner />}
 
 
-                <div id='task-calendar-weekpicker-bar-container'>
+                <div className='task-calendar-weekpicker-bar-container'>
 
-                    <div id='task-calendar-cards-month-dropdown-container'>
+                    <div className='task-calendar-cards-month-dropdown-container'>
 
-                        <div id='task-calendar-cards-month-dropdown-month'>Апрель 2025</div>
+                        <div className='task-calendar-cards-month-dropdown-month'>Апрель 2025</div>
                         <img src={DropdownIcon}/>
 
                     </div>
 
-                    <div id='task-calendar-cards-week-pagination-container'>
+                    <div className='task-calendar-cards-week-pagination-container'>
 
-                        <div id='task-calendar-cards-week-pagination-left'>
+                        <div className='task-calendar-cards-week-pagination-left'>
                             <img src={LeftIcon}/>
                         </div>
-                        <div id='task-calendar-cards-week-pagination-current-week'>
+                        <div className='task-calendar-cards-week-pagination-current-week'>
                             1 апреля - 14 апреля
                         </div>
-                        <div id='task-calendar-cards-week-pagination-right'>
+                        <div className='task-calendar-cards-week-pagination-right'>
                             <img src={RightIcon}/>
                         </div>
 

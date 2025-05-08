@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
     useUpdateBoardMutation, 
-    useAddUserToBoardByUsernameMutation, 
-    useRemoveUserFromBoardByUsernameMutation
+    useAddUserToBoardMutation,
+    useRemoveUserFromBoardMutation
 } from '../services/api/boardsApi';
 import BoardPermissionsTab from './BoardPermissionsTab';
 import '../styles/components/ProjectManagementModal.css'; // Reuse the same styles
@@ -12,8 +12,8 @@ import Girl from '../assets/icons/girl.svg';
 function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [activeTab, setActiveTab] = useState('info');
     const [updateBoard] = useUpdateBoardMutation();
-    const [addParticipant] = useAddUserToBoardByUsernameMutation();
-    const [removeParticipant] = useRemoveUserFromBoardByUsernameMutation();
+    const [addUserToBoard] = useAddUserToBoardMutation();
+    const [removeUserFromBoard] = useRemoveUserFromBoardMutation();
     const [form, setForm] = useState({
         title: board?.title || '',
         description: board?.description || '',
@@ -72,29 +72,27 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         }
     };
 
-    const handleAddParticipant = async () => {
-        if (!participantInput.trim()) return;
-        
+    const handleAddUser = async (userId) => {
         try {
-            await addParticipant({
+            await addUserToBoard({
                 boardId: board.id,
-                username: participantInput.trim()
+                userId: userId
             }).unwrap();
             
             setParticipantInput('');
         } catch (error) {
-            console.error('Error adding participant:', error);
+            console.error('Failed to add user:', error);
         }
     };
 
-    const handleRemoveParticipant = async (username) => {
+    const handleRemoveUser = async (userId) => {
         try {
-            await removeParticipant({
+            await removeUserFromBoard({
                 boardId: board.id,
-                username
+                userId: userId
             }).unwrap();
         } catch (error) {
-            console.error('Error removing participant:', error);
+            console.error('Failed to remove user:', error);
         }
     };
 
@@ -248,7 +246,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                 <button
                                     type="button"
                                     className="project-management-add-button"
-                                    onClick={handleAddParticipant}
+                                    onClick={() => handleAddUser(participantInput)}
                                 >
                                     Добавить
                                 </button>
@@ -263,7 +261,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                             </div>
                                             <button
                                                 className="project-management-remove-participant-button"
-                                                onClick={() => handleRemoveParticipant(participant.username)}
+                                                onClick={() => handleRemoveUser(participant.id)}
                                             >
                                                 Удалить
                                             </button>

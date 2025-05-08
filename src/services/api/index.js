@@ -9,7 +9,12 @@ export {
   useUpdateProjectMutation,
   useDeleteProjectMutation
 } from './projectsApi';
-
+export {
+  useCreateTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
+  useMoveTaskMutation,
+} from './tasksApi';
 export {
   // Boards API
   useGetBoardsQuery,
@@ -22,11 +27,7 @@ export {
   useUpdateColumnMutation, 
   useDeleteColumnMutation,
   useReorderColumnsMutation,
-  // Tasks mutations - теперь из boardsApi
-  useCreateTaskMutation,
-  useUpdateTaskMutation,
-  useDeleteTaskMutation,
-  useMoveTaskMutation,
+
   // Tags mutations - теперь из boardsApi
   useCreateTagMutation,
   useUpdateTagMutation,

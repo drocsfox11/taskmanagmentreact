@@ -1,4 +1,4 @@
-#top-bar-container{
+.top-bar-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -13,7 +13,7 @@
     background-color: #FFFFFF;
 }
 
-#top-bar-search-container{
+.top-bar-search-container{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -24,7 +24,7 @@
     width: 250px;
 }
 
-#top-bar-search-input{
+.top-bar-search-input{
     border: none;
     outline: none;
     background: none;
@@ -35,24 +35,24 @@
 
 }
 
-#top-bar-search-input::placeholder {
+.top-bar-search-input::placeholder {
     color: #969595;
 }
 
-#top-bar-profile-container{
+.top-bar-profile-container{
     display: flex;
     gap: 20px;
     flex-direction: row;
     align-items: center;
 }
 
-#top-bar-profile-field-container{
+.top-bar-profile-field-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
 }
-#top-bar-profile-icon-container{
+.top-bar-profile-icon-container{
     width: 35px;
     height: 35px;
     background-color: #FED9D9;
@@ -62,7 +62,7 @@
     border-radius: 360px;
 }
 
-#top-bar-profile-name{
+.top-bar-profile-name{
     font-family: "Ruberoid SemiBold";
     font-size: 12px;
 }
