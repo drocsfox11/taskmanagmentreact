@@ -1,4 +1,4 @@
-#task-calendars-dashboard-container{
+.task-calendars-dashboard-container{
     display: flex;
     justify-content: space-between;
     height: 100vh;
@@ -6,7 +6,7 @@
 }
 
 
-#task-calendar-container{
+.task-calendar-container{
     background: #F3F3F3;
     width: 100%;
     display: flex;
@@ -14,7 +14,7 @@
 }
 
 
-#task-calendar-add-bar-container{
+.task-calendar-add-bar-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -29,14 +29,14 @@
     border-right: none;
 }
 
-#task-calendar-add-bar-label{
+.task-calendar-add-bar-label{
 
     font-family: 'Ruberoid Bold';
     font-size: 28px;
 
 }
 
-#task-calendar-add-bar-add-button{
+.task-calendar-add-bar-add-button{
     background-color: #5558FF;
     border-radius: 5px;
     padding: 18px 15px;
@@ -49,7 +49,7 @@
 
 
 
-#task-calendar-cards-containeres{
+.task-calendar-cards-containeres{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -58,7 +58,7 @@
     overflow-y: auto;
 }
 
-#task-calendar-card-column{
+.task-calendar-card-column{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -66,7 +66,7 @@
     gap: 20px;
 }
 
-#task-calendar-card-column-topbar{
+.task-calendar-card-column-topbar{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -74,7 +74,7 @@
     width: 100%;
 }
 
-#task-calendar-card-column-topbar-label-container{
+.task-calendar-card-column-topbar-label-container{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -82,26 +82,26 @@
     gap: 10px;
 }
 
-#task-calendar-card-column-topbar-label-name-container{
+.task-calendar-card-column-topbar-label-name-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 2px;
 }
 
-#task-calendar-card-column-topbar-label-name-circle{
+.task-calendar-card-column-topbar-label-name-circle{
     width: 7px;
     height: 7px;
     background-color: #E58466;
     border-radius: 360px;
 }
 
-#task-calendar-card-column-topbar-label-name-text{
+.task-calendar-card-column-topbar-label-name-text{
     font-family: 'Ruberoid Bold';
     font-size: 12px;
 }
 
-#task-calendar-card-column-topbar-label-name-task-counter{
+.task-calendar-card-column-topbar-label-name-task-counter{
     padding: 5px 8px;
     background-color: #FFFFFF;
     border-radius: 15px;
@@ -113,7 +113,7 @@
 
 
 
-#task-calendar-icon-container{
+.task-calendar-icon-container{
     background-color: #D9EDFE;
     width: 40px;
     height: 40px;
@@ -123,7 +123,7 @@
     border-radius: 5px;
 }
 
-#task-calendar-icon-row-container{
+.task-calendar-icon-row-container{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -131,7 +131,7 @@
     gap: 20px;
 }
 
-#task-calendar-label-container{
+.task-calendar-label-container{
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -140,27 +140,27 @@
 
 
 
-#task-calendar-progress-container{
+.task-calendar-progress-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 20px;
 }
 
-#task-calendar-progress-bar{
+.task-calendar-progress-bar{
     background: linear-gradient(270deg, #ECECEC 79.88%, #5558FF 79.89%);
     border-radius: 5px;
     height: 7px;
     width: 30%;
 }
 
-#task-calendar-progress-text{
+.task-calendar-progress-text{
     font-family: "Ruberoid Regular";
     font-size: 10px;
     color:#969595;
 }
 
-#task-calendar-label-container-header{
+.task-calendar-label-container-header{
 
     font-family: "Ruberoid Semi Bold";
     font-size: 14px;
@@ -168,26 +168,26 @@
 
 }
 
-#task-calendar-button-and-people-container{
+.task-calendar-button-and-people-container{
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 30px;
 }
 
-#task-calendar-people{
+.task-calendar-people{
     display: flex;
     flex-direction: row;
     align-items: center;
 }
 
-#task-calendar-people > * {
+.task-calendar-people > * {
     margin-left: -13px;
 }
 
 
 
-#task-calendar-people-item{
+.task-calendar-people-item{
     width: 35px;
     height: 35px;
     display: flex;
@@ -200,7 +200,7 @@
     border-style: solid;
 }
 
-#task-calendar-people-item-more{
+.task-calendar-people-item-more{
     width: 35px;
     height: 35px;
     display: flex;
@@ -217,7 +217,7 @@
     text-align: center;
 }
 
-#task-calendar-add-task-button{
+.task-calendar-add-task-button{
     width: 100%;
     background: #FFFFFF;
     border-width: 0.7px;
@@ -228,20 +228,20 @@
 
 
 }
-#task-calendar-add-task-button-text{
+.task-calendar-add-task-button-text{
     color:#5558FF;
     font-family: 'Ruberoid Bold';
     font-size: 12px;
     margin: 18px 15px;
 }
 
-#task-calendar-cards-container{
+.task-calendar-cards-container{
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-#task-calendar-weekpicker-bar-container{
+.task-calendar-weekpicker-bar-container{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -256,7 +256,7 @@
     border-right: none;
 }
 
-#task-calendar-cards-month-dropdown-container{
+.task-calendar-cards-month-dropdown-container{
     display: flex;
     flex-direction: row;
     gap: 8px;
@@ -268,19 +268,19 @@
     border-radius: 8px;
 }
 
-#task-calendar-cards-month-dropdown-month{
+.task-calendar-cards-month-dropdown-month{
     font-family: 'Ruberoid Medium';
     font-size: 10px;
 }
 
-#task-calendar-cards-week-pagination-container{
+.task-calendar-cards-week-pagination-container{
     display: flex;
     flex-direction: row;
     gap: 10px;
     align-items: center;
 }
 
-#task-calendar-cards-week-pagination-left, #task-calendar-cards-week-pagination-right, #task-calendar-cards-week-pagination-current-week{
+.task-calendar-cards-week-pagination-left, .task-calendar-cards-week-pagination-right, .task-calendar-cards-week-pagination-current-week{
     border-width: 0.7px;
     border-color: #DBDBDB;
     border-style: solid;
@@ -291,7 +291,7 @@
     align-items: center;
 }
 
-#task-calendar-cards-week-pagination-current-week{
+.task-calendar-cards-week-pagination-current-week{
     font-family: 'Ruberoid Medium';
     font-size: 10px;
 }
