@@ -3,9 +3,8 @@ import ProjectCard from "../components/ProjectCard";
 import '../styles/pages/ProjectDashboard.css'
 import {useNavigate} from "react-router-dom";
 import {useState, useRef, useEffect} from "react";
-import { useGetProjectsQuery, useCreateProjectMutation, useUpdateProjectMutation } from '../services/api/projectsApi';
+import { useGetProjectsQuery, useCreateProjectMutation } from '../services/api/projectsApi';
 import CloseCross from '../assets/icons/close_cross.svg';
-import Girl from '../assets/icons/girl.svg';
 import LoadingSpinner from "../components/LoadingSpinner";
 
 
@@ -13,10 +12,7 @@ function ProjectDashboard() {
     const navigate = useNavigate();
     const { data: projects = [], isLoading } = useGetProjectsQuery();
     const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
-    const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalMode, setModalMode] = useState('create'); // 'create' | 'edit'
-    const [editProject, setEditProject] = useState(null);
     const modalRef = useRef(null);
 
     console.log(projects);
@@ -26,16 +22,9 @@ function ProjectDashboard() {
     };
 
     const handleAddProjectClick = () => {
-        setModalMode('create');
-        setEditProject(null);
         setIsModalOpen(true);
     };
 
-    const handleEditProject = (project) => {
-        setModalMode('edit');
-        setEditProject(project);
-        setIsModalOpen(true);
-    };
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
@@ -58,19 +47,11 @@ function ProjectDashboard() {
         };
     }, [isModalOpen]);
 
-    // Форма создания/редактирования
     const [form, setForm] = useState({ title: '', description: '' });
     
     useEffect(() => {
-        if (modalMode === 'edit' && editProject) {
-            setForm({
-                title: editProject.title || '',
-                description: editProject.description || '',
-            });
-        } else {
-            setForm({ title: '', description: '' });
-        }
-    }, [modalMode, editProject, isModalOpen]);
+        setForm({ title: '', description: '' });
+    }, [isModalOpen]);
 
     const handleFormChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -78,25 +59,15 @@ function ProjectDashboard() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Format the data for the API
         const projectData = {
             title: form.title,
             description: form.description,
         };
         
-        if (modalMode === 'create') {
-            try {
-                await createProject(projectData).unwrap();
-            } catch (err) {
-                console.error('Failed to create project:', err);
-            }
-        } else if (modalMode === 'edit' && editProject) {
-            try {
-                await updateProject({ id: editProject.id, ...projectData }).unwrap();
-            } catch (err) {
-                console.error('Failed to update project:', err);
-            }
+        try {
+            await createProject(projectData).unwrap();
+        } catch (err) {
+            console.error('Failed to create project:', err);
         }
         setIsModalOpen(false);
     };
@@ -111,7 +82,7 @@ function ProjectDashboard() {
                 </div>
             </div>
             <div className='project-dashboard-cards-container'>
-                {(isLoading || isCreating || isUpdating) && <LoadingSpinner />}
+                {(isLoading || isCreating) && <LoadingSpinner />}
 
                 <div className='project-dashboard-card-row'>
                     {projects.map(project => (
@@ -119,7 +90,6 @@ function ProjectDashboard() {
                             key={project.id}
                             project={project}
                             onClick={() => handleRedirect(project.id)}
-                            onEdit={() => handleEditProject(project)}
                         />
                     ))}
                 </div>
@@ -130,7 +100,7 @@ function ProjectDashboard() {
                 <div className="create-project-modal-overlay">
                     <form className="create-project-modal" ref={modalRef} onSubmit={handleSubmit}>
                         <div className="create-task-modal-header">
-                            <div className="create-project-modal-title">{modalMode === 'edit' ? 'Редактирование' : 'Создать проект'}</div>
+                            <div className="create-project-modal-title">Создать проект</div>
                             <img src={CloseCross} alt="close" className="create-task-modal-close" onClick={handleCloseModal}/>
                         </div>
                         
@@ -160,11 +130,9 @@ function ProjectDashboard() {
                         <button 
                             type="submit" 
                             className="create-project-modal-submit-button"
-                            disabled={isCreating || isUpdating}
+                            disabled={isCreating}
                         >
-                            {modalMode === 'edit' 
-                                ? (isUpdating ? 'Сохранение...' : 'Сохранить') 
-                                : (isCreating ? 'Создание...' : 'Создать')}
+                            {isCreating ? 'Создание...' : 'Создать'}
                         </button>
                     </form>
                 </div>

@@ -86,8 +86,8 @@ function ProjectCard({ project, onClick }) {
             )}
             
             {isManagementModalOpen && (
-                <ProjectManagementModal 
-                    project={project} 
+                <ProjectManagementModal
+                    projectId={project.id}
                     onClose={() => setIsManagementModalOpen(false)}
                 />
             )}

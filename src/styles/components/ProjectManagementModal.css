@@ -801,4 +801,379 @@ button.create-project-modal-add-button:hover {
     background-color: #f5f5f5;
     border-top: 1px solid #e0e0e0;
     text-align: center;
+}
+
+/* Styles for invitations tab */
+.invitations-section {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.invitations-section h3 {
+    font-family: 'Ruberoid Bold', sans-serif;
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 5px;
+    margin-top: 15px;
+}
+
+.invitation-list-header {
+    margin-top: 30px;
+}
+
+.project-management-invitations {
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 6px;
+    border: 1px solid #DBDBDB;
+    background-color: #FFFFFF;
+}
+
+.invitations-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invitations-table th,
+.invitations-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #DBDBDB;
+}
+
+.invitations-table th {
+    background-color: #F5F5F5;
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    font-size: 14px;
+    color: #333;
+}
+
+.invitations-table tr:last-child td {
+    border-bottom: none;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #DBDBDB;
+    object-fit: cover;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    display: inline-block;
+}
+
+.status-pending {
+    background-color: #FFF3CD;
+    color: #856404;
+}
+
+.status-accepted {
+    background-color: #D4EDDA;
+    color: #155724;
+}
+
+.status-rejected {
+    background-color: #F8D7DA;
+    color: #721C24;
+}
+
+.status-cancelled {
+    background-color: #E2E3E5;
+    color: #383D41;
+}
+
+.cancel-invitation-button {
+    background-color: #F8D7DA;
+    color: #721C24;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    transition: background-color 0.3s;
+}
+
+.cancel-invitation-button:hover {
+    background-color: #E5C3C6;
+}
+
+.loading-message,
+.no-invitations-message {
+    padding: 15px;
+    text-align: center;
+    color: #6c757d;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+}
+
+/* Updated styles for participants tab */
+.participant-item.owner {
+    background-color: #F0F4FF;
+}
+
+.participant-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.participant-name {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333;
+}
+
+.participant-role {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #666;
+}
+
+.remove-participant-button {
+    background-color: #F8D7DA;
+    color: #721C24;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    transition: background-color 0.3s;
+}
+
+.remove-participant-button:hover {
+    background-color: #E5C3C6;
+}
+
+.no-participants-message {
+    padding: 15px;
+    text-align: center;
+    color: #6c757d;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    margin-top: 10px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+}
+
+/* Стили для настройки прав в разделе "Участники" */
+.permissions-layout {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+    min-height: 400px;
+}
+
+.participants-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.permission-settings {
+    flex: 2;
+    padding: 0 10px;
+    border-left: 1px solid #eaeaea;
+}
+
+.participant-item.selected {
+    border: 2px solid #5558FF;
+    background-color: #F0F8FF;
+}
+
+.select-participant-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex: 2;
+    color: #666;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    padding: 20px;
+    text-align: center;
+    border-left: 1px solid #eaeaea;
+}
+
+.rights-list-header {
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    font-size: 16px;
+    color: #333;
+    margin: 15px 0 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.rights-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.right-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.right-info {
+    flex: 1;
+}
+
+.right-name {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.right-description {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #666;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #5558FF;
+}
+
+input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #5558FF;
+}
+
+input:checked + .toggle-slider:before {
+    -webkit-transform: translateX(18px);
+    -ms-transform: translateX(18px);
+    transform: translateX(18px);
+}
+
+.all-boards-access-section h4 {
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    font-size: 16px;
+    color: #333;
+    margin: 15px 0 10px;
+}
+
+.back-to-participants {
+    padding: 8px 15px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.back-to-participants:hover {
+    background-color: #e0e0e0;
+}
+
+.loading-rights {
+    padding: 15px;
+    text-align: center;
+    color: #666;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+}
+
+/* Styles for kick user section */
+.kick-user-section {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #eaeaea;
+}
+
+.kick-user-section h4 {
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    font-size: 16px;
+    color: #721C24;
+    margin-bottom: 10px;
+}
+
+.kick-user-description {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.kick-user-button {
+    background-color: #F8D7DA;
+    color: #721C24;
+    border: 1px solid #f5c6cb;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.kick-user-button:hover {
+    background-color: #f1b0b7;
 } 

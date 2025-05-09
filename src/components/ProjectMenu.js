@@ -3,12 +3,9 @@ import OptionsActive from '../assets/icons/options_active.svg'
 import OptionsPassive from '../assets/icons/options_passive.svg'
 import { EmojiProvider, Emoji } from "react-apple-emojis"
 import emojiData from "react-apple-emojis/src/data.json"
-import Man from "../assets/icons/man.svg"
-import Man2 from "../assets/icons/man2.svg"
 import Girl from "../assets/icons/girl.svg"
 import { useNavigate, useParams } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
-import CloseCross from '../assets/icons/close_cross.svg'
 import { useGetProjectsQuery, useGetProjectQuery } from '../services/api/projectsApi'
 
 function ProjectMenu() {
@@ -16,17 +13,19 @@ function ProjectMenu() {
     const { projectId } = useParams();
     const currentProjectId = projectId ? Number(projectId) : null;
     
-    // Use RTK Query hooks to fetch projects
     const { data: projects = [] } = useGetProjectsQuery();
-    const { data: currentProject } = useGetProjectQuery(currentProjectId, { 
+    const { data: currentProject } = useGetProjectQuery(currentProjectId, {
         skip: !currentProjectId 
     });
-    
+    console.log(currentProject)
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const modalRef = useRef(null);
 
-    // Handle clicking outside the modal to close it
+    const displayedProjects = projects.slice(0, 4);
+    const moreProjects = projects.length > 4 ? projects.slice(4) : [];
+    const projectParticipants = currentProject? [currentProject.owner, ...((currentProject.participants) || [])] : [];
+
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -66,14 +65,13 @@ function ProjectMenu() {
 
     // Navigate to project tasks
     const handleProjectTasksClick = (id, e) => {
-        e.stopPropagation(); // Prevent the parent click handler from firing
+        e.stopPropagation();
         navigate(`/system/project/tasks/${id}`);
         setOpenDropdownId(null);
     };
 
-    // Navigate to project calendar
     const handleProjectCalendarClick = (id, e) => {
-        e.stopPropagation(); // Prevent the parent click handler from firing
+        e.stopPropagation();
         navigate(`/system/calendar/${id}`);
         setOpenDropdownId(null);
     };
@@ -87,45 +85,18 @@ function ProjectMenu() {
         setOpenDropdownId(openDropdownId === id ? null : id);
     };
 
-    // User dropdown actions
     const handleUserMessageClick = (username, e) => {
         e.stopPropagation();
-        // Navigate to messenger with this user
         navigate(`/system/messenger?user=${username}`);
         setOpenDropdownId(null);
     };
 
     const handleUserProfileClick = (username, e) => {
         e.stopPropagation();
-        // Navigate to user profile (implement this when profile page is ready)
-        // For now just close the dropdown
         setOpenDropdownId(null);
     };
 
-    // Get project participants from current project
-    const getProjectParticipants = () => {
-        if (!currentProject) return [];
-        
-        // The participants are now directly available in the project
-        // Ensure we have a valid participants array
-        const participants = currentProject.participants || [];
-        
-        // Add owner to the list if it exists and isn't already in participants
-        const allParticipants = currentProject.owner ? 
-            [currentProject.owner, ...participants] : [...participants];
-            
-        // Remove duplicates if any (based on username)
-        return allParticipants.filter((user, index, self) => 
-            index === self.findIndex((u) => u.username === user.username)
-        );
-    };
 
-    // Projects to display in the side menu (up to 4)
-    const displayedProjects = projects.slice(0, 4);
-    // Projects to display in the modal (the rest)
-    const moreProjects = projects.length > 4 ? projects.slice(4) : [];
-    // Project participants to display
-    const projectParticipants = getProjectParticipants();
 
     return (
         <div className='project-menu-container'>

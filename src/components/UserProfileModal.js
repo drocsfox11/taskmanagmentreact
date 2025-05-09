@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
-import ProfilePicture from '../assets/icons/profile_picture.svg'
 import InvitationsTab from './InvitationsTab'
 import '../styles/components/UserProfileModal.css'
-
-function UserProfileModal({ user, onClose }) {
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
+function UserProfileModal({ onClose }) {
     const [activeTab, setActiveTab] = useState('profile');
-
+    const { data: user, isLoading } = useGetCurrentUserQuery();
     if (!user) return null;
-
+    console.log(user);
     const renderContent = () => {
         switch (activeTab) {
             case 'profile':
                 return (
                     <>
                         <div className="user-profile-modal-avatar-section">
-                            <img src={user.avatar || ProfilePicture} alt="avatar" className="user-profile-modal-avatar"/>
+                            <img src={user.avatarURL} alt="avatar" className="user-profile-modal-avatar"/>
                             <button className="user-profile-modal-edit-button">Редактировать</button>
                             <button className="user-profile-modal-delete-button">Удалить</button>
                         </div>

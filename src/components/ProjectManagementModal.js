@@ -1,16 +1,33 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchUsersQuery } from '../services/api/usersApi';
-import { useAddProjectParticipantMutation, useRemoveProjectParticipantMutation } from '../services/api/projectParticipantsApi';
-import { useUpdateProjectMutation } from '../services/api/projectsApi';
+import { useRemoveProjectParticipantMutation } from '../services/api/projectParticipantsApi';
+import {
+    useUpdateProjectMutation,
+    useGrantProjectRightMutation,
+    useRevokeProjectRightMutation,
+    useGetUserRightsQuery,
+    useAddUserToAllBoardsMutation,
+    useRemoveUserFromAllBoardsMutation, useGetProjectQuery
+} from '../services/api/projectsApi';
+import { 
+    useSendInvitationMutation, 
+    useGetProjectInvitationsQuery,
+    useCancelInvitationMutation
+} from '../services/api/invitationsApi';
+import { PROJECT_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectManagementModal.css';
-import ProjectPermissionsTab from './ProjectPermissionsTab';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
 
-function ProjectManagementModal({ project, onClose, isOpen = true }) {
+function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
+    const {data: project, isLoading} = useGetProjectQuery(projectId)
+    console.log(project)
+
+    const usersOnPage = 2;
     const [activeTab, setActiveTab] = useState('info');
     const [updateProject] = useUpdateProjectMutation();
-    const [addParticipant] = useAddProjectParticipantMutation();
+    const [inviteUser] = useSendInvitationMutation();
+    const [cancelInvitation] = useCancelInvitationMutation();
     const [removeParticipant] = useRemoveProjectParticipantMutation();
     const [form, setForm] = useState({
         title: project?.title || '',
@@ -18,6 +35,24 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
     });
     const modalRef = useRef(null);
     const [inputValue, setInputValue] = useState('');
+    
+    // Состояние для прав доступа
+    const [selectedUserId, setSelectedUserId] = useState(null);
+    const [userRights, setUserRights] = useState([]);
+    const [hasAccessToAllBoards, setHasAccessToAllBoards] = useState(false);
+    const [showPermissions, setShowPermissions] = useState(false);
+    
+    // Мутации для прав доступа
+    const [grantRight] = useGrantProjectRightMutation();
+    const [revokeRight] = useRevokeProjectRightMutation();
+    const [addUserToAllBoards] = useAddUserToAllBoardsMutation();
+    const [removeUserFromAllBoards] = useRemoveUserFromAllBoardsMutation();
+    
+    // Запрос прав пользователя
+    const { data: fetchedUserRights, isLoading: isLoadingRights, refetch } = useGetUserRightsQuery(
+        { projectId: project?.id, userId: selectedUserId },
+        { skip: !selectedUserId || !showPermissions }
+    );
     
     const [searchParams, setSearchParams] = useState({
         query: '',
@@ -30,10 +65,12 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
     const timeoutRef = useRef(null);
     const [isScrollLoading, setIsScrollLoading] = useState(false);
 
+
+    console.log(project?.invitations);
     const queryArg = {
         name: searchParams.query,
         page: searchParams.page,
-        size: 2
+        size: usersOnPage
     };
 
     const { 
@@ -49,12 +86,21 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
         }
     );
 
-    console.log(searchData);
+    // Эффект для обновления прав пользователя
+    useEffect(() => {
+        if (fetchedUserRights) {
+            setUserRights(fetchedUserRights);
+            // Проверяем наличие права ACCESS_ALL_BOARDS в списке
+            setHasAccessToAllBoards(fetchedUserRights.includes(PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
+        }
+    }, [fetchedUserRights]);
+
     const users = searchData? searchData.users : [];
     const hasNextPage = searchData? searchData.hasNext : true;
 
     const filteredUsers = users.filter(user => 
-        !project?.participants?.some(participant => participant.id === user.id)
+        !project?.participants?.some(participant => participant.id === user.id) &&
+        !project?.invitations?.some(invitation => invitation.recipientId === user.id)
     );
 
     const handleScroll = useCallback(() => {
@@ -90,7 +136,7 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
         if (searchParams.query && 
             !isSearching && 
             !isFetching && 
-            filteredUsers.length === 0 && 
+            filteredUsers.length < usersOnPage &&
             hasNextPage && 
             !isScrollLoading) {
             setIsScrollLoading(true);
@@ -183,7 +229,7 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
 
     const handleAddUser = async (user) => {
         try {
-            await addParticipant({ projectId: project.id, user }).unwrap();
+            await inviteUser({ projectId: project.id, user: user }).unwrap();
             setInputValue('');
             setSearchQuery('');
             setShowSearchResults(false);
@@ -198,8 +244,22 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
                 projectId: project.id,
                 userId: userId
             }).unwrap();
+            
+            // Если удаляем пользователя, для которого показываются права, скрываем панель прав
+            if (selectedUserId === userId) {
+                setSelectedUserId(null);
+                setShowPermissions(false);
+            }
         } catch (error) {
             console.error('Failed to remove participant:', error);
+        }
+    };
+
+    const handleCancelInvitation = async (invitationId) => {
+        try {
+            await cancelInvitation({invitationId: invitationId, projectId: project.id}).unwrap();
+        } catch (error) {
+            console.error('Failed to cancel invitation:', error);
         }
     };
     
@@ -226,6 +286,96 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
         };
     }, []);
 
+    // Обработчики для прав доступа
+    const handleUserSelect = (userId) => {
+        setSelectedUserId(userId);
+        setShowPermissions(true);
+    };
+
+    const handleToggleRight = async (rightName, hasRight) => {
+        if (!selectedUserId) return;
+        
+        try {
+            if (hasRight) {
+                await revokeRight({
+                    projectId: project.id,
+                    userId: selectedUserId,
+                    rightName,
+                }).unwrap();
+            } else {
+                await grantRight({
+                    projectId: project.id,
+                    userId: selectedUserId,
+                    rightName,
+                }).unwrap();
+            }
+            
+            refetch();
+        } catch (error) {
+            console.error("Failed to update right:", error);
+        }
+    };
+
+    const handleToggleAllBoardsAccess = async (hasAccess) => {
+        if (!selectedUserId) return;
+        
+        try {
+            if (hasAccess) {
+                await removeUserFromAllBoards({
+                    projectId: project.id,
+                    userId: selectedUserId,
+                }).unwrap();
+            } else {
+                await addUserToAllBoards({
+                    projectId: project.id,
+                    userId: selectedUserId,
+                }).unwrap();
+            }
+            
+            setHasAccessToAllBoards(!hasAccess);
+            refetch(); // Refresh rights in case this impacts other rights
+        } catch (error) {
+            console.error("Failed to update board access:", error);
+        }
+    };
+
+    // Функция для преобразования статуса приглашения в читаемый текст
+    const getInvitationStatus = (status) => {
+        switch (status) {
+            case 'PENDING':
+                return 'Ожидает ответа';
+            case 'ACCEPTED':
+                return 'Принято';
+            case 'REJECTED':
+                return 'Отклонено';
+            case 'CANCELLED':
+                return 'Отменено';
+            default:
+                return 'Неизвестный статус';
+        }
+    };
+
+    // Функция для получения класса стиля в зависимости от статуса
+    const getStatusClass = (status) => {
+        switch (status) {
+            case 'PENDING':
+                return 'status-pending';
+            case 'ACCEPTED':
+                return 'status-accepted';
+            case 'REJECTED':
+                return 'status-rejected';
+            case 'CANCELLED':
+                return 'status-cancelled';
+            default:
+                return '';
+        }
+    };
+
+    // Фильтруем стандартные права проекта, исключая ACCESS_ALL_BOARDS
+    const projectRightsToDisplay = Object.values(PROJECT_RIGHTS).filter(
+        right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS
+    );
+
     if (!isOpen) return null;
 
     return (
@@ -245,20 +395,20 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
                         Информация
                     </button>
                     <button 
+                        className={`tab-button ${activeTab === 'invitations' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('invitations')}
+                    >
+                        Приглашения
+                    </button>
+                    <button 
                         className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
                         onClick={() => setActiveTab('participants')}
                     >
                         Участники
                     </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('permissions')}
-                    >
-                        Права доступа
-                    </button>
                 </div>
                 <div className="project-management-modal-content">
-                    {activeTab === 'info' ? (
+                    {activeTab === 'info' && (
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label htmlFor="title">Название проекта</label>
@@ -284,11 +434,13 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
                                 Сохранить
                             </button>
                         </form>
-                    ) : activeTab === 'participants' ? (
-                        <div className="participants-section">
-                            <h3>Участники проекта</h3>
+                    )}
+
+                    {activeTab === 'invitations' && (
+                        <div className="invitations-section">
+                            <h3>Пригласить пользователей</h3>
                             <p className="section-description">
-                                Добавьте пользователей, которые смогут работать с этим проектом
+                                Пригласите пользователей присоединиться к проекту
                             </p>
                             <div className="project-management-modal-search" ref={searchResultsRef}>
                                 <input
@@ -332,31 +484,179 @@ function ProjectManagementModal({ project, onClose, isOpen = true }) {
                                     </div>
                                 )}
                             </div>
-                            <div className="project-management-participants">
-                                {project?.participants && project.participants.length > 0 ? (
-                                    project.participants.map((participant) => (
-                                        <div key={participant.id} className="participant-item">
-                                            <div className="participant-info">
-                                                <img src={participant.avatarURL || Girl} alt={participant.name} />
-                                                <span>{participant.name}</span>
-                                            </div>
-                                            <button
-                                                className="project-management-remove-participant-button"
-                                                onClick={() => handleRemoveParticipant(participant.id)}
-                                            >
-                                                Удалить
-                                            </button>
-                                        </div>
-                                    ))
+
+                            <h3 className="invitation-list-header">Статусы приглашений</h3>
+                            <div className="project-management-invitations">
+                                {isLoading ? (
+                                    <div className="loading-message">Загрузка приглашений...</div>
+                                ) : project?.invitations.length > 0 ? (
+                                    <table className="invitations-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Пользователь</th>
+                                                <th>Статус</th>
+                                                <th>Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {project?.invitations.map((invitation) => (
+                                                <tr key={invitation.id}>
+                                                    <td className="user-cell">
+                                                        <img 
+                                                            src={invitation.recipient?.avatarURL || Girl} 
+                                                            alt={invitation.recipient?.name} 
+                                                            className="user-avatar"
+                                                        />
+                                                        <span>{invitation.recipient?.name || invitation.recipientId}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`status-badge ${getStatusClass(invitation.status)}`}>
+                                                            {getInvitationStatus(invitation.status)}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {invitation.status === 'PENDING' && (
+                                                            <button
+                                                                className="cancel-invitation-button"
+                                                                onClick={() => handleCancelInvitation(invitation.id)}
+                                                            >
+                                                                Отменить
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 ) : (
-                                    <div className="project-management-no-participants-message">
-                                        Нет участников
+                                    <div className="no-invitations-message">
+                                        Нет приглашений
                                     </div>
                                 )}
                             </div>
                         </div>
-                    ) : (
-                        <ProjectPermissionsTab project={project} />
+                    )}
+
+                    {activeTab === 'participants' && (
+                        <div className="participants-section">
+                            <h3>Участники проекта</h3>
+                            
+                            <div className="permissions-layout">
+                                <div className="participants-list">
+                                    {project?.owner && (
+                                        <div className={`participant-item owner ${selectedUserId === project.owner.id ? 'selected' : ''}`} 
+                                             onClick={() => handleUserSelect(project.owner.id)}>
+                                            <div className="participant-info">
+                                                <img src={project.owner.avatarURL || Girl} alt={project.owner.name} />
+                                                <div className="participant-details">
+                                                    <span className="participant-name">{project.owner.name}</span>
+                                                    <span className="participant-role">Владелец проекта</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {project?.participants && project.participants.length > 0 ? (
+                                        project.participants.map((participant) => (
+                                            <div 
+                                                key={participant.id} 
+                                                className={`participant-item ${selectedUserId === participant.id ? 'selected' : ''}`}
+                                                onClick={() => handleUserSelect(participant.id)}
+                                            >
+                                                <div className="participant-info">
+                                                    <img src={participant.avatarURL || Girl} alt={participant.name} />
+                                                    <span className="participant-name">{participant.name}</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="no-participants-message">
+                                            Нет участников
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {showPermissions && selectedUserId && (
+                                    <div className="permission-settings">
+                                        <h4>Права пользователя {project?.participants?.find(p => p.id === selectedUserId)?.name || project?.owner?.name}</h4>
+                                        
+                                        {isLoadingRights ? (
+                                            <div className="loading-rights">Загрузка прав...</div>
+                                        ) : (
+                                            <>
+                                                <div className="rights-list-header">Права проекта</div>
+                                                <div className="rights-list">
+                                                    {projectRightsToDisplay.map((rightName) => {
+                                                        const hasRight = userRights.includes(rightName);
+                                                        return (
+                                                            <div key={rightName} className="right-item">
+                                                                <div className="right-info">
+                                                                    <div className="right-name">{rightName}</div>
+                                                                    <div className="right-description">{RIGHT_DESCRIPTIONS[rightName]}</div>
+                                                                </div>
+                                                                <label className="toggle-switch">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={hasRight}
+                                                                        onChange={() => handleToggleRight(rightName, hasRight)}
+                                                                    />
+                                                                    <span className="toggle-slider"></span>
+                                                                </label>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                
+                                                <div className="all-boards-access-section">
+                                                    <h4>Доступ ко всем доскам</h4>
+                                                    <div className="right-item">
+                                                        <div className="right-info">
+                                                            <div className="right-name">Доступ ко всем доскам</div>
+                                                            <div className="right-description">
+                                                                Предоставляет доступ ко всем доскам проекта
+                                                            </div>
+                                                        </div>
+                                                        <label className="toggle-switch">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={hasAccessToAllBoards}
+                                                                onChange={() => handleToggleAllBoardsAccess(hasAccessToAllBoards)}
+                                                            />
+                                                            <span className="toggle-slider"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                {/* Кнопка "Выгнать" в панели настройки прав */}
+                                                {selectedUserId !== project?.owner?.id && (
+                                                    <div className="kick-user-section">
+                                                        <h4>Удаление из проекта</h4>
+                                                        <div className="kick-user-description">
+                                                            После удаления участник потеряет доступ ко всем ресурсам проекта
+                                                        </div>
+                                                        <button
+                                                            className="kick-user-button"
+                                                            onClick={() => handleRemoveParticipant(selectedUserId)}
+                                                        >
+                                                            Выгнать участника
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                        <button className="back-to-participants" onClick={() => setShowPermissions(false)}>
+                                            ← Назад к списку
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                {!showPermissions && (
+                                    <div className="select-participant-prompt">
+                                        <p>Выберите участника для управления правами</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

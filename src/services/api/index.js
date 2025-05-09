@@ -43,9 +43,7 @@ export {
   useGetMyPendingInvitationsQuery
 } from './invitationsApi';
 
-// Эти хуки все еще могут быть полезны отдельно, но мы их не экспортируем напрямую в *.js файлах
-// вместо этого используем именованный импорт из соответствующих файлов при необходимости
-// например: import { useGetColumnsQuery } from '../services/api/columnsApi';
+
 
 // API пользователей
 export * from './usersApi';

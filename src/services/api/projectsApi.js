@@ -16,9 +16,6 @@ export const projectsApi = baseApi.injectEndpoints({
     getProject: builder.query({
       query: (id) => ({url:`${apiPrefix}/${id}`}),
       providesTags: (result, error, id) => [{ type: 'Projects', id }],
-      transformResponse: (response) => {
-        return response;
-      },
       keepUnusedDataFor: 2,
     }),
     createProject: builder.mutation({
@@ -37,7 +34,6 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Projects', id }],
       async onQueryStarted({ id, ...updates }, { dispatch, queryFulfilled }) {
-        // Оптимистично обновляем UI
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
             const project = draft.find(p => p.id === id);

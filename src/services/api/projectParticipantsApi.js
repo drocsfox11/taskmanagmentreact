@@ -12,12 +12,9 @@ export const projectParticipantsApi = baseApi.injectEndpoints({
       async onQueryStarted({ projectId, user }, { dispatch, queryFulfilled, getState }) {
 
         const patchResult = dispatch(
-          baseApi.util.updateQueryData('getProjects', undefined,(draft) => {
+          baseApi.util.updateQueryData('getProject', projectId,(draft) => {
             console.log('Inside update draft before:', draft);
-            const project = draft.find(p => p.id === projectId);
-            if (project && !project.participants.some(p => p.id === user.id)) {
-              project.participants.push(user);
-            }
+              draft.participants.push(user);
             console.log('Inside update draft after:', draft);
           })
         );
@@ -37,11 +34,8 @@ export const projectParticipantsApi = baseApi.injectEndpoints({
       async onQueryStarted({ projectId, userId }, { dispatch, queryFulfilled, getState }) {
 
         const patchResult = dispatch(
-          baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
-            const project = draft.find(p => p.id === projectId);
-            if (project && project.participants) {
-              project.participants = project.participants.filter(p => p.id !== userId);
-            }
+          baseApi.util.updateQueryData('getProject', projectId, (draft) => {
+              draft.participants = draft.participants.filter(p => p.id !== userId);
           })
         );
 
@@ -50,10 +44,7 @@ export const projectParticipantsApi = baseApi.injectEndpoints({
         } catch {
           patchResult.undo();
         }
-      },
-      invalidatesTags: (result, error, { projectId }) => [
-        { type: 'Projects', id: projectId }
-      ],
+      }
     }),
   }),
 });

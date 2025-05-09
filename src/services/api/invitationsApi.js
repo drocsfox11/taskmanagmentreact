@@ -5,12 +5,50 @@ const apiPrefix = 'api/invitations';
 export const invitationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     sendInvitation: builder.mutation({
-      query: ({ recipientId, projectId }) => ({
+      query: ({ user, projectId }) => ({
         url: `${apiPrefix}/send`,
         method: 'POST',
-        params: { recipientId, projectId },
+        params: { recipientId: user.id, projectId },
       }),
-      invalidatesTags: ['Invitations'],
+      async onQueryStarted({ projectId, user }, { dispatch, queryFulfilled }) {
+        const tempId = 'temp-' + Date.now();
+        
+        const tempInvitation = {
+          id: tempId,
+          projectId,
+          recipient: user,
+          status: 'PENDING',
+          createdAt: new Date().toISOString()
+        };
+        
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getProject', projectId, (draft) => {
+            draft.invitations.push(tempInvitation);
+          })
+        );
+
+        try {
+          const { data } = await queryFulfilled;
+          
+          dispatch(
+            baseApi.util.updateQueryData('getProject', projectId, (draft) => {
+              const index = draft.invitations.findIndex(inv => inv.id === tempId);
+              if (index !== -1) {
+                draft.invitations[index] = {
+                  ...draft[index],
+                  id: data.id,
+                  status: data.status,
+                  createdAt: data.createdAt,
+                  senderId: data.senderId,
+                  ...data
+                };
+              }
+            })
+          );
+        } catch (error) {
+          patchResult.undo();
+        }
+      },
     }),
     acceptInvitation: builder.mutation({
       query: (invitationId) => ({
@@ -26,6 +64,29 @@ export const invitationsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Invitations'],
     }),
+    cancelInvitation: builder.mutation({
+      query: ({invitationId, projectId}) => ({
+        url: `${apiPrefix}/${invitationId}/cancel`,
+        method: 'POST',
+      }),
+      async onQueryStarted({ invitationId, projectId }, { dispatch, queryFulfilled }) {
+
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getProject', projectId, (draft) => {
+            const index = draft.invitations.findIndex(invitation => invitation.id === invitationId);
+            if (index !== -1) {
+              draft.invitations.splice(index, 1);
+            }
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          patchResult.undo();
+        }
+      },
+    }),
     getMyInvitations: builder.query({
       query: () => ({url: `${apiPrefix}/my`}),
       providesTags: ['Invitations'],
@@ -34,6 +95,11 @@ export const invitationsApi = baseApi.injectEndpoints({
       query: () => ({url:`${apiPrefix}/my/pending`}),
       providesTags: ['Invitations'],
     }),
+    getProjectInvitations: builder.query({
+      query: (projectId) => ({url:`${apiPrefix}/project/${projectId}`}),
+      providesTags: ['ProjectInvitations'],
+      keepUnusedDataFor: 2,
+    }),
   }),
 });
 
@@ -41,6 +107,8 @@ export const {
   useSendInvitationMutation,
   useAcceptInvitationMutation,
   useRejectInvitationMutation,
+  useCancelInvitationMutation,
   useGetMyInvitationsQuery,
   useGetMyPendingInvitationsQuery,
-} = invitationsApi; 
+  useGetProjectInvitationsQuery,
+} = invitationsApi;
