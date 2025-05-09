@@ -9,7 +9,7 @@ import OptionsPassive from "../assets/icons/options_passive.svg";
 import CloseCross from "../assets/icons/cross for task.svg";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import AddSectionModal from "../components/AddSectionModal";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import CreateTaskModal from "../components/CreateTaskModal";
@@ -53,7 +53,26 @@ function TaskDashboard() {
     const [reorderColumns] = useReorderColumnsMutation();
     const [moveTask] = useMoveTaskMutation();
     
-    const columns = [...(boardWithData?.columns || [])].sort((a, b) => a.position - b.position);
+    // Filter out duplicate columns and sort them by position
+    const columns = useMemo(() => {
+        if (!boardWithData?.columns) return [];
+        
+        // Create a map to track columns by ID to remove duplicates
+        const columnMap = new Map();
+        
+        // Process all columns and keep only the latest version of each column
+        boardWithData.columns.forEach(column => {
+            const id = column.id || column.columnId;
+            if (id) {
+                columnMap.set(id, column);
+            }
+        });
+        
+        // Convert map back to array and sort by position
+        return Array.from(columnMap.values())
+            .sort((a, b) => a.position - b.position);
+    }, [boardWithData?.columns]);
+    
     console.log('Колонки в компоненте:', columns);
     console.log('ID доски:', boardId);
     
@@ -151,7 +170,7 @@ function TaskDashboard() {
             
             // Обновляем позиции всех колонок
             const updatedColumns = newColumns.map((col, index) => ({
-                id: col.id,
+                id: col.id || col.columnId,
                 position: index
             }));
             
@@ -321,7 +340,7 @@ function TaskDashboard() {
                         {(provided) => (
                             <div className='task-dashboard-cards-containeres' ref={provided.innerRef} {...provided.droppableProps}>
                                 {columns.map((column, index) => (
-                                    <Draggable key={column.id} draggableId={String(column.id)} index={index} type="column">
+                                    <Draggable key={column.id || column.columnId} draggableId={String(column.id || column.columnId)} index={index} type="column">
                                         {(provided, snapshot) => (
                                             <div
                                                 ref={provided.innerRef}
@@ -334,7 +353,7 @@ function TaskDashboard() {
                                             >
                                                 <TaskColumn 
                                                     column={column} 
-                                                    onAddTask={() => handleOpenTaskModal(column.id)} 
+                                                    onAddTask={() => handleOpenTaskModal(column.id || column.columnId)} 
                                                     onTaskClick={task => { setSelectedTask(task); setIsTaskInfoOpen(true); }}
                                                     updateColumn={updateColumn}
                                                     deleteColumn={deleteColumn}
@@ -443,7 +462,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     
-    const columnId = column?.id;
+    const columnId = column?.id || column?.columnId;
     const tasks = column?.tasks || [];
     const taskCount = tasks.length;
     
@@ -481,13 +500,22 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
 
     const handleDeleteColumn = () => {
         if (window.confirm("Вы уверены, что хотите удалить раздел? Все задачи в этом разделе также будут удалены.")) {
+            console.log('Deleting column with params:', { 
+                columnId: columnId, 
+                boardId: column.boardId 
+            });
+            
             deleteColumn({ 
-                id: columnId,
+                columnId: columnId,
                 boardId: column.boardId
             })
                 .unwrap()
+                .then(result => {
+                    console.log('Column deleted successfully:', result);
+                })
                 .catch(error => {
                     console.error('Failed to delete column:', error);
+                    console.error('Error details:', JSON.stringify(error));
                 });
         }
         setIsModalOpen(false);
@@ -496,7 +524,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     const handleUpdateColumn = () => {
         if (editColumnName.trim()) {
             updateColumn({ 
-                id: columnId,
+                columnId: columnId,
                 boardId: column.boardId,
                 title: editColumnName,
                 name: editColumnName,

@@ -22,16 +22,26 @@ function TaskCard({ task, onClick }) {
     const [updateTask] = useUpdateTaskMutation();
     
     // Получаем данные пользователей из Redux
-    const usersByUsername = useSelector(state => state.users.byUsername);
+    const usersByUsername = useSelector(state => state.users?.byUsername || {});
+    
+    // Функция для получения имени пользователя из разных форматов данных
+    const getUsernameFromParticipant = (participant) => {
+        if (typeof participant === 'string') {
+            return participant;
+        } else if (participant) {
+            return participant.username || participant.name || '';
+        }
+        return '';
+    };
     
     // Загружаем данные пользователей при монтировании компонента
     useEffect(() => {
         if (task?.participants && task.participants.length > 0) {
             task.participants.forEach(participant => {
-                // Проверяем тип участника - может быть строкой или объектом
-                const username = typeof participant === 'string' ? participant : participant.username;
+                // Получаем имя пользователя
+                const username = getUsernameFromParticipant(participant);
                 
-                if (username && !usersByUsername[username]) {
+                if (username && usersByUsername && !usersByUsername[username]) {
                     console.log('Запрашиваем данные пользователя:', username);
                     dispatch({ type: 'users/fetchUser', payload: username });
                 }
@@ -111,14 +121,14 @@ function TaskCard({ task, onClick }) {
     const checklistProgress = totalChecklist > 0 ? `${completedChecklist}/${totalChecklist}` : '0/0';
     
     return (
-        <div id='task-card-container' ref={cardRef} style={{ position: 'relative' }} onClick={handleCardClick}>
-            <div id='task-card-label-container'>
+        <div className='task-card-container' ref={cardRef} style={{ position: 'relative' }} onClick={handleCardClick}>
+            <div className='task-card-label-container'>
                 {task.tag ? (
-                    <div id='task-card-label-background' style={{ backgroundColor: task.tag.color }}>
+                    <div className='task-card-label-background' style={{ backgroundColor: task.tag.color }}>
                         {task.tag.name}
                     </div>
                 ) : (
-                    <div id='task-card-label-background' style={{ backgroundColor: '#E0E0E0', color: '#666666' }}>
+                    <div className='task-card-label-background' style={{ backgroundColor: '#E0E0E0', color: '#666666' }}>
                         Без тега
                     </div>
                 )}
@@ -128,29 +138,43 @@ function TaskCard({ task, onClick }) {
                 </div>
             </div>
 
-            <div id='task-card-text-info-container'>
-                <div id='task-card-text-info-header'>{task.title}</div>
-                <div id='task-card-text-info-text'>{task.description}</div>
+            <div className='task-card-text-info-container'>
+                <div className='task-card-text-info-header'>{task.title}</div>
+                <div className='task-card-text-info-text'>{task.description}</div>
             </div>
 
-            <div id='task-card-points-list'>
-                <img src={TaskListIcon} id='task-card-points-list-icon' alt="Checklist"/>
-                <div id='task-card-points-list-counter'>{checklistProgress}</div>
+            <div className='task-card-points-list'>
+                <img src={TaskListIcon} className='task-card-points-list-icon' alt="Checklist"/>
+                <div className='task-card-points-list-counter'>{checklistProgress}</div>
             </div>
 
-            <div id='task-card-delimiter'></div>
+            <div className='task-card-delimiter'></div>
 
-            <div id='task-card-down-container' style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 13 }}>
+            <div className='task-card-down-container'>
                 {/* Участники */}
                 {task.participants && task.participants.length > 0 && (
-                    <div id="task-card-people">
+                    <div className="task-card-people">
                         {task.participants.slice(0, 4).map((participant, index) => {
-                            const username = typeof participant === 'string' ? participant : participant.username;
-                            const user = usersByUsername[username];
+                            // Получаем имя пользователя
+                            const username = getUsernameFromParticipant(participant);
+                            
+                            // Определяем URL аватарки
+                            let avatarURL;
+                            if (typeof participant === 'object' && participant && participant.avatarURL) {
+                                // Если у объекта участника есть аватарка, используем её
+                                avatarURL = participant.avatarURL;
+                            } else if (usersByUsername[username]) {
+                                // Иначе ищем в Redux store
+                                avatarURL = usersByUsername[username].avatarURL;
+                            } else {
+                                // Если нигде нет, генерируем по имени
+                                avatarURL = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+                            }
+                            
                             return (
-                                <div id="task-card-people-item" key={index} title={username}>
+                                <div className="task-card-people-item" key={index} title={username}>
                                     <img 
-                                        src={user?.avatarURL || Girl} 
+                                        src={avatarURL || Girl} 
                                         alt={username}
                                         style={{ 
                                             width: '100%', 
@@ -163,7 +187,7 @@ function TaskCard({ task, onClick }) {
                             );
                         })}
                         {task.participants.length > 4 && (
-                            <div id="task-card-people-item-more">
+                            <div className="task-card-people-item-more">
                                 +{task.participants.length - 4}
                             </div>
                         )}
@@ -172,14 +196,14 @@ function TaskCard({ task, onClick }) {
                 {/* Spacer для выравнивания справа */}
                 <div style={{ flexGrow: 1 }}></div>
                 {/* Комментарии и вложения */}
-                <div id='task-card-misc-info-container'>
-                    <div id='task-card-misc-info-row'>
+                <div className='task-card-misc-info-container'>
+                    <div className='task-card-misc-info-row'>
                         <img src={CommentIcon} alt="Comments"/>
-                        <div id='task-card-misc-info-row-text'>0</div>
+                        <div className='task-card-misc-info-row-text'>0</div>
                     </div>
-                    <div id='task-card-misc-info-row'>
+                    <div className='task-card-misc-info-row'>
                         <img src={Clip} alt="Attachments"/>
-                        <div id='task-card-misc-info-row-text'>{task.attachments?.length || 0}</div>
+                        <div className='task-card-misc-info-row-text'>{task.attachments?.length || 0}</div>
                     </div>
                 </div>
             </div>

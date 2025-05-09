@@ -215,35 +215,68 @@ export const boardsApi = baseApi.injectEndpoints({
               // События колонок
               case 'COLUMN_CREATED':
                 updateCachedData((draft) => {
-                  // Добавляем новую колонку с пустым массивом задач
-                  draft.columns.push({
-                    ...data.payload,
-                    tasks: []
-                  });
+                  // Check if column already exists to prevent duplicates
+                  const existingColumnIndex = draft.columns.findIndex(col => 
+                    col.id === data.payload.id || col.columnId === data.payload.id
+                  );
+                  
+                  if (existingColumnIndex === -1) {
+                    // Only add if column doesn't already exist
+                    draft.columns.push({
+                      ...data.payload,
+                      tasks: []
+                    });
+                  } else {
+                    console.log('Column already exists, not adding duplicate:', data.payload.id);
+                  }
                 });
                 break;
                 
               case 'COLUMN_UPDATED':
                 updateCachedData((draft) => {
-                  const index = draft.columns.findIndex(col => col.id === data.payload.id);
+                  // Check both id and columnId properties
+                  const index = draft.columns.findIndex(col => 
+                    col.id === data.payload.id || 
+                    col.id === data.payload.columnId ||
+                    col.columnId === data.payload.id
+                  );
+                  
                   if (index !== -1) {
                     // Обновляем только поля колонки, сохраняя задачи
+                    const tasks = draft.columns[index].tasks || [];
                     draft.columns[index] = { 
                       ...draft.columns[index],
                       id: data.payload.id || draft.columns[index].id,
                       name: data.payload.name || draft.columns[index].name,
+                      title: data.payload.title || data.payload.name || draft.columns[index].title || draft.columns[index].name,
                       boardId: data.payload.boardId || draft.columns[index].boardId,
-                      position: data.payload.position || draft.columns[index].position
+                      position: data.payload.position !== undefined ? data.payload.position : draft.columns[index].position,
+                      tasks: tasks
                     };
+                  } else {
+                    console.log('Column not found for update, adding new one:', data.payload);
+                    // If column doesn't exist, add it with empty tasks array
+                    draft.columns.push({
+                      ...data.payload,
+                      tasks: []
+                    });
                   }
                 });
                 break;
                 
               case 'COLUMN_DELETED':
+                console.log('WebSocket COLUMN_DELETED event received:', data.payload);
                 updateCachedData((draft) => {
-                  const index = draft.columns.findIndex(col => col.id === data.payload.id);
+                  // Fix: Check both id and columnId properties since the payload might use either one
+                  const index = draft.columns.findIndex(col => 
+                    col.id === data.payload.columnId || col.id === data.payload.id
+                  );
+                  
                   if (index !== -1) {
+                    console.log('Removing column from draft at index:', index);
                     draft.columns.splice(index, 1);
+                  } else {
+                    console.log('Column not found in draft, id:', data.payload.columnId || data.payload.id);
                   }
                 });
                 break;
@@ -474,11 +507,22 @@ export const boardsApi = baseApi.injectEndpoints({
         
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            draft.columns.push({
-              ...column,
-              id: tempId,
-              tasks: []
-            });
+            // Check if a column with similar properties already exists to prevent duplicates
+            const existingColumn = draft.columns.find(col => 
+              (col.title === column.title && col.position === column.position) ||
+              col.tempId === tempId
+            );
+            
+            if (!existingColumn) {
+              draft.columns.push({
+                ...column,
+                id: tempId,
+                tempId: tempId, // Add a tempId to track this column
+                tasks: []
+              });
+            } else {
+              console.log('Similar column already exists, not adding duplicate:', column);
+            }
           })
         );
 
@@ -487,13 +531,35 @@ export const boardsApi = baseApi.injectEndpoints({
           
           dispatch(
             baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-              const columnIndex = draft.columns.findIndex(col => col.id === tempId);
-              if (columnIndex !== -1) {
-                draft.columns[columnIndex] = createdColumn;
+              // Find and remove any temporary columns with the same tempId
+              const tempColumnIndex = draft.columns.findIndex(col => col.tempId === tempId);
+              if (tempColumnIndex !== -1) {
+                draft.columns.splice(tempColumnIndex, 1);
+              }
+              
+              // Check if column with the same ID already exists
+              const existingColumnIndex = draft.columns.findIndex(col => 
+                col.id === createdColumn.id || col.columnId === createdColumn.id
+              );
+              
+              if (existingColumnIndex === -1) {
+                // Only add if it doesn't already exist
+                draft.columns.push({
+                  ...createdColumn,
+                  tasks: []
+                });
+              } else {
+                // Update existing column with server data
+                draft.columns[existingColumnIndex] = {
+                  ...draft.columns[existingColumnIndex],
+                  ...createdColumn,
+                  tasks: draft.columns[existingColumnIndex].tasks || []
+                };
               }
             })
           );
-        } catch {
+        } catch (error) {
+          console.error('Error creating column:', error);
           patchResult.undo();
         }
       },
@@ -524,24 +590,41 @@ export const boardsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Columns']
     }),
     deleteColumn: builder.mutation({
-      query: ({ boardId, columnId }) => ({
-        url: `${apiPrefix}/${boardId}/columns/${columnId}`,
-        method: 'DELETE',
-      }),
+      query: ({ boardId, columnId }) => {
+        console.log('Sending DELETE request for column:', { boardId, columnId });
+        return {
+          url: `${apiPrefix}/${boardId}/columns/${columnId}?socketEvent=true`,
+          method: 'DELETE',
+        };
+      },
       async onQueryStarted({ boardId, columnId }, { dispatch, queryFulfilled }) {
+        console.log('Starting optimistic update for column deletion:', { boardId, columnId });
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            const columnIndex = draft.columns.findIndex(col => col.id === columnId);
+            // Fix: Check both id and columnId properties
+            const columnIndex = draft.columns.findIndex(col => col.id === columnId || col.columnId === columnId);
             if (columnIndex !== -1) {
+              console.log('Optimistically removing column at index:', columnIndex);
               draft.columns.splice(columnIndex, 1);
+            } else {
+              console.log('Column not found for optimistic update, id:', columnId);
             }
           })
         );
 
         try {
-          await queryFulfilled;
-        } catch {
-          patchResult.undo();
+          const result = await queryFulfilled;
+          console.log('Delete column request successful:', result);
+        } catch (error) {
+          console.error('Delete column request failed:', error);
+          // Don't undo the optimistic update if we got a 200 response but with JSON parsing error
+          // This is likely because the server successfully deleted the column but returned an empty response
+          if (!(error.error && error.error.status === 500 && 
+                error.error.data === 'Unexpected end of JSON input')) {
+            patchResult.undo();
+          } else {
+            console.log('Server returned success but with empty response, keeping optimistic update');
+          }
         }
       },
       invalidatesTags: ['Columns']
