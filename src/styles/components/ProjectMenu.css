@@ -238,7 +238,14 @@
 .project-menu-events-window-events{
     display: flex;
     justify-content: space-between;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 5px;
+    border-radius: 4px;
+}
 
+.project-menu-events-window-events:hover {
+    background-color: #f5f5f5;
 }
 
 .project-menu-events-window-events-counter{
@@ -250,8 +257,15 @@
 .project-menu-events-window-events-added{
     display: flex;
     flex-direction: row;
-    align-items: center;
-    gap: 8px;
+    gap: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.project-menu-events-window-events-added:hover {
+    background-color: #f5f5f5;
 }
 
 .project-menu-events-window-events-added-text{

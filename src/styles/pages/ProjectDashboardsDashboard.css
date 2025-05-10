@@ -1,22 +1,26 @@
-.project-dashboards-dashboard-container{
+.project-dashboards-container {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     height: 100vh;
     width: 100%;
-
 }
 
+.project-dashboards-content {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
 
-.project-dashboard-container{
+.project-dashboards-main-content {
     background: #F3F3F3;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     width: 100%;
+    overflow: hidden;
 }
 
-
-.project-dashboard-add-bar-container{
+.project-dashboards-header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -26,32 +30,126 @@
     border-width: 0.7px;
     border-color: #DBDBDB;
     border-style: solid;
-    border-top:none;
-    border-left:none;
+    border-top: none;
+    border-left: none;
     border-right: none;
 }
 
-.project-dashboard-add-bar-label{
-
+.project-dashboards-header-title {
     font-family: 'Ruberoid Bold';
     font-size: 28px;
-
+    color: #333;
 }
 
-.project-dashboard-add-bar-add-button{
+.project-dashboards-header-button {
+    background-color: #5558FF;
+    border-radius: 5px;
+    padding: 15px 20px;
+    font-family: 'Ruberoid Bold';
+    font-size: 14px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.project-dashboards-header-button:hover {
+    background-color: #4447cc;
+}
+
+.project-dashboards-cards-container {
+    padding: 30px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.project-dashboards-cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: flex-start;
+}
+
+.project-dashboards-empty-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+    width: 100%;
+    text-align: center;
+}
+
+.project-dashboards-empty-message p {
+    font-family: 'Ruberoid Medium';
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.project-dashboards-create-button {
+    background-color: #5558FF;
+    border-radius: 5px;
+    padding: 12px 20px;
+    font-family: 'Ruberoid Bold';
+    font-size: 14px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.project-dashboards-create-button:hover {
+    background-color: #4447cc;
+}
+
+/* Сохраняем стили для обратной совместимости */
+.project-dashboards-dashboard-container { 
+    display: flex;
+    justify-content: space-between;
+    height: 100vh;
+    width: 100%;
+}
+
+.project-dashboard-container {
+    background: #F3F3F3;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.project-dashboard-add-bar-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #FFFFFF;
+    border-width: 0.7px;
+    border-color: #DBDBDB;
+    border-style: solid;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.project-dashboard-add-bar-label {
+    font-family: 'Ruberoid Bold';
+    font-size: 28px;
+}
+
+.project-dashboard-add-bar-add-button {
     background-color: #5558FF;
     border-radius: 5px;
     padding: 18px 15px;
     font-family: 'Ruberoid Bold';
     font-size: 12px;
     color: white;
-
+    cursor: pointer;
 }
 
-
-
-
-.project-dashboard-cards-container{
+.project-dashboard-cards-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -62,7 +160,7 @@
     flex-grow: 1;
 }
 
-.project-dashboard-card-row{
+.project-dashboard-card-row {
     display: flex;
     flex-direction: row;
     width: 100%;

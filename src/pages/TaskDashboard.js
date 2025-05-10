@@ -14,6 +14,9 @@ import AddSectionModal from "../components/AddSectionModal";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import CreateTaskModal from "../components/CreateTaskModal";
 import TaskInfoModal from "../components/TaskInfoModal";
+import { useBoardRights } from "../components/permissions";
+import { BOARD_RIGHTS } from "../constants/rights";
+import { BoardRightGuard } from "../components/permissions";
 
 // Import RTK Query hooks
 import { 
@@ -23,7 +26,8 @@ import {
     useUpdateColumnMutation,
     useDeleteColumnMutation,
     useReorderColumnsMutation,
-    useMoveTaskMutation
+    useMoveTaskMutation,
+    useUploadTaskAttachmentsMutation
 } from '../services/api';
 
 function TaskDashboard() {
@@ -52,6 +56,7 @@ function TaskDashboard() {
     const [deleteColumn] = useDeleteColumnMutation();
     const [reorderColumns] = useReorderColumnsMutation();
     const [moveTask] = useMoveTaskMutation();
+    const [uploadTaskAttachments] = useUploadTaskAttachmentsMutation();
     
     // Filter out duplicate columns and sort them by position
     const columns = useMemo(() => {
@@ -62,15 +67,29 @@ function TaskDashboard() {
         
         // Process all columns and keep only the latest version of each column
         boardWithData.columns.forEach(column => {
+            // Use a consistent ID field
             const id = column.id || column.columnId;
             if (id) {
-                columnMap.set(id, column);
+                // Sort tasks by position within the column
+                const sortedTasks = [...(column.tasks || [])].sort((a, b) => {
+                    // Handle cases where position might be undefined
+                    const posA = typeof a.position === 'number' ? a.position : Number.MAX_SAFE_INTEGER;
+                    const posB = typeof b.position === 'number' ? b.position : Number.MAX_SAFE_INTEGER;
+                    return posA - posB;
+                });
+                
+                // Normalize column data to ensure consistent structure
+                columnMap.set(id, {
+                    ...column,
+                    id: id,  // Use a consistent id field
+                    tasks: sortedTasks
+                });
             }
         });
         
         // Convert map back to array and sort by position
         return Array.from(columnMap.values())
-            .sort((a, b) => a.position - b.position);
+            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }, [boardWithData?.columns]);
     
     console.log('Колонки в компоненте:', columns);
@@ -82,6 +101,9 @@ function TaskDashboard() {
     const boardParticipants = board?.participants || [];
     
     const [usersByUsername, setUsersByUsername] = useState({});
+    
+    // Получаем права пользователя
+    const { hasRight } = useBoardRights(boardIdNum);
     
     useEffect(() => {
         console.log('Board data received:', {
@@ -123,15 +145,43 @@ function TaskDashboard() {
 
     const handleCreateTask = (taskData) => {
         if (currentColumnId && boardId) {
+            // Extract files from taskData to handle separately
+            const { files, ...taskDataWithoutFiles } = taskData;
+            
+            console.log('Creating task with data:', taskDataWithoutFiles);
+            console.log('Files to upload:', files?.length || 0, 'files');
+            
             const newTask = {
-                ...taskData,
+                ...taskDataWithoutFiles,
                 columnId: currentColumnId,
                 boardId: Number(boardId),
                 projectId: Number(projectId)
             };
-            // Use RTK Query mutation
+            
+            // Create task first
             createTask(newTask)
                 .unwrap()
+                .then(createdTask => {
+                    console.log('Task created successfully:', createdTask);
+                    
+                    // If there are files, upload them
+                    if (files && files.length > 0) {
+                        console.log('Uploading files for taskId:', createdTask.id);
+                        console.log('Files to upload:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+                        
+                        uploadTaskAttachments({
+                            taskId: createdTask.id,
+                            files: files
+                        })
+                        .unwrap()
+                        .then(result => {
+                            console.log('Files uploaded successfully:', result);
+                        })
+                        .catch(error => {
+                            console.error('Failed to upload files:', error);
+                        });
+                    }
+                })
                 .catch(error => {
                     console.error('Failed to create task:', error);
                 });
@@ -161,6 +211,12 @@ function TaskDashboard() {
         if (!destination) return;
         
         if (type === 'column') {
+            // Проверяем права на перемещение колонок
+            if (!hasRight(BOARD_RIGHTS.MOVE_COLUMNS)) {
+                console.log('У пользователя нет прав на перемещение колонок');
+                return;
+            }
+            
             const sourceIndex = source.index;
             const destIndex = destination.index;
             if (sourceIndex === destIndex) return;
@@ -188,30 +244,40 @@ function TaskDashboard() {
         }
         
         if (type === 'task') {
-            const sourceColId = Number(source.droppableId);
-            const destColId = Number(destination.droppableId);
+            // Проверяем права на перемещение задач
+            if (!hasRight(BOARD_RIGHTS.MOVE_TASKS)) {
+                console.log('У пользователя нет прав на перемещение задач');
+                return;
+            }
+            
+            const sourceColumnId = Number(source.droppableId);
+            const targetColumnId = Number(destination.droppableId);
             const sourceIndex = source.index;
-            const destIndex = destination.index;
+            const newPosition = destination.index;
             const taskId = Number(draggableId);
             
-            console.log('Dragging task:', { 
+            console.log('Перемещение задачи:', { 
                 taskId, 
-                sourceColId, 
-                destColId, 
+                sourceColumnId, 
+                targetColumnId, 
                 sourceIndex, 
-                destIndex
+                newPosition,
+                boardId: boardIdNum
             });
             
-            // Use RTK Query mutation
+            // Используем правильные имена параметров для соответствия API
             moveTask({ 
                 taskId, 
-                sourceColumnId: sourceColId, 
-                destColumnId: destColId, 
-                newPosition: destIndex,
+                sourceColumnId, 
+                targetColumnId, 
+                newPosition,
                 boardId: boardIdNum
             }).unwrap()
+                .then(() => {
+                    console.log('Задача успешно перемещена');
+                })
                 .catch(error => {
-                    console.error('Failed to move task:', error);
+                    console.error('Ошибка при перемещении задачи:', error);
                 });
         }
     };
@@ -340,7 +406,13 @@ function TaskDashboard() {
                         {(provided) => (
                             <div className='task-dashboard-cards-containeres' ref={provided.innerRef} {...provided.droppableProps}>
                                 {columns.map((column, index) => (
-                                    <Draggable key={column.id || column.columnId} draggableId={String(column.id || column.columnId)} index={index} type="column">
+                                    <Draggable 
+                                        key={column.id} 
+                                        draggableId={String(column.id)} 
+                                        index={index} 
+                                        type="column"
+                                        isDragDisabled={!hasRight(BOARD_RIGHTS.MOVE_COLUMNS)}
+                                    >
                                         {(provided, snapshot) => (
                                             <div
                                                 ref={provided.innerRef}
@@ -353,7 +425,7 @@ function TaskDashboard() {
                                             >
                                                 <TaskColumn 
                                                     column={column} 
-                                                    onAddTask={() => handleOpenTaskModal(column.id || column.columnId)} 
+                                                    onAddTask={() => handleOpenTaskModal(column.id)} 
                                                     onTaskClick={task => { setSelectedTask(task); setIsTaskInfoOpen(true); }}
                                                     updateColumn={updateColumn}
                                                     deleteColumn={deleteColumn}
@@ -464,7 +536,15 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     
     const columnId = column?.id || column?.columnId;
     const tasks = column?.tasks || [];
+    
     const taskCount = tasks.length;
+    
+    // Debug task positions
+    useEffect(() => {
+        if (tasks.length > 0) {
+            console.log(`Колонка ${columnId} задачи:`, tasks.map(t => ({ id: t.id, position: t.position })));
+        }
+    }, [tasks, columnId]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -523,14 +603,26 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
 
     const handleUpdateColumn = () => {
         if (editColumnName.trim()) {
-            updateColumn({ 
-                columnId: columnId,
+            // Construct update payload with only necessary fields
+            const updatePayload = {
+                columnId,
                 boardId: column.boardId,
-                title: editColumnName,
-                name: editColumnName,
-                position: column.position
-            })
+                title: editColumnName.trim(),
+                name: editColumnName.trim()
+            };
+            
+            // Store current state for comparison
+            console.log('Updating column:', { 
+                oldTitle: columnTitle, 
+                newTitle: editColumnName,
+                columnId
+            });
+            
+            updateColumn(updatePayload)
                 .unwrap()
+                .then(() => {
+                    console.log('Column updated successfully');
+                })
                 .catch(error => {
                     console.error('Failed to update column:', error);
                 });

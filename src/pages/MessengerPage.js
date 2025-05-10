@@ -14,30 +14,30 @@ function MessengerPage() {
     const isLoading = false;
 
     return (
-        <div className="messenger-page-container">
+        <div id="messenger-page-container">
             <LeftMenuMessenger></LeftMenuMessenger>
 
-            <div className="messenger-main-part-container">
-                <div className="messenger-main-part-topbar-container">
-                    <div className="messenger-main-part-topbar-avatar-container">
+            <div id="messenger-main-part-container">
+                <div id="messenger-main-part-topbar-container">
+                    <div id="messenger-main-part-topbar-avatar-container">
                         <div>
-                            <img src={ProfileIcon} className="messenger-main-part-topbar-avatar"/>
+                            <img src={ProfileIcon} id="messenger-main-part-topbar-avatar"/>
                         </div>
 
-                        <div className="messenger-main-part-topbar-avatar-text-container">
-                            <div className="messenger-main-part-topbar-avatar-text-name">FXRGXTTXN</div>
-                            <div className="messenger-main-part-topbar-avatar-text-status">был недавно</div>
+                        <div id="messenger-main-part-topbar-avatar-text-container">
+                            <div id="messenger-main-part-topbar-avatar-text-name">FXRGXTTXN</div>
+                            <div id="messenger-main-part-topbar-avatar-text-status">был недавно</div>
                         </div>
                     </div>
 
-                    <div className="messenger-main-part-topbar-icons-container">
+                    <div id="messenger-main-part-topbar-icons-container">
                         <img src={CameraIcon} className="TopBarIcons"/>
                         <img src={PhoneIcon} className="TopBarIcons"/>
                         <img src={ClipIcon} className="TopBarIcons"/>
                     </div>
                 </div>
 
-                <div className="messenger-main-part-topbar-messages-container">
+                <div id="messenger-main-part-topbar-messages-container">
                     {isLoading && <LoadingSpinner />}
 
                     <div className="incomingMessage">
@@ -113,11 +113,11 @@ function MessengerPage() {
                     </div>
                 </div>
 
-                <div className="messenger-send-field-container">
-                    <input className='messenger-send-field'/>
-                    <div className='messenger-send-field-icons-container'>
-                        <img src={ClipIcon} className='messngerSendIcon'/>
-                        <img src={SendIcon} className='messngerSendIcon'/>
+                <div id="messenger-send-field-container">
+                    <input id="messenger-send-field"/>
+                    <div id="messenger-send-field-icons-container">
+                        <img src={ClipIcon} className="messngerSendIcon"/>
+                        <img src={SendIcon} className="messngerSendIcon"/>
                     </div>
                 </div>
             </div>

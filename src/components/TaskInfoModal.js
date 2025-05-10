@@ -14,8 +14,9 @@ function TaskInfoModal({ isOpen, onClose, task }) {
     const extractUsername = (participant) => {
         if (typeof participant === 'string') {
             return participant;
-        } else if (participant && participant.username) {
-            return participant.username;
+        } else if (participant) {
+            // Check for name as well, as per task data structure
+            return participant.username || participant.name || '';
         }
         return '';
     };
@@ -76,14 +77,18 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                         {task.participants.map((participant, index) => {
                             const username = extractUsername(participant);
                             const user = usersByUsername ? usersByUsername[username] : null;
+                            // Use participant.avatarURL from task data if user or user.avatarURL is not found in Redux
+                            const avatar = user?.avatarURL || participant?.avatarURL || Girl;
+                            // Display participant.name from task data if user.displayName or user.name is not found
+                            const displayName = user?.displayName || user?.name || (typeof participant === 'object' ? participant.name : username) || 'Unknown User';
                             return (
                                 <div key={index} className="create-task-modal-participant">
                                     <img 
-                                        src={user?.avatarURL || Girl} 
-                                        alt={username} 
+                                        src={avatar} 
+                                        alt={displayName} 
                                         className="create-task-modal-participant-avatar"
                                     />
-                                    <span>{user?.displayName || username}</span>
+                                    <span>{displayName}</span>
                                 </div>
                             );
                         })}
@@ -94,13 +99,13 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                 
                 {/* Tags */}
                 <div className="create-task-modal-label">Тег</div>
-                {task.tagId && task.tagName ? (
+                {task.tag && task.tag.id && task.tag.name ? (
                     <div className="create-task-modal-tags-preview">
                         <div 
                             className="create-task-modal-tag-preview"
-                            style={{ backgroundColor: task.tagColor || '#EFEFEF' }}
+                            style={{ backgroundColor: task.tag.color || '#EFEFEF' }}
                         >
-                            {task.tagName}
+                            {task.tag.name}
                         </div>
                     </div>
                 ) : (

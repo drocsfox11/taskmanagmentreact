@@ -6,8 +6,7 @@ import {
     useGrantProjectRightMutation,
     useRevokeProjectRightMutation,
     useGetUserRightsQuery,
-    useAddUserToAllBoardsMutation,
-    useRemoveUserFromAllBoardsMutation, useGetProjectQuery
+    useGetProjectQuery
 } from '../services/api/projectsApi';
 import { 
     useSendInvitationMutation, 
@@ -18,9 +17,12 @@ import { PROJECT_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectManagementModal.css';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
+import { ProjectRightGuard, useProjectRights } from './permissions';
 
 function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const {data: project, isLoading} = useGetProjectQuery(projectId)
+    const { data: currentUser } = useGetCurrentUserQuery();
     console.log(project)
 
     const usersOnPage = 2;
@@ -45,8 +47,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     // Мутации для прав доступа
     const [grantRight] = useGrantProjectRightMutation();
     const [revokeRight] = useRevokeProjectRightMutation();
-    const [addUserToAllBoards] = useAddUserToAllBoardsMutation();
-    const [removeUserFromAllBoards] = useRemoveUserFromAllBoardsMutation();
     
     // Запрос прав пользователя
     const { data: fetchedUserRights, isLoading: isLoadingRights, refetch } = useGetUserRightsQuery(
@@ -65,6 +65,8 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const timeoutRef = useRef(null);
     const [isScrollLoading, setIsScrollLoading] = useState(false);
 
+    // Получаем права пользователя
+    const { hasRight } = useProjectRights(projectId);
 
     console.log(project?.invitations);
     const queryArg = {
@@ -100,7 +102,8 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
 
     const filteredUsers = users.filter(user => 
         !project?.participants?.some(participant => participant.id === user.id) &&
-        !project?.invitations?.some(invitation => invitation.recipientId === user.id)
+        !project?.invitations?.some(invitation => invitation.recipientId === user.id) &&
+        (currentUser ? user.id !== currentUser.id : true)
     );
 
     const handleScroll = useCallback(() => {
@@ -321,14 +324,16 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         
         try {
             if (hasAccess) {
-                await removeUserFromAllBoards({
+                await revokeRight({
                     projectId: project.id,
                     userId: selectedUserId,
+                    rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
             } else {
-                await addUserToAllBoards({
+                await grantRight({
                     projectId: project.id,
                     userId: selectedUserId,
+                    rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
             }
             
@@ -380,7 +385,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
 
     return (
         <div className="project-management-modal-overlay" onClick={handleModalClick}>
-            <div className="project-management-modal" ref={modalRef} onClick={handleModalClick}>
+            <div className="project-management-modal" ref={modalRef} onClick={e => e.stopPropagation()}>
                 <div className="project-management-modal-header">
                     <h2>Управление проектом</h2>
                     <button className="close-button" onClick={onClose}>
@@ -394,18 +399,22 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                     >
                         Информация
                     </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'invitations' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('invitations')}
-                    >
-                        Приглашения
-                    </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('participants')}
-                    >
-                        Участники
-                    </button>
+                    <ProjectRightGuard projectId={projectId} requires={PROJECT_RIGHTS.MANAGE_MEMBERS}>
+                        <button 
+                            className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('participants')}
+                        >
+                            Участники
+                        </button>
+                    </ProjectRightGuard>
+                    <ProjectRightGuard projectId={projectId} requires={PROJECT_RIGHTS.MANAGE_RIGHTS}>
+                        <button 
+                            className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('permissions')}
+                        >
+                            Права доступа
+                        </button>
+                    </ProjectRightGuard>
                 </div>
                 <div className="project-management-modal-content">
                     {activeTab === 'info' && (
@@ -436,108 +445,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                         </form>
                     )}
 
-                    {activeTab === 'invitations' && (
-                        <div className="invitations-section">
-                            <h3>Пригласить пользователей</h3>
-                            <p className="section-description">
-                                Пригласите пользователей присоединиться к проекту
-                            </p>
-                            <div className="project-management-modal-search" ref={searchResultsRef}>
-                                <input
-                                    type="text"
-                                    className="project-management-modal-input-participant"
-                                    placeholder="Поиск пользователей..."
-                                    value={inputValue}
-                                    onChange={handleSearchChange}
-                                />
-                                {showSearchResults && inputValue && (
-                                    <div className="search-results" ref={scrollableResultsRef}>
-                                        {isSearching && searchParams.page === 0 ? (
-                                            <div className="search-loading">Поиск...</div>
-                                        ) : filteredUsers.length > 0 ? (
-                                            <>
-                                                {filteredUsers.map((user) => (
-                                                    <div
-                                                        key={user.id}
-                                                        className="search-result-item"
-                                                        onClick={() => handleAddUser(user)}
-                                                    >
-                                                        <img src={user.avatarURL || Girl} alt={user.name} />
-                                                        <span>{user.name}</span>
-                                                    </div>
-                                                ))}
-                                                {(isFetching || isScrollLoading) && hasNextPage && (
-                                                    <div className="search-loading search-loading-more">
-                                                        Загрузка...
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : searchParams.query && !isFetching ? (
-                                            <div className="search-no-results">
-                                                Пользователи не найдены
-                                            </div>
-                                        ) : (
-                                            <div className="search-loading">
-                                                {isFetching ? "Загрузка пользователей..." : "Введите имя для поиска"}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            <h3 className="invitation-list-header">Статусы приглашений</h3>
-                            <div className="project-management-invitations">
-                                {isLoading ? (
-                                    <div className="loading-message">Загрузка приглашений...</div>
-                                ) : project?.invitations.length > 0 ? (
-                                    <table className="invitations-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Пользователь</th>
-                                                <th>Статус</th>
-                                                <th>Действия</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {project?.invitations.map((invitation) => (
-                                                <tr key={invitation.id}>
-                                                    <td className="user-cell">
-                                                        <img 
-                                                            src={invitation.recipient?.avatarURL || Girl} 
-                                                            alt={invitation.recipient?.name} 
-                                                            className="user-avatar"
-                                                        />
-                                                        <span>{invitation.recipient?.name || invitation.recipientId}</span>
-                                                    </td>
-                                                    <td>
-                                                        <span className={`status-badge ${getStatusClass(invitation.status)}`}>
-                                                            {getInvitationStatus(invitation.status)}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        {invitation.status === 'PENDING' && (
-                                                            <button
-                                                                className="cancel-invitation-button"
-                                                                onClick={() => handleCancelInvitation(invitation.id)}
-                                                            >
-                                                                Отменить
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                ) : (
-                                    <div className="no-invitations-message">
-                                        Нет приглашений
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'participants' && (
+                    {activeTab === 'participants' && hasRight(PROJECT_RIGHTS.MANAGE_MEMBERS) && (
                         <div className="participants-section">
                             <h3>Участники проекта</h3>
                             
@@ -653,6 +561,107 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                                 {!showPermissions && (
                                     <div className="select-participant-prompt">
                                         <p>Выберите участника для управления правами</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'permissions' && hasRight(PROJECT_RIGHTS.MANAGE_RIGHTS) && (
+                        <div className="permissions-section">
+                            <h3>Настройки прав доступа</h3>
+                            <p className="section-description">
+                                Настройте права доступа для участников проекта
+                            </p>
+                            <div className="project-management-modal-search" ref={searchResultsRef}>
+                                <input
+                                    type="text"
+                                    className="project-management-modal-input-participant"
+                                    placeholder="Поиск пользователей..."
+                                    value={inputValue}
+                                    onChange={handleSearchChange}
+                                />
+                                {showSearchResults && inputValue && (
+                                    <div className="search-results" ref={scrollableResultsRef}>
+                                        {isSearching && searchParams.page === 0 ? (
+                                            <div className="search-loading">Поиск...</div>
+                                        ) : filteredUsers.length > 0 ? (
+                                            <>
+                                                {filteredUsers.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="search-result-item"
+                                                        onClick={() => handleAddUser(user)}
+                                                    >
+                                                        <img src={user.avatarURL || Girl} alt={user.name} />
+                                                        <span>{user.name}</span>
+                                                    </div>
+                                                ))}
+                                                {(isFetching || isScrollLoading) && hasNextPage && (
+                                                    <div className="search-loading search-loading-more">
+                                                        Загрузка...
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : searchParams.query && !isFetching ? (
+                                            <div className="search-no-results">
+                                                Пользователи не найдены
+                                            </div>
+                                        ) : (
+                                            <div className="search-loading">
+                                                {isFetching ? "Загрузка пользователей..." : "Введите имя для поиска"}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <h3 className="invitation-list-header">Статусы приглашений</h3>
+                            <div className="project-management-invitations">
+                                {isLoading ? (
+                                    <div className="loading-message">Загрузка приглашений...</div>
+                                ) : project?.invitations.length > 0 ? (
+                                    <table className="invitations-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Пользователь</th>
+                                                <th>Статус</th>
+                                                <th>Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {project?.invitations.map((invitation) => (
+                                                <tr key={invitation.id}>
+                                                    <td className="user-cell">
+                                                        <img 
+                                                            src={invitation.recipient?.avatarURL || Girl} 
+                                                            alt={invitation.recipient?.name} 
+                                                            className="user-avatar"
+                                                        />
+                                                        <span>{invitation.recipient?.name || invitation.recipientId}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`status-badge ${getStatusClass(invitation.status)}`}>
+                                                            {getInvitationStatus(invitation.status)}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {invitation.status === 'PENDING' && (
+                                                            <button
+                                                                className="cancel-invitation-button"
+                                                                onClick={() => handleCancelInvitation(invitation.id)}
+                                                            >
+                                                                Отменить
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="no-invitations-message">
+                                        Нет приглашений
                                     </div>
                                 )}
                             </div>

@@ -7,6 +7,7 @@ import Girl from "../assets/icons/girl.svg"
 import { useNavigate, useParams } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
 import { useGetProjectsQuery, useGetProjectQuery } from '../services/api/projectsApi'
+import TaskEventsModal from './TaskEventsModal'
 
 function ProjectMenu() {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ function ProjectMenu() {
     });
     console.log(currentProject)
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+    const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const modalRef = useRef(null);
 
@@ -95,8 +97,14 @@ function ProjectMenu() {
         e.stopPropagation();
         setOpenDropdownId(null);
     };
-
-
+    
+    const handleOpenEventsModal = () => {
+        setIsEventsModalOpen(true);
+    };
+    
+    const handleCloseEventsModal = () => {
+        setIsEventsModalOpen(false);
+    };
 
     return (
         <div className='project-menu-container'>
@@ -200,14 +208,20 @@ function ProjectMenu() {
                 <div className='project-menu-events-window'>
                     <div className='project-menu-events-window-all'>Всего</div>
 
-                    <div className='project-menu-events-window-events'>
+                    <div className='project-menu-events-window-events' onClick={handleOpenEventsModal}>
                         <div className='project-menu-events-window-events-counter'>1087 событий</div>
-                        <div className='project-menu-people-list-item-options'>
+                        <div 
+                            className='project-menu-people-list-item-options'
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEventsModal();
+                            }}
+                        >
                             <img src={OptionsPassive} alt="Options Active"/>
                         </div>
                     </div>
 
-                    <div className='project-menu-events-window-events-added'>
+                    <div className='project-menu-events-window-events-added' onClick={handleOpenEventsModal}>
                         <div className='project-menu-events-window-events-added-text'>+25</div>
                         <div className='project-menu-events-window-events-added-label'>новых событий</div>
                     </div>
@@ -241,6 +255,12 @@ function ProjectMenu() {
                     </div>
                 </div>
             )}
+            
+            {/* Task Events Modal */}
+            <TaskEventsModal 
+                isOpen={isEventsModalOpen}
+                onClose={handleCloseEventsModal}
+            />
         </div>
     );
 }

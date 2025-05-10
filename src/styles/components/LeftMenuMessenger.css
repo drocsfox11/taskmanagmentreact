@@ -35,6 +35,31 @@
     margin-bottom: 25px;
 }
 
+.top-bar-search-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 40px;
+    background-color: #F5F5F5;
+    border-radius: 10px;
+    padding: 0 15px;
+}
+
+.top-bar-search-icon {
+    width: 18px;
+    margin-right: 10px;
+}
+
+.top-bar-search-input {
+    border: none;
+    outline: none;
+    background: none;
+    width: 100%;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #969595;
+}
+
 .left-menu-messenger-chats-container{
     padding: 20px 10px;
     background-color: #F5F5F5;

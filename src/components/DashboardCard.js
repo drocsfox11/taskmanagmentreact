@@ -6,8 +6,10 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDeleteBoardMutation, useGetBoardWithDataQuery } from "../services/api/boardsApi";
 import BoardManagementModal from "./BoardManagementModal";
+import { BoardRightGuard, ProjectRightGuard, useProjectRights } from "./permissions";
+import { PROJECT_RIGHTS } from "../constants/rights";
 
-function DashboardCard({ boardId, projectId, onClick, title, description }) {
+function DashboardCard({ board, onClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
     const modalRef = useRef(null);
@@ -15,8 +17,24 @@ function DashboardCard({ boardId, projectId, onClick, title, description }) {
     const navigate = useNavigate();
     const [deleteBoard] = useDeleteBoardMutation();
     
+    // Для отображения нужны эти данные из объекта board
+    const boardId = board?.id;
+    const projectId = board?.projectId;
+    const title = board?.title;
+    const description = board?.description;
+    
+    // Получаем права пользователя для проверки
+    const { hasRight } = useProjectRights(projectId);
+    
+    // Проверяем, есть ли у пользователя права на редактирование или удаление
+    const canEditBoard = hasRight(PROJECT_RIGHTS.EDIT_BOARDS);
+    const canDeleteBoard = hasRight(PROJECT_RIGHTS.DELETE_BOARDS);
+    
+    // Показывать троеточие только если есть хотя бы одно право
+    const showOptionsIcon = canEditBoard || canDeleteBoard;
+    
     // Fetch board data when management modal is opened
-    const { data: board } = useGetBoardWithDataQuery(boardId, {
+    const { data: boardWithData } = useGetBoardWithDataQuery(boardId, {
         skip: !isManagementModalOpen,
     });
 
@@ -70,17 +88,22 @@ function DashboardCard({ boardId, projectId, onClick, title, description }) {
         };
     }, []);
 
+    // Если board не определен, не отображаем карточку
+    if (!board) return null;
+
     return (
         <div className='project-card-container' onClick={handleCardClick} style={{ position: 'relative' }}>
             <div className='project-card-icon-row-container'>
                 <div className='project-card-icon-container'>
                     <EmojiProvider data={emojiData}>
-                        <Emoji name="teacher-light-skin-tone" width={22}/>
+                        <Emoji name="clipboard" width={22}/>
                     </EmojiProvider>
                 </div>
-                <div ref={optionsRef} onClick={handleOptionsClick}>
-                    <img src={OptionsPassive} alt="Options Active"/>
-                </div>
+                {showOptionsIcon && (
+                    <div ref={optionsRef} onClick={handleOptionsClick} className='project-card-icon-row-container-options'>
+                        <img src={OptionsPassive} alt="Options"/>
+                    </div>
+                )}
             </div>
             <div className='project-card-text-container'>
                 <div className='project-card-text-header'>
@@ -100,15 +123,19 @@ function DashboardCard({ boardId, projectId, onClick, title, description }) {
             {isModalOpen && (
                 <div ref={modalRef} className="project-card-modal-container" onClick={(e) => e.stopPropagation()}>
                     <div className="project-card-modal-content">
-                        <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
-                        <div className="project-card-modal-delete" onClick={handleDelete}>Удалить</div>
+                        {canEditBoard && (
+                            <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
+                        )}
+                        {canDeleteBoard && (
+                            <div className="project-card-modal-delete" onClick={handleDelete}>Удалить</div>
+                        )}
                     </div>
                 </div>
             )}
             
-            {isManagementModalOpen && board && (
+            {isManagementModalOpen && boardWithData && (
                 <BoardManagementModal 
-                    board={board} 
+                    board={boardWithData} 
                     onClose={() => setIsManagementModalOpen(false)}
                     isOpen={isManagementModalOpen}
                 />

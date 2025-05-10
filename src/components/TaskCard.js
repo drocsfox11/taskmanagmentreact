@@ -9,6 +9,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useDeleteTaskMutation, useUpdateTaskMutation } from '../services/api/tasksApi';
 import EditTaskModal from './EditTaskModal';
+import { EmojiProvider, Emoji } from "react-apple-emojis";
+import emojiData from "react-apple-emojis/src/data.json";
+import Avatar from './Avatar';
+import { BoardRightGuard, useBoardRights } from './permissions';
+import { BOARD_RIGHTS } from '../constants/rights';
 
 function TaskCard({ task, onClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,6 +25,16 @@ function TaskCard({ task, onClick }) {
     
     const [deleteTask] = useDeleteTaskMutation();
     const [updateTask] = useUpdateTaskMutation();
+    
+    // Получаем права пользователя для проверки
+    const { hasRight } = useBoardRights(task?.boardId);
+    
+    // Проверяем, есть ли у пользователя права на редактирование или удаление
+    const canEditTask = hasRight(BOARD_RIGHTS.EDIT_TASKS);
+    const canDeleteTask = hasRight(BOARD_RIGHTS.DELETE_TASKS);
+    
+    // Показывать троеточие только если есть хотя бы одно право
+    const showOptionsIcon = canEditTask || canDeleteTask;
     
     // Получаем данные пользователей из Redux
     const usersByUsername = useSelector(state => state.users?.byUsername || {});
@@ -73,8 +88,31 @@ function TaskCard({ task, onClick }) {
     }, []);
     
     const handleDeleteTask = () => {
-        deleteTask(task.id);
+        console.log(`Deleting task with id: ${task.id}, boardId: ${task.boardId}`);
+        
+        // Close the modal immediately for better UX
         setIsModalOpen(false);
+        
+        // Ensure we're using the correct numeric IDs
+        const taskId = Number(task.id);
+        const boardId = Number(task.boardId);
+        
+        // Make sure we're passing the id and not the whole task object
+        // Always include boardId to ensure proper cache invalidation
+        deleteTask({
+            id: taskId,
+            boardId: boardId,
+            columnId: Number(task.columnId) // Include columnId for better cache updates
+        })
+        .unwrap()
+        .then(() => {
+            console.log('Task successfully deleted');
+        })
+        .catch(error => {
+            console.error('Failed to delete task:', error);
+            // The task will still be removed from UI due to optimistic updates
+            // even if backend responds with an error
+        });
     };
     
     const handleEditTask = (e) => {
@@ -89,13 +127,35 @@ function TaskCard({ task, onClick }) {
     };
     
     const handleUpdateTask = (updatedTaskData) => {
+        // Создаем полную копию обновленной задачи с сохранением всех полей
         const updatedTask = {
             ...task,
-            ...updatedTaskData
+            ...updatedTaskData,
+            // Убедимся, что есть все необходимые поля
+            boardId: task.boardId,
+            columnId: task.columnId
         };
+        
         console.log('Отправка обновленных данных задачи:', updatedTask);
-        updateTask(updatedTask);
+        
+        // Закрываем модальное окно до отправки запроса 
         setIsEditModalOpen(false);
+        
+        // НЕ пытаемся изменять исходный объект task напрямую,
+        // так как это может вызвать ошибку, если он read-only
+        // Вместо этого полагаемся на обновление через Redux
+        
+        // Отправляем запрос на обновление
+        updateTask(updatedTask)
+            .unwrap()
+            .then(result => {
+                console.log('Task updated successfully:', result);
+                // Успешное обновление уже отражено в UI через оптимистическое обновление
+            })
+            .catch(error => {
+                console.error('Failed to update task:', error);
+                // В случае ошибки можно показать уведомление пользователю
+            });
     };
     
     // Обработчик клика на карточку, предотвращающий срабатывание при открытом модальном окне
@@ -118,7 +178,40 @@ function TaskCard({ task, onClick }) {
     // Calculate checklist progress
     const totalChecklist = task.checklist?.length || 0;
     const completedChecklist = task.checklist?.filter(item => item.completed)?.length || 0;
-    const checklistProgress = totalChecklist > 0 ? `${completedChecklist}/${totalChecklist}` : '0/0';
+    // Show only the total number of checklist items
+    const checklistCount = totalChecklist > 0 ? `${totalChecklist}` : '0';
+    
+    // Determine if task has an emoji for rendering
+    const hasEmoji = task.emoji && task.emoji.trim() !== '';
+    
+    // Parse due date if it exists
+    const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+    
+    // Format the due date for display
+    const formattedDueDate = dueDate 
+        ? dueDate.toLocaleDateString('ru-RU', { 
+            day: '2-digit', 
+            month: '2-digit'
+        })
+        : null;
+        
+    // Check if task has tags
+    const hasTags = task.tags && task.tags.length > 0;
+    
+    // Check if task has participants
+    const hasParticipants = task.participants && task.participants.length > 0;
+    
+    // Check if task has checklist
+    const hasChecklist = task.checklist && task.checklist.length > 0;
+    
+    // Calculate checklist completion percentage
+    const checklistTotal = hasChecklist ? task.checklist.length : 0;
+    const checklistCompleted = hasChecklist 
+        ? task.checklist.filter(item => item.completed).length 
+        : 0;
+    const checklistPercentage = checklistTotal > 0 
+        ? Math.round((checklistCompleted / checklistTotal) * 100) 
+        : 0;
     
     return (
         <div className='task-card-container' ref={cardRef} style={{ position: 'relative' }} onClick={handleCardClick}>
@@ -133,9 +226,11 @@ function TaskCard({ task, onClick }) {
                     </div>
                 )}
 
-                <div ref={optionsRef} onClick={handleOptionsClick}>
-                    <img src={OptionsPassive} alt="Options"/>
-                </div>
+                {showOptionsIcon && (
+                    <div ref={optionsRef} onClick={handleOptionsClick}>
+                        <img src={OptionsPassive} alt="Options"/>
+                    </div>
+                )}
             </div>
 
             <div className='task-card-text-info-container'>
@@ -145,7 +240,7 @@ function TaskCard({ task, onClick }) {
 
             <div className='task-card-points-list'>
                 <img src={TaskListIcon} className='task-card-points-list-icon' alt="Checklist"/>
-                <div className='task-card-points-list-counter'>{checklistProgress}</div>
+                <div className='task-card-points-list-counter'>{checklistCount}</div>
             </div>
 
             <div className='task-card-delimiter'></div>
@@ -221,29 +316,33 @@ function TaskCard({ task, onClick }) {
                     width: '150px'
                 }}>
                     <div className="modal-content-custom">
-                        <div className="modal-edit" 
-                            onClick={handleEditTask}
-                            style={{ 
-                                padding: '8px 16px', 
-                                cursor: 'pointer', 
-                                fontSize: '14px',
-                                fontFamily: 'Ruberoid Medium'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >Редактировать</div>
-                        <div className="modal-delete" 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteTask(); }}
-                            style={{ 
-                                padding: '8px 16px', 
-                                cursor: 'pointer', 
-                                color: '#FF5252',
-                                fontSize: '14px',
-                                fontFamily: 'Ruberoid Medium'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >Удалить</div>
+                        {canEditTask && (
+                            <div className="modal-edit" 
+                                onClick={handleEditTask}
+                                style={{ 
+                                    padding: '8px 16px', 
+                                    cursor: 'pointer', 
+                                    fontSize: '14px',
+                                    fontFamily: 'Ruberoid Medium'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >Редактировать</div>
+                        )}
+                        {canDeleteTask && (
+                            <div className="modal-delete" 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteTask(); }}
+                                style={{ 
+                                    padding: '8px 16px', 
+                                    cursor: 'pointer', 
+                                    color: '#FF5252',
+                                    fontSize: '14px',
+                                    fontFamily: 'Ruberoid Medium'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >Удалить</div>
+                        )}
                     </div>
                 </div>
             )}

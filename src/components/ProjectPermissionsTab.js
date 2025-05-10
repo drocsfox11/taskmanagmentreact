@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
     useGrantProjectRightMutation, 
     useRevokeProjectRightMutation, 
-    useGetUserRightsQuery,
-    useAddUserToAllBoardsMutation,
-    useRemoveUserFromAllBoardsMutation
+    useGetUserRightsQuery
 } from '../services/api/projectsApi';
 import { PROJECT_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css';
@@ -17,8 +15,6 @@ function ProjectPermissionsTab({ project }) {
     
     const [grantRight] = useGrantProjectRightMutation();
     const [revokeRight] = useRevokeProjectRightMutation();
-    const [addUserToAllBoards] = useAddUserToAllBoardsMutation();
-    const [removeUserFromAllBoards] = useRemoveUserFromAllBoardsMutation();
     
     const { data: fetchedUserRights, isLoading, refetch } = useGetUserRightsQuery(
         { projectId: project?.id, userId: selectedUserId },
@@ -66,14 +62,16 @@ function ProjectPermissionsTab({ project }) {
         
         try {
             if (hasAccess) {
-                await removeUserFromAllBoards({
+                await revokeRight({
                     projectId: project.id,
                     userId: selectedUserId,
+                    rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
             } else {
-                await addUserToAllBoards({
+                await grantRight({
                     projectId: project.id,
                     userId: selectedUserId,
+                    rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
             }
             

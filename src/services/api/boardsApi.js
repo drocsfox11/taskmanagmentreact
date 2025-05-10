@@ -156,10 +156,12 @@ export const boardsApi = baseApi.injectEndpoints({
           stompConn.setMessageHandler((data) => {
             // Получаем данные о текущем пользователе из store
             const state = getState();
-            const currentUsername = state.api.queries['getCurrentUser(undefined)'].data?.username;
-            console.log("из стейста достал",currentUsername, "отправил", data.payload.initiatedBy );
-            // Проверяем, инициировано ли это событие текущим пользователем
-            if (data.payload && data.payload.initiatedBy === currentUsername) {
+            const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
+            const currentUserId = currentUser?.id;
+            console.log("из стейста достал userId:", currentUserId, "отправил:", data.payload.initiatedById);
+            
+            // Проверяем, инициировано ли это событие текущим пользователем по ID
+            if (data.payload && data.payload.initiatedById === currentUserId) {
               console.log(`Игнорируем собственное действие: ${data.type}`);
               return; // Пропускаем обработку своих событий
             }
@@ -234,11 +236,10 @@ export const boardsApi = baseApi.injectEndpoints({
                 
               case 'COLUMN_UPDATED':
                 updateCachedData((draft) => {
-                  // Check both id and columnId properties
+                  // Check both id and columnId properties but make sure they are an exact match
                   const index = draft.columns.findIndex(col => 
                     col.id === data.payload.id || 
-                    col.id === data.payload.columnId ||
-                    col.columnId === data.payload.id
+                    (data.payload.columnId && col.id === data.payload.columnId)
                   );
                   
                   if (index !== -1) {
@@ -344,6 +345,13 @@ export const boardsApi = baseApi.injectEndpoints({
                     if (taskIndex !== -1) {
                       // Удаляем задачу
                       column.tasks.splice(taskIndex, 1);
+                      
+                      // Update the position of remaining tasks
+                      column.tasks.forEach((task, index) => {
+                        task.position = index;
+                      });
+                      
+                      console.log(`Task ${data.payload.id} deleted from column ${column.id} via WebSocket`);
                     }
                   });
                 });
@@ -576,7 +584,11 @@ export const boardsApi = baseApi.injectEndpoints({
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
             const columnIndex = draft.columns.findIndex(col => col.id === columnId);
             if (columnIndex !== -1) {
-              Object.assign(draft.columns[columnIndex], updates);
+              // Create a new object instead of using Object.assign to prevent reference issues
+              draft.columns[columnIndex] = {
+                ...draft.columns[columnIndex],
+                ...updates
+              };
             }
           })
         );
@@ -616,14 +628,17 @@ export const boardsApi = baseApi.injectEndpoints({
           const result = await queryFulfilled;
           console.log('Delete column request successful:', result);
         } catch (error) {
-          console.error('Delete column request failed:', error);
-          // Don't undo the optimistic update if we got a 200 response but with JSON parsing error
-          // This is likely because the server successfully deleted the column but returned an empty response
+          console.error('Delete column request failed. Raw error object: ', error);
+          console.error('Delete column request failed. Stringified error object: ', JSON.stringify(error));
+          // Don't undo the optimistic update if we got a 500 response with a JSON parsing error
+          // This is likely because the server successfully deleted the column but returned an empty/non-JSON response
           if (!(error.error && error.error.status === 500 && 
-                error.error.data === 'Unexpected end of JSON input')) {
+                typeof error.error.data === 'string' &&
+                error.error.data.startsWith("Failed to execute 'json' on 'Response': Unexpected end of JSON input"))) {
             patchResult.undo();
+            console.log('Request truly failed or unknown error (status: ' + (error.error ? error.error.status : 'unknown') + '), undoing optimistic update.');
           } else {
-            console.log('Server returned success but with empty response, keeping optimistic update');
+            console.log('Server likely returned success but with an empty/invalid JSON response, keeping optimistic update.');
           }
         }
       },

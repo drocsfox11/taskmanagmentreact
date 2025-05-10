@@ -9,11 +9,13 @@ import CheckIcon from "../assets/icons/task_list.svg";
 import Girl from "../assets/icons/profile_picture.svg";
 import { useDispatch, useSelector } from 'react-redux';
 import { useGetTagsQuery } from '../services/api/tagsApi';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
 
 function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     const dispatch = useDispatch();
     const usersByUsername = useSelector(state => state.users?.byUsername || {});
     const { data: boardTags = [] } = useGetTagsQuery(boardId);
+    const { data: currentUser } = useGetCurrentUserQuery();
     
     // Get board participants from store
     const boardData = useSelector(state => 
@@ -488,7 +490,12 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                                         alt={getParticipantNameById(participant)} 
                                         className="create-task-modal-participant-avatar"
                                     />
-                                    <span title={getParticipantNameById(participant)}>
+                                    <span title={getParticipantNameById(participant)} style={{ 
+                                        flex: 1, 
+                                        whiteSpace: 'nowrap', 
+                                        overflow: 'hidden', 
+                                        textOverflow: 'ellipsis' 
+                                    }}>
                                         {getParticipantNameById(participant)}
                                     </span>
                                     <span 
@@ -517,7 +524,7 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     >
                         <option value="">Выберите участника</option>
                         {normalizedBoardParticipants
-                            // Фильтруем участников, чьи ID уже выбраны
+                            // Фильтруем только участников, которые ещё не добавлены
                             .filter(username => {
                                 const participantId = participantIdsByName[username];
                                 return !form.participants.includes(participantId);

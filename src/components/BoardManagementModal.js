@@ -8,6 +8,9 @@ import BoardPermissionsTab from './BoardPermissionsTab';
 import '../styles/components/ProjectManagementModal.css'; // Reuse the same styles
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
+import { useBoardRights } from './permissions';
+import { BOARD_RIGHTS } from '../constants/rights';
+import { BoardRightGuard } from './permissions';
 
 function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [activeTab, setActiveTab] = useState('info');
@@ -23,6 +26,9 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [tagColor, setTagColor] = useState('#FFD700');
     const [participantInput, setParticipantInput] = useState('');
     const modalRef = useRef(null);
+
+    // Получаем права пользователя
+    const { hasRight } = useBoardRights(board.id);
 
     useEffect(() => {
         if (board) {
@@ -140,18 +146,22 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                     >
                         Информация
                     </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('participants')}
-                    >
-                        Участники
-                    </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('permissions')}
-                    >
-                        Права доступа
-                    </button>
+                    <BoardRightGuard boardId={board.id} requires={BOARD_RIGHTS.MANAGE_MEMBERS}>
+                        <button 
+                            className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('participants')}
+                        >
+                            Участники
+                        </button>
+                    </BoardRightGuard>
+                    <BoardRightGuard boardId={board.id} requires={BOARD_RIGHTS.MANAGE_RIGHTS}>
+                        <button 
+                            className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('permissions')}
+                        >
+                            Права доступа
+                        </button>
+                    </BoardRightGuard>
                 </div>
                 <div className="project-management-modal-content">
                     {activeTab === 'info' ? (
@@ -229,7 +239,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                 Сохранить
                             </button>
                         </form>
-                    ) : activeTab === 'participants' ? (
+                    ) : activeTab === 'participants' && hasRight(BOARD_RIGHTS.MANAGE_MEMBERS) ? (
                         <div className="participants-section">
                             <h3>Участники доски</h3>
                             <p className="section-description">
@@ -274,9 +284,9 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                 )}
                             </div>
                         </div>
-                    ) : (
+                    ) : activeTab === 'permissions' && hasRight(BOARD_RIGHTS.MANAGE_RIGHTS) ? (
                         <BoardPermissionsTab board={board} />
-                    )}
+                    ) : null}
                 </div>
             </div>
         </div>

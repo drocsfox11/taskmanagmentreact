@@ -6,7 +6,7 @@ const BASE_URL = process.env.REACT_APP_API_BASE_URL + "/";
 const customBaseQuery = async (args, api, extraOptions) => {
   console.log(args, api, extraOptions);
 
-  const { url, method = 'GET', body, params, headers } = args;
+  const { url, method = 'GET', body, params, headers, formData } = args;
   let endpoint = url;
   // Добавляем query-параметры, если есть
   if (params) {
@@ -23,8 +23,16 @@ const customBaseQuery = async (args, api, extraOptions) => {
 
   // Добавляем тело запроса для мутаций
   if (body) {
-    fetchOptions.headers['Content-Type'] = 'application/json';
-    fetchOptions.body = JSON.stringify(body);
+    // Check if this is a FormData request (for file uploads)
+    if (formData) {
+      // For FormData, don't set Content-Type (browser will set it with boundary)
+      // and don't try to JSON.stringify the body
+      fetchOptions.body = body;
+    } else {
+      // For regular JSON requests
+      fetchOptions.headers['Content-Type'] = 'application/json';
+      fetchOptions.body = JSON.stringify(body);
+    }
   }
 
   try {
@@ -40,10 +48,15 @@ const customBaseQuery = async (args, api, extraOptions) => {
       return { error: { status: response.status, data: errorBody.message || response.statusText } };
     }
 
+    // Handle responses with no content (like 204 No Content)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { data: null };
+    }
 
     const data = await response.json();
     return { data };
   } catch (error) {
+    console.error('API request error:', error);
     return { error: { status: error.status || 500, data: error.message || 'Unknown error' } };
   }
 };
@@ -53,5 +66,5 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: customBaseQuery,
   endpoints: () => ({}),
-  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags', 'CurrentUser', 'ProjectRights'],
+  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags', 'CurrentUser', 'ProjectRights', 'Events'],
 }); 

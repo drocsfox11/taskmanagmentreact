@@ -9,12 +9,16 @@ export {
   useUpdateProjectMutation,
   useDeleteProjectMutation
 } from './projectsApi';
+
+// Re-export TasksAPI hooks
+// These will now use the updated implementation with fixed delete functionality
 export {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
   useMoveTaskMutation,
 } from './tasksApi';
+
 export {
   // Boards API
   useGetBoardsQuery,
@@ -43,13 +47,19 @@ export {
   useGetMyPendingInvitationsQuery
 } from './invitationsApi';
 
-
-
 // API пользователей
 export * from './usersApi';
 
 // API авторизации
 export * from './authApi';
+
+// Export attachments API hooks
+export {
+  useUploadTaskAttachmentMutation,
+  useUploadTaskAttachmentsMutation,
+  useDeleteAttachmentMutation,
+  useGetTaskAttachmentsQuery,
+} from './attachmentsApi';
 
 // Экспортируем reducerPath и middleware для конфигурации Redux store
 export const apiReducer = { [baseApi.reducerPath]: baseApi.reducer };

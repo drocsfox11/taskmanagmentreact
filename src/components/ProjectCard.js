@@ -6,14 +6,25 @@ import { useState, useRef, useEffect } from "react";
 import { useDeleteProjectMutation } from '../services/api/projectsApi';
 import Girl from '../assets/icons/girl.svg';
 import ProjectManagementModal from './ProjectManagementModal';
+import { ProjectRightGuard, useProjectRights } from './permissions';
+import { PROJECT_RIGHTS } from '../constants/rights';
 
 function ProjectCard({ project, onClick }) {
-    console.log(project);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
+    
+    // Получаем права пользователя для проверки
+    const { hasRight } = useProjectRights(project.id);
+    
+    // Проверяем, есть ли у пользователя права на редактирование или удаление
+    const canEditProject = hasRight(PROJECT_RIGHTS.EDIT_PROJECT);
+    const canDeleteProject = hasRight(PROJECT_RIGHTS.DELETE_BOARDS);
+    
+    // Показывать троеточие только если есть хотя бы одно право
+    const showOptionsIcon = canEditProject || canDeleteProject;
 
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -34,7 +45,8 @@ function ProjectCard({ project, onClick }) {
         };
     }, []);
 
-    const handleDelete = async () => {
+    const handleDelete = async (e) => {
+        e.stopPropagation();
         try {
             await deleteProject(project.id);
             setIsModalOpen(false);
@@ -49,7 +61,8 @@ function ProjectCard({ project, onClick }) {
         setIsManagementModalOpen(true);
     };
 
-
+    // Если project не определен, не отображаем карточку
+    if (!project) return null;
     
     return (
         <div className='project-card-container' onClick={(e) => {
@@ -64,9 +77,11 @@ function ProjectCard({ project, onClick }) {
                         <Emoji name="teacher-light-skin-tone" width={22}/>
                     </EmojiProvider>
                 </div>
-                <div className='project-card-icon-row-container-options' ref={optionsRef} onClick={handleOptionsClick}>
-                    <img src={OptionsPassive} alt="Options Active"/>
-                </div>
+                {showOptionsIcon && (
+                    <div className='project-card-icon-row-container-options' ref={optionsRef} onClick={handleOptionsClick}>
+                        <img src={OptionsPassive} alt="Options Active"/>
+                    </div>
+                )}
             </div>
             <div className='project-card-text-container'>
                 <div className='project-card-text-header'>{project.title}</div>
@@ -79,8 +94,12 @@ function ProjectCard({ project, onClick }) {
             {isModalOpen && (
                 <div ref={modalRef} className="project-card-modal-container">
                     <div className="project-card-modal-content">
-                        <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
-                        <div className="project-card-modal-delete" onClick={e => { e.stopPropagation(); handleDelete(); }}>Удалить</div>
+                        {canEditProject && (
+                            <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
+                        )}
+                        {canDeleteProject && (
+                            <div className="project-card-modal-delete" onClick={handleDelete}>Удалить</div>
+                        )}
                     </div>
                 </div>
             )}
