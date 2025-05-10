@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     useUpdateBoardMutation, 
     useAddUserToBoardMutation,
@@ -9,8 +9,11 @@ import '../styles/components/ProjectManagementModal.css'; // Reuse the same styl
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
 import { useBoardRights } from './permissions';
-import { BOARD_RIGHTS } from '../constants/rights';
+import { BOARD_RIGHTS, PROJECT_RIGHTS } from '../constants/rights';
 import { BoardRightGuard } from './permissions';
+import { useProjectRights } from './permissions';
+import { useSearchUsersQuery } from '../services/api/usersApi';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
 
 function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [activeTab, setActiveTab] = useState('info');
@@ -24,11 +27,193 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     });
     const [tagName, setTagName] = useState('');
     const [tagColor, setTagColor] = useState('#FFD700');
-    const [participantInput, setParticipantInput] = useState('');
     const modalRef = useRef(null);
+    
+    // Для поиска пользователей
+    const usersOnPage = 2;
+    const [inputValue, setInputValue] = useState('');
+    const [searchParams, setSearchParams] = useState({
+        query: '',
+        page: 0
+    });
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const searchResultsRef = useRef(null);
+    const scrollableResultsRef = useRef(null);
+    const timeoutRef = useRef(null);
+    const [isScrollLoading, setIsScrollLoading] = useState(false);
+    const { data: currentUser } = useGetCurrentUserQuery();
 
-    // Получаем права пользователя
-    const { hasRight } = useBoardRights(board.id);
+    // Получаем права пользователя на уровне доски
+    const { hasRight: hasBoardRight, rights: boardRights, isLoading: isBoardRightsLoading } = useBoardRights(board.id);
+    
+    // Получаем права пользователя на уровне проекта
+    const { hasRight: hasProjectRight, rights: projectRights, isLoading: isProjectRightsLoading } = useProjectRights(board.projectId);
+    
+    // Проверяем, имеет ли пользователь право управлять участниками доски
+    // Это возможно если у него есть право MANAGE_MEMBERS на доске ИЛИ MANAGE_ACCESS на проекте
+    const canManageMembers = hasBoardRight(BOARD_RIGHTS.MANAGE_MEMBERS) || hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS);
+    
+    // Проверяем, имеет ли пользователь право управлять правами на доске
+    // Это возможно если у него есть право MANAGE_RIGHTS на доске ИЛИ MANAGE_BOARD_RIGHTS на проекте
+    const canManageRights = hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS) || hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS);
+    
+    // Запрос поиска пользователей
+    const queryArg = {
+        name: searchParams.query,
+        page: searchParams.page,
+        size: usersOnPage
+    };
+
+    const { 
+        data: searchData, 
+        isLoading: isSearching, 
+        isFetching 
+    } = useSearchUsersQuery(
+        queryArg,
+        { 
+            skip: !searchParams.query,
+            refetchOnMountOrArgChange: true,
+            refetchOnFocus: false
+        }
+    );
+
+    const users = searchData ? searchData.users : [];
+    const hasNextPage = searchData ? searchData.hasNext : true;
+
+    const filteredUsers = users.filter(user => 
+        !board?.participants?.some(participant => participant.id === user.id) &&
+        (currentUser ? user.id !== currentUser.id : true)
+    );
+    
+    // Добавляем логирование для диагностики
+    useEffect(() => {
+        console.log("BoardManagementModal: Диагностика прав доступа");
+        console.log("projectId:", board.projectId);
+        console.log("boardId:", board.id);
+        console.log("isProjectRightsLoading:", isProjectRightsLoading);
+        console.log("isBoardRightsLoading:", isBoardRightsLoading);
+        console.log("projectRights:", projectRights);
+        console.log("boardRights:", boardRights);
+        console.log("hasProjectRight(MANAGE_BOARD_RIGHTS):", hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS));
+        console.log("hasBoardRight(MANAGE_RIGHTS):", hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS));
+        console.log("canManageRights:", canManageRights);
+    }, [
+        board.projectId, 
+        board.id, 
+        projectRights, 
+        boardRights, 
+        isProjectRightsLoading, 
+        isBoardRightsLoading, 
+        hasProjectRight, 
+        hasBoardRight, 
+        canManageRights
+    ]);
+
+    // Функция загрузки следующей страницы результатов поиска
+    const loadNextPage = useCallback(() => {
+        if (hasNextPage && !isFetching) {
+            setSearchParams(prev => ({
+                ...prev,
+                page: prev.page + 1
+            }));
+        }
+    }, [hasNextPage, isFetching]);
+
+    // Обработчик прокрутки результатов поиска
+    const handleScroll = useCallback(() => {
+        if (!scrollableResultsRef.current || !hasNextPage || isFetching || isScrollLoading) {
+            return;
+        }
+
+        const { scrollTop, scrollHeight, clientHeight } = scrollableResultsRef.current;
+        
+        if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+            setIsScrollLoading(true);
+            loadNextPage();
+        }
+    }, [hasNextPage, isFetching, isScrollLoading, loadNextPage]);
+
+    // Устанавливаем обработчик прокрутки
+    useEffect(() => {
+        const scrollableElement = scrollableResultsRef.current;
+        if (scrollableElement) {
+            scrollableElement.addEventListener('scroll', handleScroll);
+            return () => {
+                scrollableElement.removeEventListener('scroll', handleScroll);
+            };
+        }
+    }, [handleScroll]);
+
+    // Сбрасываем состояние загрузки при завершении запроса
+    useEffect(() => {
+        if (!isFetching) {
+            setIsScrollLoading(false);
+        }
+    }, [isFetching]);
+
+    // Автоматически загружаем следующую страницу, если результатов мало
+    useEffect(() => {
+        if (searchParams.query && 
+            !isSearching && 
+            !isFetching && 
+            filteredUsers.length < usersOnPage &&
+            hasNextPage && 
+            !isScrollLoading) {
+            setIsScrollLoading(true);
+            loadNextPage();
+        }
+    }, [filteredUsers, searchParams.query, isSearching, isFetching, hasNextPage, isScrollLoading, usersOnPage, loadNextPage]);
+
+    // Устанавливаем поисковый запрос
+    const setSearchQuery = useCallback((query) => {
+        setSearchParams({
+            query,
+            page: 0
+        });
+    }, []);
+
+    // Обрабатываем изменение поискового запроса с задержкой
+    useEffect(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        
+        if (inputValue) {
+            timeoutRef.current = setTimeout(() => {
+                setSearchQuery(inputValue);
+            }, 1000);
+        } else {
+            setSearchQuery('');
+        }
+        
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [inputValue, setSearchQuery]);
+
+    // Обработчик изменения поля поиска
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setInputValue(value);
+        setShowSearchResults(!!value);
+    };
+
+    // Обработчик клика вне окна поиска
+    const handleClickOutsideSearch = (event) => {
+        if (searchResultsRef.current && !searchResultsRef.current.contains(event.target)) {
+            setShowSearchResults(false);
+        }
+    };
+
+    // Устанавливаем обработчик клика вне окна поиска
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutsideSearch);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutsideSearch);
+        };
+    }, []);
 
     useEffect(() => {
         if (board) {
@@ -78,14 +263,15 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         }
     };
 
-    const handleAddUser = async (userId) => {
+    const handleAddUser = async (user) => {
         try {
             await addUserToBoard({
                 boardId: board.id,
-                userId: userId
+                userId: user.id
             }).unwrap();
             
-            setParticipantInput('');
+            setInputValue('');
+            setShowSearchResults(false);
         } catch (error) {
             console.error('Failed to add user:', error);
         }
@@ -146,22 +332,22 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                     >
                         Информация
                     </button>
-                    <BoardRightGuard boardId={board.id} requires={BOARD_RIGHTS.MANAGE_MEMBERS}>
+                    {canManageMembers && (
                         <button 
                             className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
                             onClick={() => setActiveTab('participants')}
                         >
                             Участники
                         </button>
-                    </BoardRightGuard>
-                    <BoardRightGuard boardId={board.id} requires={BOARD_RIGHTS.MANAGE_RIGHTS}>
+                    )}
+                    {canManageRights && (
                         <button 
                             className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
                             onClick={() => setActiveTab('permissions')}
                         >
                             Права доступа
                         </button>
-                    </BoardRightGuard>
+                    )}
                 </div>
                 <div className="project-management-modal-content">
                     {activeTab === 'info' ? (
@@ -239,35 +425,61 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                 Сохранить
                             </button>
                         </form>
-                    ) : activeTab === 'participants' && hasRight(BOARD_RIGHTS.MANAGE_MEMBERS) ? (
+                    ) : activeTab === 'participants' && canManageMembers ? (
                         <div className="participants-section">
                             <h3>Участники доски</h3>
                             <p className="section-description">
                                 Добавьте пользователей, которые смогут работать с этой доской
                             </p>
-                            <div className="project-management-participants-row">
+                            <div className="project-management-modal-search" ref={searchResultsRef}>
                                 <input
                                     type="text"
                                     className="project-management-modal-input-participant"
-                                    placeholder="Имя пользователя"
-                                    value={participantInput}
-                                    onChange={(e) => setParticipantInput(e.target.value)}
+                                    placeholder="Поиск пользователей..."
+                                    value={inputValue}
+                                    onChange={handleSearchChange}
                                 />
-                                <button
-                                    type="button"
-                                    className="project-management-add-button"
-                                    onClick={() => handleAddUser(participantInput)}
-                                >
-                                    Добавить
-                                </button>
+                                {showSearchResults && inputValue && (
+                                    <div className="search-results" ref={scrollableResultsRef}>
+                                        {isSearching && searchParams.page === 0 ? (
+                                            <div className="search-loading">Поиск...</div>
+                                        ) : filteredUsers.length > 0 ? (
+                                            <>
+                                                {filteredUsers.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="search-result-item"
+                                                        onClick={() => handleAddUser(user)}
+                                                    >
+                                                        <img src={user.avatarURL || Girl} alt={user.name} />
+                                                        <span>{user.name}</span>
+                                                    </div>
+                                                ))}
+                                                {(isFetching || isScrollLoading) && hasNextPage && (
+                                                    <div className="search-loading search-loading-more">
+                                                        Загрузка...
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : searchParams.query && !isFetching ? (
+                                            <div className="search-no-results">
+                                                Пользователи не найдены
+                                            </div>
+                                        ) : (
+                                            <div className="search-loading">
+                                                {isFetching ? "Загрузка пользователей..." : "Введите имя для поиска"}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <div className="project-management-participants">
                                 {board?.participants && board.participants.length > 0 ? (
                                     board.participants.map((participant) => (
-                                        <div key={participant.username || participant.id} className="participant-item">
+                                        <div key={participant.id || participant.username} className="participant-item">
                                             <div className="participant-info">
-                                                <img src={participant.avatarURL || Girl} alt={participant.username} />
-                                                <span>{participant.username}</span>
+                                                <img src={participant.avatarURL || Girl} alt={participant.name || participant.username} />
+                                                <span>{participant.name || participant.username}</span>
                                             </div>
                                             <button
                                                 className="project-management-remove-participant-button"
@@ -284,7 +496,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                 )}
                             </div>
                         </div>
-                    ) : activeTab === 'permissions' && hasRight(BOARD_RIGHTS.MANAGE_RIGHTS) ? (
+                    ) : activeTab === 'permissions' && canManageRights ? (
                         <BoardPermissionsTab board={board} />
                     ) : null}
                 </div>

@@ -4,7 +4,7 @@ import {
     useRevokeProjectRightMutation, 
     useGetUserRightsQuery
 } from '../services/api/projectsApi';
-import { PROJECT_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
+import { PROJECT_RIGHTS, PROJECT_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css';
 import Girl from '../assets/icons/girl.svg';
 
@@ -130,7 +130,7 @@ function ProjectPermissionsTab({ project }) {
                                             <div key={rightName} className="right-item">
                                                 <div className="right-info">
                                                     <div className="right-name">{rightName}</div>
-                                                    <div className="right-description">{RIGHT_DESCRIPTIONS[rightName]}</div>
+                                                    <div className="right-description">{PROJECT_RIGHT_DESCRIPTIONS[rightName]}</div>
                                                 </div>
                                                 <label className="toggle-switch">
                                                     <input

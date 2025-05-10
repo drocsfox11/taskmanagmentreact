@@ -4,9 +4,10 @@ import {
     useRevokeBoardRightMutation, 
     useGetBoardUserRightsQuery
 } from '../services/api/boardsApi';
-import { BOARD_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
+import { BOARD_RIGHTS, BOARD_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css'; // Reuse the same styles
 import Girl from '../assets/icons/girl.svg';
+import { useGetProjectQuery } from '../services/api/projectsApi';
 
 function BoardPermissionsTab({ board }) {
     const [selectedUserId, setSelectedUserId] = useState(null);
@@ -14,6 +15,11 @@ function BoardPermissionsTab({ board }) {
     
     const [grantRight] = useGrantBoardRightMutation();
     const [revokeRight] = useRevokeBoardRightMutation();
+    
+    // Получаем данные о проекте, чтобы определить владельца
+    const { data: project } = useGetProjectQuery(board.projectId, {
+        skip: !board.projectId
+    });
     
     const { data: fetchedUserRights, isLoading, refetch } = useGetBoardUserRightsQuery(
         { boardId: board?.id, userId: selectedUserId },
@@ -58,6 +64,11 @@ function BoardPermissionsTab({ board }) {
 
     // All board rights to display
     const boardRightsToDisplay = Object.values(BOARD_RIGHTS);
+    
+    // Проверяем, является ли пользователь владельцем проекта
+    const isProjectOwner = (userId) => {
+        return project && project.owner && project.owner.id === userId;
+    };
 
     return (
         <div className="project-permissions-tab" onClick={(e) => e.stopPropagation()}>
@@ -71,11 +82,16 @@ function BoardPermissionsTab({ board }) {
                             board.participants.map((user) => (
                                 <div 
                                     key={user.id} 
-                                    className={`user-item ${selectedUserId === user.id ? 'selected' : ''}`}
+                                    className={`user-item ${selectedUserId === user.id ? 'selected' : ''} ${isProjectOwner(user.id) ? 'owner' : ''}`}
                                     onClick={(e) => handleUserSelect(user.id, e)}
                                 >
                                     <img src={user.avatarURL || Girl} alt={user.name} />
-                                    <span>{user.name}</span>
+                                    <div className="user-details">
+                                        <span className="user-name">{user.name}</span>
+                                        {isProjectOwner(user.id) && (
+                                            <span className="user-role">Владелец проекта</span>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         ) : (
@@ -88,6 +104,9 @@ function BoardPermissionsTab({ board }) {
                 
                 <div className="user-rights-section">
                     <h4>Права пользователя {board?.participants?.find(p => p.id === selectedUserId)?.name}</h4>
+                    {isProjectOwner(selectedUserId) && (
+                        <div className="user-role" style={{marginBottom: '10px'}}>Владелец проекта</div>
+                    )}
                     
                     {isLoading ? (
                         <div className="loading-rights">Загрузка прав...</div>
@@ -101,7 +120,7 @@ function BoardPermissionsTab({ board }) {
                                         <div key={rightName} className="right-item" onClick={(e) => e.stopPropagation()}>
                                             <div className="right-info">
                                                 <div className="right-name">{rightName}</div>
-                                                <div className="right-description">{RIGHT_DESCRIPTIONS[rightName]}</div>
+                                                <div className="right-description">{BOARD_RIGHT_DESCRIPTIONS[rightName]}</div>
                                             </div>
                                             <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
                                                 <input

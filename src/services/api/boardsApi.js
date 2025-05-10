@@ -772,9 +772,8 @@ export const boardsApi = baseApi.injectEndpoints({
     }),
     addUserToBoard: builder.mutation({
       query: ({ boardId, userId }) => ({
-        url: `${apiPrefix}/${boardId}/rights/users`,
+        url: `${apiPrefix}/${boardId}/participants/${userId}`,
         method: 'POST',
-        body: { userId },
       }),
       invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
     }),

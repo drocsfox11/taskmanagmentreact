@@ -13,7 +13,7 @@ import {
     useGetProjectInvitationsQuery,
     useCancelInvitationMutation
 } from '../services/api/invitationsApi';
-import { PROJECT_RIGHTS, RIGHT_DESCRIPTIONS } from '../constants/rights';
+import { PROJECT_RIGHTS, PROJECT_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectManagementModal.css';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
@@ -500,7 +500,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                                                             <div key={rightName} className="right-item">
                                                                 <div className="right-info">
                                                                     <div className="right-name">{rightName}</div>
-                                                                    <div className="right-description">{RIGHT_DESCRIPTIONS[rightName]}</div>
+                                                                    <div className="right-description">{PROJECT_RIGHT_DESCRIPTIONS[rightName]}</div>
                                                                 </div>
                                                                 <label className="toggle-switch">
                                                                     <input

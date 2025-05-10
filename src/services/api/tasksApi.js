@@ -23,6 +23,15 @@ export const tasksApi = baseApi.injectEndpoints({
         { type: 'Tasks', id: `column-${id}` },
       ],
     }),
+    getTasksByProject: builder.query({
+      query: (projectId) => ({
+        url: `api/tasks/project/${projectId}`,
+        method: 'GET'
+      }),
+      providesTags: (result, error, projectId) => [
+        { type: 'Tasks', id: `project-${projectId}` }
+      ]
+    }),
     createTask: builder.mutation({
       query: (task) => ({
         url: 'api/tasks',
@@ -281,6 +290,7 @@ export const tasksApi = baseApi.injectEndpoints({
 export const {
   useGetTaskQuery,
   useGetTasksByColumnQuery,
+  useGetTasksByProjectQuery,
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,

@@ -8,23 +8,42 @@
     border-color: #DBDBDB;
     border-style: solid;
     border-radius: 5px;
+    height: fit-content;
 }
 
-.calendar-card-label-container{
+.calendar-card-header {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 5px;
 }
 
-.calendar-card-label-background{
+.calendar-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-    background: #FFF1D6;
-    padding: 8px 20px;
+.calendar-card-board-title {
+    font-size: 11px;
+    color: #757575;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.calendar-card-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
     border-radius: 12px;
-    font-family: 'Ruberoid Bold';
-    font-size: 12px;
-    color: #EA9236;
+    color: white;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    width: fit-content;
+    text-overflow: ellipsis;
 }
 
 .calendar-card-text-info-container{
@@ -38,12 +57,14 @@
 .calendar-card-text-info-header{
     font-family: "Ruberoid Bold";
     font-size: 16px;
+    word-break: break-word;
 }
 
 .calendar-card-text-info-text{
     font-family: "Ruberoid Regular";
     font-size: 12px;
     color: #969595;
+    word-break: break-word;
 }
 
 .calendar-card-points-list{
@@ -59,7 +80,6 @@
     align-self: start;
     border-radius: 5px;
     gap: 8px;
-
 }
 
 .calendar-card-points-list-counter{
@@ -72,23 +92,25 @@
     height: 1px;
     width: 100%;
     background: #E1E1E1;
-
 }
 
 .calendar-card-people{
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
 }
 
 .calendar-card-people > * {
     margin-left: -13px;
 }
 
+.calendar-card-people > *:first-child {
+    margin-left: 0;
+}
+
 .calendar-card-people-item{
-    width: 35px;
-    height: 35px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -97,11 +119,18 @@
     border: #FFFFFF;
     border-width: 1px;
     border-style: solid;
+    overflow: hidden;
+}
+
+.calendar-card-people-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .calendar-card-people-item-more{
-    width: 35px;
-    height: 35px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,7 +141,7 @@
     border-style: solid;
     font-family: 'Ruberoid Regular';
     font-size: 10px;
-    color:#1D20FE ;
+    color:#1D20FE;
     text-align: center;
 }
 
@@ -123,32 +152,15 @@
     width: 100%;
     justify-content: space-between;
     align-self: start;
-    padding-left: 13px;
-
 }
 
 .calendar-card-misc-info-container{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 15px;
     font-family: "Ruberoid Regular";
-    font-size: 10px;
+    font-size: 9px;
     color: #969595;
-    margin-right: 13px;
-}
-
-.calendar-card-misc-info-row{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 2px;
-}
-
-.calendar-card-misc-info-row-text{
-    font-family: "Ruberoid Regular";
-    font-size: 10px;
-    color: #969595;
+    text-align: right;
+    word-break: keep-all;
+    white-space: nowrap;
 }
 
 

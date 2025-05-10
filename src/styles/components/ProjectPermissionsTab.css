@@ -65,6 +65,25 @@
     object-fit: cover;
 }
 
+.user-item.owner {
+    background-color: #fafad2;
+}
+
+.user-item.owner:hover {
+    background-color: #f0f0a0;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: #666;
+    font-style: italic;
+}
+
 .user-rights-section {
     flex: 1;
     display: flex;

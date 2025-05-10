@@ -12,10 +12,21 @@ export const useProjectRights = (projectId) => {
   const { data: currentUser } = useGetCurrentUserQuery();
   const userId = currentUser?.id;
   
-  const { data: userRights = [], isLoading } = useGetUserRightsQuery(
+  // Отладочный вывод для проверки параметров
+  console.log(`useProjectRights called with projectId: ${projectId}, userId: ${userId}`);
+  
+  const { data: userRights = [], isLoading, isFetching, error } = useGetUserRightsQuery(
     { projectId, userId },
     { skip: !projectId || !userId }
   );
+  
+  // Добавляем отладочный вывод для результатов запроса
+  useEffect(() => {
+    console.log(`Project rights loaded for projectId: ${projectId}`);
+    console.log(`Loading: ${isLoading}, Fetching: ${isFetching}`);
+    console.log(`Rights:`, userRights);
+    if (error) console.error(`Error loading rights:`, error);
+  }, [projectId, userRights, isLoading, isFetching, error]);
   
   /**
    * Проверяет наличие указанного права у пользователя
@@ -23,8 +34,9 @@ export const useProjectRights = (projectId) => {
    * @returns {boolean} true, если пользователь имеет указанное право
    */
   const hasRight = (rightName) => {
-    if (!userRights || isLoading) return false;
-    return userRights.includes(rightName);
+    const result = userRights && userRights.includes && userRights.includes(rightName);
+    console.log(`Checking right: ${rightName}, result: ${result}`);
+    return result;
   };
   
   /**
@@ -66,10 +78,21 @@ export const useBoardRights = (boardId) => {
   const { data: currentUser } = useGetCurrentUserQuery();
   const userId = currentUser?.id;
   
-  const { data: userRights = [], isLoading } = useGetBoardUserRightsQuery(
+  // Отладочный вывод для проверки параметров
+  console.log(`useBoardRights called with boardId: ${boardId}, userId: ${userId}`);
+  
+  const { data: userRights = [], isLoading, isFetching, error } = useGetBoardUserRightsQuery(
     { boardId, userId },
     { skip: !boardId || !userId }
   );
+  
+  // Добавляем отладочный вывод для результатов запроса
+  useEffect(() => {
+    console.log(`Board rights loaded for boardId: ${boardId}`);
+    console.log(`Loading: ${isLoading}, Fetching: ${isFetching}`);
+    console.log(`Rights:`, userRights);
+    if (error) console.error(`Error loading rights:`, error);
+  }, [boardId, userRights, isLoading, isFetching, error]);
   
   /**
    * Проверяет наличие указанного права у пользователя
@@ -77,8 +100,9 @@ export const useBoardRights = (boardId) => {
    * @returns {boolean} true, если пользователь имеет указанное право
    */
   const hasRight = (rightName) => {
-    if (!userRights || isLoading) return false;
-    return userRights.includes(rightName);
+    const result = userRights && userRights.includes && userRights.includes(rightName);
+    console.log(`Checking board right: ${rightName}, result: ${result}`);
+    return result;
   };
   
   /**

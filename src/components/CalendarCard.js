@@ -1,66 +1,126 @@
 import '../styles/components/CalendarCard.css'
-import OptionsPassive from "../assets/icons/options_passive.svg";
-import Girl from "../assets/icons/profile_picture.svg";
 import TaskListIcon from "../assets/icons/task_list.svg";
-import EyeIcon from "../assets/icons/eye.svg";
-import CommentIcon from "../assets/icons/comments.svg";
-import Clip from "../assets/icons/clip.svg";
+import Girl from "../assets/icons/profile_picture.svg";
 
-function CalendarCard({ startDate, endDate, style }) {
+function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
+    // Format dates for display
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        
+        // Форматирование даты и времени
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    };
+
+    // Calculate progress based on checklist items if available
+    const calculateProgress = () => {
+        if (task && task.checklist && task.checklist.length > 0) {
+            const total = task.checklist.length;
+            return `${total}`;
+        }
+        return '0';
+    };
+
+    // Get tag color if available
+    const getTagColor = () => {
+        if (task && task.tag && task.tag.color) {
+            return task.tag.color;
+        }
+        return '#FFD700'; // Default color как на скриншоте
+    };
+
+    // Get tag name if available
+    const getTagName = () => {
+        if (task && task.tag && task.tag.name) {
+            return task.tag.name;
+        }
+        return '';
+    };
+
+    const taskTitle = task ? task.title : 'Задача без названия';
+    const taskDescription = task ? task.description : '';
+    const boardName = task.boardTitle || boardTitle || '';
+    const columnName = task.columnName || '';
+    const progress = calculateProgress();
+    const participants = task.participants || [];
+    const tagColor = getTagColor();
+    const tagName = getTagName();
+    
+    const formattedStartDate = formatDate(startDate);
+    const formattedEndDate = formatDate(endDate);
+    
+    const displayDate = 
+        formattedStartDate && formattedEndDate && formattedStartDate !== formattedEndDate
+            ? `${formattedStartDate} - ${formattedEndDate}`
+            : formattedStartDate || formattedEndDate || '';
+
     return (
         <div className='calendar-card-container' style={style}>
-
-
-            <div className='calendar-card-text-info-container'>
-
-                <div className='calendar-card-text-info-header'>Сетка страницы</div>
-                <div className='calendar-card-text-info-text'>Нужно сделать основную сетку страницы без смысловых блоков. Сетка должна быть адаптивной под все девайсы</div>
-
-
+            <div className="calendar-card-header">
+                {boardName && (
+                    <div className='calendar-card-board-title'>
+                        {boardName}{columnName ? ` / ${columnName}` : ''}
+                    </div>
+                )}
+                
+                {task.tag && (
+                    <div className='calendar-card-tag' style={{ backgroundColor: tagColor }}>
+                        {tagName}
+                    </div>
+                )}
             </div>
 
-            <div className='calendar-card-points-list'>
+            <div className='calendar-card-content'>
+                <div className='calendar-card-text-info-container'>
+                    <div className='calendar-card-text-info-header'>{taskTitle}</div>
+                    {taskDescription && (
+                        <div className='calendar-card-text-info-text'>{taskDescription}</div>
+                    )}
+                </div>
 
-                <img src={TaskListIcon} className='calendar-card-points-list-icon'/>
-                <div className='calendar-card-points-list-counter'>0/8</div>
-
+                {task.checklist && task.checklist.length > 0 && (
+                    <div className='calendar-card-points-list'>
+                        <img src={TaskListIcon} className='calendar-card-points-list-icon' alt="Task list" />
+                        <div className='calendar-card-points-list-counter'>{progress}</div>
+                    </div>
+                )}
             </div>
 
             <div className='calendar-card-delimiter'></div>
 
             <div className='calendar-card-down-container'>
-
-                <div className="calendar-card-people">
-
-                    <div className="calendar-card-people-item">
-                        <img src={Girl}/>
+                {participants.length > 0 && (
+                    <div className="calendar-card-people">
+                        {participants.slice(0, 4).map((user, index) => (
+                            <div key={index} className="calendar-card-people-item">
+                                {user.avatarURL ? (
+                                    <img src={user.avatarURL} alt={user.name || 'User'} />
+                                ) : (
+                                    <img src={Girl} alt="Default user" />
+                                )}
+                            </div>
+                        ))}
+                        
+                        {participants.length > 4 && (
+                            <div className="calendar-card-people-item-more">
+                                +{participants.length - 4}
+                            </div>
+                        )}
                     </div>
+                )}
 
-                    <div className="calendar-card-people-item">
-                        <img src={Girl}/>
+                {displayDate && (
+                    <div className='calendar-card-misc-info-container'>
+                        {displayDate}
                     </div>
-
-                    <div className="calendar-card-people-item">
-                        <img src={Girl}/>
-                    </div>
-
-                    <div className="calendar-card-people-item">
-                        <img src={Girl}/>
-                    </div>
-
-                    <div className="calendar-card-people-item-more">
-                        +3
-                    </div>
-
-                </div>
-
-                <div className='calendar-card-misc-info-container'>
-                    {startDate} - {endDate}
-                </div>
-
+                )}
             </div>
-
-
         </div>
     );
 }

@@ -8,6 +8,7 @@ import Girl from '../assets/icons/girl.svg';
 import ProjectManagementModal from './ProjectManagementModal';
 import { ProjectRightGuard, useProjectRights } from './permissions';
 import { PROJECT_RIGHTS } from '../constants/rights';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
 
 function ProjectCard({ project, onClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,15 +17,20 @@ function ProjectCard({ project, onClick }) {
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
     
+    // Получаем текущего пользователя
+    const { data: currentUser } = useGetCurrentUserQuery();
+    
     // Получаем права пользователя для проверки
     const { hasRight } = useProjectRights(project.id);
     
-    // Проверяем, есть ли у пользователя права на редактирование или удаление
+    // Проверяем, есть ли у пользователя права на редактирование
     const canEditProject = hasRight(PROJECT_RIGHTS.EDIT_PROJECT);
-    const canDeleteProject = hasRight(PROJECT_RIGHTS.DELETE_BOARDS);
+    
+    // Проверяем, является ли пользователь владельцем проекта (только владелец может удалять проект)
+    const isProjectOwner = currentUser && project.owner && currentUser.id === project.owner.id;
     
     // Показывать троеточие только если есть хотя бы одно право
-    const showOptionsIcon = canEditProject || canDeleteProject;
+    const showOptionsIcon = canEditProject || isProjectOwner;
 
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -97,7 +103,7 @@ function ProjectCard({ project, onClick }) {
                         {canEditProject && (
                             <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
                         )}
-                        {canDeleteProject && (
+                        {isProjectOwner && (
                             <div className="project-card-modal-delete" onClick={handleDelete}>Удалить</div>
                         )}
                     </div>
