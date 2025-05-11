@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGetCurrentUserQuery } from '../services/api/usersApi';
-import { useGetUserRightsQuery } from '../services/api/projectsApi';
+import { useGetUserRightsQuery, useGetAllUserRightsQuery } from '../services/api/projectsApi';
 import { useGetBoardUserRightsQuery } from '../services/api/boardsApi';
 
 /**
@@ -15,16 +15,20 @@ export const useProjectRights = (projectId) => {
   // Отладочный вывод для проверки параметров
   console.log(`useProjectRights called with projectId: ${projectId}, userId: ${userId}`);
   
-  const { data: userRights = [], isLoading, isFetching, error } = useGetUserRightsQuery(
-    { projectId, userId },
-    { skip: !projectId || !userId }
+  // Получение всех прав пользователя на всех проектах
+  const { data: allProjectRights = {}, isLoading, isFetching, error } = useGetAllUserRightsQuery(
+    userId,
+    { skip: !userId }
   );
+  
+  // Извлекаем права для конкретного проекта из объекта всех прав
+  const userRights = projectId && allProjectRights[projectId] ? allProjectRights[projectId] : [];
   
   // Добавляем отладочный вывод для результатов запроса
   useEffect(() => {
     console.log(`Project rights loaded for projectId: ${projectId}`);
     console.log(`Loading: ${isLoading}, Fetching: ${isFetching}`);
-    console.log(`Rights:`, userRights);
+    console.log(`Rights for project ${projectId}:`, userRights);
     if (error) console.error(`Error loading rights:`, error);
   }, [projectId, userRights, isLoading, isFetching, error]);
   

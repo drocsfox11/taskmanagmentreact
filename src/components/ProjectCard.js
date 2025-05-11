@@ -13,6 +13,7 @@ import { useGetCurrentUserQuery } from '../services/api/usersApi';
 function ProjectCard({ project, onClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
+    const [isDeleted, setIsDeleted] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
@@ -53,11 +54,21 @@ function ProjectCard({ project, onClick }) {
 
     const handleDelete = async (e) => {
         e.stopPropagation();
+        
+        // Оптимистично скрываем карточку
+        setIsDeleted(true);
+        setIsModalOpen(false);
+        
         try {
+            // Отправляем запрос на удаление
             await deleteProject(project.id);
-            setIsModalOpen(false);
+            console.log(`Проект ${project.id} успешно удален`);
         } catch (error) {
+            // В случае ошибки возвращаем карточку
+            setIsDeleted(false);
             console.error('Error deleting project:', error);
+            // Показываем уведомление пользователю
+            alert('Не удалось удалить проект. Пожалуйста, попробуйте снова.');
         }
     };
 
@@ -67,8 +78,8 @@ function ProjectCard({ project, onClick }) {
         setIsManagementModalOpen(true);
     };
 
-    // Если project не определен, не отображаем карточку
-    if (!project) return null;
+    // Не рендерим карточку, если проект был удален
+    if (isDeleted || !project) return null;
     
     return (
         <div className='project-card-container' onClick={(e) => {

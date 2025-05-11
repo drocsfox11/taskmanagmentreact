@@ -9,6 +9,10 @@ export const projectParticipantsApi = baseApi.injectEndpoints({
         url: `${apiPrefix}/${projectId}/participants/${user.id}`,
         method: 'POST',
       }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Projects', id: projectId },
+        'ProjectRights'
+      ],
       async onQueryStarted({ projectId, user }, { dispatch, queryFulfilled, getState }) {
 
         const patchResult = dispatch(
@@ -31,6 +35,10 @@ export const projectParticipantsApi = baseApi.injectEndpoints({
         url: `${apiPrefix}/${projectId}/participants/${userId}`,
         method: 'DELETE',
       }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Projects', id: projectId },
+        'ProjectRights'
+      ],
       async onQueryStarted({ projectId, userId }, { dispatch, queryFulfilled, getState }) {
 
         const patchResult = dispatch(

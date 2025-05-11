@@ -7,7 +7,8 @@ export {
   useGetProjectQuery,
   useCreateProjectMutation,
   useUpdateProjectMutation,
-  useDeleteProjectMutation
+  useDeleteProjectMutation,
+  useGetAllUserRightsQuery
 } from './projectsApi';
 
 // Re-export TasksAPI hooks

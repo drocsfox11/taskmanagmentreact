@@ -14,11 +14,9 @@
 .user-profile-modal {
     background-color: white;
     border-radius: 8px;
-    width: 600px;
-    max-width: 90%;
-    max-height: 90vh;
-    overflow: hidden;
     display: flex;
+    width: 90%;
+    max-width: 700px;
     flex-direction: column;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     box-sizing: border-box;
@@ -53,9 +51,9 @@
 .user-profile-modal-content {
     display: flex;
     flex: 1;
-    overflow: hidden;
     width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .user-profile-modal-sidebar {
@@ -91,9 +89,10 @@
 .user-profile-modal-main {
     flex: 1;
     padding: 20px;
+    box-sizing: border-box;
     overflow-y: auto;
     overflow-x: hidden;
-    box-sizing: border-box;
+    max-height: 70vh;
 }
 
 .user-profile-modal-avatar-section {
@@ -169,4 +168,11 @@
     font-size: 14px;
     color: #333;
     box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .user-profile-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
 } 

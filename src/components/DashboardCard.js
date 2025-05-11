@@ -8,7 +8,7 @@ import { useDeleteBoardMutation, useGetBoardWithDataQuery } from "../services/ap
 import BoardManagementModal from "./BoardManagementModal";
 import { useProjectRights } from "./permissions";
 import { PROJECT_RIGHTS } from "../constants/rights";
-import { useGetUserRightsQuery } from "../services/api/projectsApi";
+import { useGetAllUserRightsQuery } from "../services/api/projectsApi";
 import { useGetCurrentUserQuery } from "../services/api/usersApi";
 
 function DashboardCard({ board, onClick }) {
@@ -30,11 +30,14 @@ function DashboardCard({ board, onClick }) {
     const { data: currentUser } = useGetCurrentUserQuery();
     const userId = currentUser?.id;
     
-    // Напрямую получаем права пользователя для отладки
-    const { data: directUserRights = [], isLoading: isRightsLoading } = useGetUserRightsQuery(
-        { projectId, userId },
-        { skip: !projectId || !userId }
+    // Получаем все права пользователя на всех проектах
+    const { data: allProjectRights = {}, isLoading: isRightsLoading } = useGetAllUserRightsQuery(
+        userId,
+        { skip: !userId }
     );
+    
+    // Извлекаем права для текущего проекта, если он известен
+    const directUserRights = projectId && allProjectRights[projectId] ? allProjectRights[projectId] : [];
     
     // Получаем права пользователя через хук
     const { hasRight, rights, isLoading: isRightsHookLoading } = useProjectRights(projectId);
@@ -60,24 +63,11 @@ function DashboardCard({ board, onClick }) {
     // Если projectId не был указан изначально, но получен через API, используем его
     const effectiveProjectId = projectId || boardWithData?.projectId;
     
-    // Повторно получаем права с effectiveProjectId, если он изменился
-    const { data: updatedRights = [] } = useGetUserRightsQuery(
-        { projectId: effectiveProjectId, userId },
-        { skip: !effectiveProjectId || !userId || (projectId && projectId === effectiveProjectId) }
-    );
-    
-    // Определяем окончательные права на основе всех доступных данных
-    const finalCanEditBoard = 
-        directCanEditBoard || 
-        canEditBoard || 
-        updatedRights.includes(PROJECT_RIGHTS.EDIT_BOARDS);
-    const finalCanDeleteBoard = 
-        directCanDeleteBoard || 
-        canDeleteBoard || 
-        updatedRights.includes(PROJECT_RIGHTS.DELETE_BOARDS);
-    
-    // Окончательное решение о показе иконки
-    const finalShowOptionsIcon = finalCanEditBoard || finalCanDeleteBoard;
+    // Извлекаем права для эффективного projectId, если он отличается от исходного
+    const updatedRights = effectiveProjectId && 
+                         effectiveProjectId !== projectId && 
+                         allProjectRights[effectiveProjectId] ? 
+                         allProjectRights[effectiveProjectId] : [];
     
     // Отладочный вывод для проверки прав
     useEffect(() => {
@@ -88,11 +78,11 @@ function DashboardCard({ board, onClick }) {
         console.log(`Direct rights:`, directUserRights);
         console.log(`Hook rights:`, rights);
         console.log(`Updated rights:`, updatedRights);
-        console.log(`Final permissions: canEdit=${finalCanEditBoard}, canDelete=${finalCanDeleteBoard}`);
-        console.log(`Show options icon: ${finalShowOptionsIcon}`);
+        console.log(`Final permissions: canEdit=${canEditBoard}, canDelete=${canDeleteBoard}`);
+        console.log(`Show options icon: ${showOptionsIcon}`);
     }, [boardId, projectId, effectiveProjectId, directUserRights, rights, 
-        updatedRights, boardWithData, finalCanEditBoard, finalCanDeleteBoard, 
-        finalShowOptionsIcon, currentUser]);
+        updatedRights, boardWithData, canEditBoard, canDeleteBoard, 
+        showOptionsIcon, currentUser]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -167,7 +157,7 @@ function DashboardCard({ board, onClick }) {
                         <Emoji name={board.emoji || "clipboard"} width={22}/>
                     </EmojiProvider>
                 </div>
-                {finalShowOptionsIcon && (
+                {showOptionsIcon && (
                     <div ref={optionsRef} onClick={handleOptionsClick} className='project-card-icon-row-container-options'>
                         <img src={OptionsPassive} alt="Options"/>
                     </div>
@@ -191,10 +181,10 @@ function DashboardCard({ board, onClick }) {
             {isModalOpen && (
                 <div ref={modalRef} className="project-card-modal-container" onClick={(e) => e.stopPropagation()}>
                     <div className="project-card-modal-content">
-                        {finalCanEditBoard && (
+                        {canEditBoard && (
                             <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
                         )}
-                        {finalCanDeleteBoard && (
+                        {canDeleteBoard && (
                             <div className="project-card-modal-delete" onClick={handleDelete}>Удалить</div>
                         )}
                     </div>

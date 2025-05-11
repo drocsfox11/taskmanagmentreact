@@ -42,14 +42,16 @@ function InvitationsTab() {
                 {invitationsList.map((invitation) => (
                     <div key={invitation.id} className="invitation-card">
                         <div className="invitation-info">
-                            <div className="invitation-project">
-                                Проект: {invitation.projectTitle}
-                            </div>
-                            <div className="invitation-sender">
-                                От: {invitation.senderUsername}
-                            </div>
-                            <div className="invitation-status">
-                                Статус: Ожидает ответа
+                            <div className="invitation-content">
+                                <div className="invitation-project">
+                                    Проект: {invitation.projectTitle}
+                                </div>
+                                <div className="invitation-sender">
+                                    От: {invitation.senderUsername}
+                                </div>
+                                <div className="invitation-status">
+                                    Статус: Ожидает ответа
+                                </div>
                             </div>
                         </div>
                         <div className="invitation-actions">

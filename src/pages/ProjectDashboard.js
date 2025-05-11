@@ -3,7 +3,8 @@ import ProjectCard from "../components/ProjectCard";
 import '../styles/pages/ProjectDashboard.css'
 import {useNavigate} from "react-router-dom";
 import {useState, useRef, useEffect} from "react";
-import { useGetProjectsQuery, useCreateProjectMutation } from '../services/api/projectsApi';
+import { useGetProjectsQuery, useCreateProjectMutation, useGetAllUserRightsQuery } from '../services/api/projectsApi';
+import { useGetCurrentUserQuery } from "../services/api/usersApi";
 import CloseCross from '../assets/icons/close_cross.svg';
 import LoadingSpinner from "../components/LoadingSpinner";
 import EmojiPicker from "../components/EmojiPicker";
@@ -18,6 +19,15 @@ function ProjectDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const modalRef = useRef(null);
+    
+    // Получаем данные о текущем пользователе для запроса прав
+    const { data: currentUser } = useGetCurrentUserQuery();
+    
+    // Получаем права пользователя с возможностью рефетча
+    const { refetch: refetchRights } = useGetAllUserRightsQuery(
+        currentUser?.id,
+        { skip: !currentUser?.id }
+    );
 
     console.log(projects);
 
@@ -87,11 +97,26 @@ function ProjectDashboard() {
         };
         
         try {
-            await createProject(projectData).unwrap();
+            // Отправляем запрос на создание проекта
+            const response = await createProject(projectData).unwrap();
+            console.log('Проект успешно создан:', response);
+            
+            // Делаем рефетч прав пользователя
+            if (currentUser?.id) {
+                await refetchRights();
+                console.log('Права пользователя обновлены');
+            }
+            
+            // Сразу закрываем модальное окно и сбрасываем форму
+            setIsModalOpen(false);
+            setForm({ 
+                title: '', 
+                description: '',
+                emoji: 'teacher-light-skin-tone'
+            });
         } catch (err) {
             console.error('Failed to create project:', err);
         }
-        setIsModalOpen(false);
     };
 
     return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
     useGrantProjectRightMutation, 
     useRevokeProjectRightMutation, 
-    useGetUserRightsQuery
+    useGetAllUserRightsQuery
 } from '../services/api/projectsApi';
 import { PROJECT_RIGHTS, PROJECT_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css';
@@ -20,18 +20,23 @@ function ProjectPermissionsTab({ project }) {
     // Получаем данные о текущем пользователе
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    const { data: fetchedUserRights, isLoading, refetch } = useGetUserRightsQuery(
-        { projectId: project?.id, userId: selectedUserId },
+    // Получаем все права выбранного пользователя
+    const { data: allProjectRights = {}, isLoading, refetch } = useGetAllUserRightsQuery(
+        selectedUserId,
         { skip: !selectedUserId }
     );
     
+    // При изменении выбранного пользователя или проекта
     useEffect(() => {
-        if (fetchedUserRights) {
-            setUserRights(fetchedUserRights);
+        if (selectedUserId && project?.id && allProjectRights) {
+            // Извлекаем права для текущего проекта
+            const projectRights = allProjectRights[project.id] || [];
+            setUserRights(projectRights);
+            
             // Проверяем наличие права ACCESS_ALL_BOARDS в списке
-            setHasAccessToAllBoards(fetchedUserRights.includes(PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
+            setHasAccessToAllBoards(projectRights.includes(PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
         }
-    }, [fetchedUserRights]);
+    }, [selectedUserId, project?.id, allProjectRights]);
     
     const handleUserSelect = (userId) => {
         setSelectedUserId(userId);
