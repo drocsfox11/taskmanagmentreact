@@ -61,6 +61,27 @@ export {
   useGetTaskAttachmentsQuery,
 } from './attachmentsApi';
 
-// Экспортируем reducerPath и middleware для конфигурации Redux store
+// Chats API
+export {
+  useCreateChatMutation,
+  useDeleteChatMutation,
+  useGetMyChatsQuery,
+  useGetChatByIdQuery,
+  useAddParticipantMutation,
+  useRemoveParticipantMutation,
+  useChangeParticipantRoleMutation,
+  useGetPagedChatsQuery,
+} from './ChatsApi';
+
+// Messages API
+export {
+  useSendMessageMutation,
+  useGetMessagesQuery,
+  useEditMessageMutation,
+  useDeleteMessageMutation,
+  useUploadAttachmentMutation,
+  useMarkAsReadMutation,
+} from './MessagesApi';
+
 export const apiReducer = { [baseApi.reducerPath]: baseApi.reducer };
-export const apiMiddleware = baseApi.middleware; 
+export const apiMiddleware = baseApi.middleware;

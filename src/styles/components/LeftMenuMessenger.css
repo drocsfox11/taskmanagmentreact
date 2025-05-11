@@ -1,4 +1,5 @@
 .left-menu-messenger-container{
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -124,4 +125,31 @@
     font-size: 10px;
     color: #969595;
     font-family: "Ruberoid Regular", sans-serif;
+}
+
+.messenger-create-chat-btn {
+    position: absolute;
+    right: 24px;
+    bottom: 32px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #4F8CFF;
+    box-shadow: 0 4px 16px rgba(79, 140, 255, 0.15);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    z-index: 10;
+}
+.messenger-create-chat-btn:hover {
+    background: #2566d4;
+    box-shadow: 0 6px 24px rgba(79, 140, 255, 0.25);
+}
+.messenger-create-chat-btn svg {
+    width: 28px;
+    height: 28px;
+    display: block;
 }

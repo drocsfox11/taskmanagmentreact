@@ -34,7 +34,10 @@ const router = createBrowserRouter([
                     { path: "tasks/:projectId?", element: <TaskDashboard /> }
                 ]
             },
-            { path: "messenger", element: <MessengerPage /> },
+            { path: "messenger", children: [
+                { index: true, element: <MessengerPage /> },
+                { path: ":chatId", element: <MessengerPage /> }
+            ] },
             { path: "calendar/:projectId?", element: <TaskCalendar /> }
         ]
     },
