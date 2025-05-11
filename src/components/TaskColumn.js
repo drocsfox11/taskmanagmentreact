@@ -4,18 +4,31 @@ import OptionsPassive from "../assets/icons/options_passive.svg";
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { BoardRightGuard } from './permissions';
 import { BOARD_RIGHTS } from '../constants/rights';
+import { useBoardRights } from '../hooks/useRights';
 
 function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn }) {
+    console.log('Рендер колонки');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editColumnName, setEditColumnName] = useState('');
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     
-    const columnId = column.id;
-    const columnTitle = column.title || column.name;
-    const tasks = column.tasks || [];
+    const columnId = column?.id || column?.columnId;
+    const columnTitle = column?.title || column?.name;
+    const tasks = column?.tasks || [];
     const taskCount = tasks.length;
+    
+    // Получаем права пользователя для текущей доски
+    const { hasRight, hasAnyRight } = useBoardRights(column.boardId);
+    
+    // Проверяем права на редактирование и удаление
+    const canEdit = hasRight(BOARD_RIGHTS.EDIT_SECTIONS);
+    const canDelete = hasRight(BOARD_RIGHTS.DELETE_SECTIONS);
+    const canMoveTasks = hasRight(BOARD_RIGHTS.MOVE_TASKS);
+    
+    // Проверяем, есть ли хотя бы одно из прав для отображения троеточия
+    const showOptionsButton = hasAnyRight([BOARD_RIGHTS.EDIT_SECTIONS, BOARD_RIGHTS.DELETE_SECTIONS]);
     
     useEffect(() => {
         setEditColumnName(columnTitle);
@@ -112,31 +125,36 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                         {taskCount}
                     </div>
                 </div>
-                <BoardRightGuard boardId={column.boardId} requires={[BOARD_RIGHTS.EDIT_SECTIONS, BOARD_RIGHTS.DELETE_SECTIONS]}>
+                
+                {/* Отображаем троеточие только если есть хотя бы одно из прав */}
+                {showOptionsButton && (
                     <div ref={optionsRef} onClick={handleOptionsClick} style={{ cursor: 'pointer' }}>
                         <img src={OptionsPassive} alt="Options" />
                     </div>
-                </BoardRightGuard>
+                )}
                 
                 {isModalOpen && (
                     <div ref={modalRef} className="modal-container">
                         <div className="modal-content-custom">
-                            <BoardRightGuard boardId={column.boardId} requires={BOARD_RIGHTS.EDIT_SECTIONS}>
+                            {/* Отображаем пункт "Редактировать" только если есть право EDIT_SECTIONS */}
+                            {canEdit && (
                                 <div 
                                     className="modal-edit"
                                     onClick={handleEditColumn}
                                 >
                                     Редактировать
                                 </div>
-                            </BoardRightGuard>
-                            <BoardRightGuard boardId={column.boardId} requires={BOARD_RIGHTS.DELETE_SECTIONS}>
+                            )}
+                            
+                            {/* Отображаем пункт "Удалить" только если есть право DELETE_SECTIONS */}
+                            {canDelete && (
                                 <div 
                                     className="modal-delete"
                                     onClick={handleDeleteColumn}
                                 >
                                     Удалить
                                 </div>
-                            </BoardRightGuard>
+                            )}
                         </div>
                     </div>
                 )}
@@ -158,7 +176,13 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                                 </div>
                             ) : (
                                 tasks.map((task, index) => (
-                                    <Draggable key={task.id} draggableId={String(task.id)} index={index} type="task">
+                                    <Draggable 
+                                        key={task.id} 
+                                        draggableId={String(task.id)} 
+                                        index={index} 
+                                        type="task"
+                                        isDragDisabled={!canMoveTasks}
+                                    >
                                         {(provided, snapshot) => (
                                             <div
                                                 ref={provided.innerRef}
@@ -170,7 +194,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                                                 }}
                                             >
                                                 <TaskCard 
-                                                    task={task}
+                                                    task={{...task, boardId: column.boardId}}
                                                     onClick={() => onTaskClick(task)}
                                                 />
                                             </div>

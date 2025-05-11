@@ -158,10 +158,17 @@ export const boardsApi = baseApi.injectEndpoints({
             const state = getState();
             const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
             const currentUserId = currentUser?.id;
-            console.log("из стейста достал userId:", currentUserId, "отправил:", data.payload.initiatedById);
+            const currentUsername = currentUser?.username || currentUser?.login;
             
-            // Проверяем, инициировано ли это событие текущим пользователем по ID
-            if (data.payload && data.payload.initiatedById === currentUserId) {
+            console.log("WS event received:", data.type, "payload:", data.payload);
+            console.log("Current user:", currentUserId, currentUsername);
+            
+            // Проверяем, инициировано ли это событие текущим пользователем
+            // Проверяем как initiatedById (числовой ID), так и initiatedBy (имя пользователя/логин)
+            if (data.payload && (
+                (data.payload.initiatedById && data.payload.initiatedById === currentUserId) || 
+                (data.payload.initiatedBy && data.payload.initiatedBy === currentUsername)
+            )) {
               console.log(`Игнорируем собственное действие: ${data.type}`);
               return; // Пропускаем обработку своих событий
             }
@@ -216,20 +223,30 @@ export const boardsApi = baseApi.injectEndpoints({
               
               // События колонок
               case 'COLUMN_CREATED':
+                console.log('Processing COLUMN_CREATED websocket event from another user');
                 updateCachedData((draft) => {
                   // Check if column already exists to prevent duplicates
                   const existingColumnIndex = draft.columns.findIndex(col => 
-                    col.id === data.payload.id || col.columnId === data.payload.id
+                    col.id === data.payload.columnId || 
+                    col.columnId === data.payload.columnId
                   );
                   
                   if (existingColumnIndex === -1) {
                     // Only add if column doesn't already exist
-                    draft.columns.push({
-                      ...data.payload,
+                    const newColumn = {
+                      id: data.payload.columnId,
+                      columnId: data.payload.columnId,
+                      title: data.payload.title,
+                      name: data.payload.title,
+                      boardId: boardId,
+                      position: data.payload.position,
                       tasks: []
-                    });
+                    };
+                    
+                    console.log('Adding new column to board:', newColumn);
+                    draft.columns.push(newColumn);
                   } else {
-                    console.log('Column already exists, not adding duplicate:', data.payload.id);
+                    console.log('Column already exists, not adding duplicate:', data.payload.columnId);
                   }
                 });
                 break;
@@ -308,41 +325,73 @@ export const boardsApi = baseApi.injectEndpoints({
               
               // События задач
               case 'TASK_CREATED':
+                console.log('Processing TASK_CREATED websocket event:', data.payload);
                 updateCachedData((draft) => {
+                  // Normalize task ID
+                  const taskData = {
+                    ...data.payload,
+                    id: data.payload.id || data.payload.taskId,
+                  };
+                  
                   // Находим колонку, к которой относится задача
-                  const columnIndex = draft.columns.findIndex(col => col.id === data.payload.columnId);
+                  const columnIndex = draft.columns.findIndex(col => col.id === taskData.columnId);
                   if (columnIndex !== -1) {
-                    // Добавляем задачу в массив задач колонки
-                    draft.columns[columnIndex].tasks.push(data.payload);
+                    console.log(`Adding task ${taskData.id} to column ${taskData.columnId}`);
+                    // Проверяем, не существует ли уже такая задача
+                    const taskExists = draft.columns[columnIndex].tasks.some(task => task.id === taskData.id);
+                    if (!taskExists) {
+                      // Добавляем задачу в массив задач колонки
+                      draft.columns[columnIndex].tasks.push(taskData);
+                    } else {
+                      console.log(`Task ${taskData.id} already exists in column ${taskData.columnId}, not adding duplicate`);
+                    }
+                  } else {
+                    console.log(`Column ${taskData.columnId} not found for adding task ${taskData.id}`);
                   }
                 });
                 break;
                 
               case 'TASK_UPDATED':
+                console.log('Processing TASK_UPDATED websocket event:', data.payload);
                 updateCachedData((draft) => {
+                  // Normalize task ID
+                  const taskData = {
+                    ...data.payload,
+                    id: data.payload.id || data.payload.taskId,
+                  };
+                  
                   // Находим колонку, содержащую задачу
-                  const columnIndex = draft.columns.findIndex(col => col.id === data.payload.columnId);
+                  const columnIndex = draft.columns.findIndex(col => col.id === taskData.columnId);
                   if (columnIndex !== -1) {
                     // Находим индекс задачи в колонке
-                    const taskIndex = draft.columns[columnIndex].tasks.findIndex(task => task.id === data.payload.id);
+                    const taskIndex = draft.columns[columnIndex].tasks.findIndex(task => task.id === taskData.id);
                     if (taskIndex !== -1) {
+                      console.log(`Updating task ${taskData.id} in column ${taskData.columnId}`);
                       // Обновляем задачу
                       draft.columns[columnIndex].tasks[taskIndex] = { 
                         ...draft.columns[columnIndex].tasks[taskIndex],
-                        ...data.payload 
+                        ...taskData 
                       };
+                    } else {
+                      console.log(`Task ${taskData.id} not found in column ${taskData.columnId} for update`);
                     }
+                  } else {
+                    console.log(`Column ${taskData.columnId} not found for task ${taskData.id} update`);
                   }
                 });
                 break;
                 
               case 'TASK_DELETED':
+                console.log('Processing TASK_DELETED websocket event:', data.payload);
                 updateCachedData((draft) => {
                   // Проходим по всем колонкам
                   draft.columns.forEach(column => {
-                    // Находим индекс задачи
-                    const taskIndex = column.tasks.findIndex(task => task.id === data.payload.id);
+                    // Находим индекс задачи, проверяем как id, так и taskId
+                    const taskId = data.payload.id || data.payload.taskId;
+                    const taskIndex = column.tasks.findIndex(task => task.id === taskId);
+                    
                     if (taskIndex !== -1) {
+                      console.log(`Found task to delete at index ${taskIndex} in column ${column.id}`);
                       // Удаляем задачу
                       column.tasks.splice(taskIndex, 1);
                       
@@ -351,44 +400,61 @@ export const boardsApi = baseApi.injectEndpoints({
                         task.position = index;
                       });
                       
-                      console.log(`Task ${data.payload.id} deleted from column ${column.id} via WebSocket`);
+                      console.log(`Task ${taskId} deleted from column ${column.id} via WebSocket`);
                     }
                   });
                 });
                 break;
                 
               case 'TASK_MOVED':
+                console.log('Processing TASK_MOVED websocket event:', data.payload);
                 updateCachedData((draft) => {
-                  const { taskId, sourceColumnId, targetColumnId, newPosition } = data.payload;
+                  // Normalize task ID
+                  const taskId = data.payload.taskId || data.payload.id;
+                  const { sourceColumnId, targetColumnId, newPosition } = data.payload;
+                  
+                  console.log(`Moving task ${taskId} from column ${sourceColumnId} to column ${targetColumnId} at position ${newPosition}`);
                   
                   // Находим исходную колонку
                   const sourceColIndex = draft.columns.findIndex(col => col.id === sourceColumnId);
-                  if (sourceColIndex === -1) return;
+                  if (sourceColIndex === -1) {
+                    console.log(`Source column ${sourceColumnId} not found`);
+                    return;
+                  }
                   
                   // Находим задачу в исходной колонке
                   const taskIndex = draft.columns[sourceColIndex].tasks.findIndex(task => task.id === taskId);
-                  if (taskIndex === -1) return;
+                  if (taskIndex === -1) {
+                    console.log(`Task ${taskId} not found in source column ${sourceColumnId}`);
+                    return;
+                  }
                   
                   // Копируем задачу перед удалением
                   const task = { ...draft.columns[sourceColIndex].tasks[taskIndex] };
                   
                   // Удаляем задачу из исходной колонки
                   draft.columns[sourceColIndex].tasks.splice(taskIndex, 1);
+                  console.log(`Removed task from source column ${sourceColumnId}`);
                   
                   // Если перемещение в другую колонку
                   if (sourceColumnId !== targetColumnId) {
                     // Находим целевую колонку
                     const destColIndex = draft.columns.findIndex(col => col.id === targetColumnId);
-                    if (destColIndex === -1) return;
+                    if (destColIndex === -1) {
+                      console.log(`Target column ${targetColumnId} not found`);
+                      return;
+                    }
                     
                     // Обновляем columnId задачи
                     task.columnId = targetColumnId;
                     
                     // Вставляем задачу в новую позицию в целевой колонке
                     draft.columns[destColIndex].tasks.splice(newPosition, 0, task);
+                    console.log(`Added task to target column ${targetColumnId} at position ${newPosition}`);
                   } else {
                     // Вставляем задачу в новую позицию в той же колонке
                     draft.columns[sourceColIndex].tasks.splice(newPosition, 0, task);
+                    console.log(`Moved task within same column ${sourceColumnId} to position ${newPosition}`);
                   }
                   
                   // Обновляем позиции всех задач в затронутых колонках
@@ -412,6 +478,8 @@ export const boardsApi = baseApi.injectEndpoints({
                       task.position = index;
                     });
                   }
+                  
+                  console.log(`Task ${taskId} successfully moved via WebSocket`);
                 });
                 break;
                 

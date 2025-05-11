@@ -310,14 +310,14 @@ function TaskDashboard() {
                     <div className="calendar-body">
                         {mappedTasks.length > 0 ? (
                             mappedTasks.map((task, index) => (
-                                <CalendarCard
+                        <CalendarCard
                                     key={task.id || index}
                                     task={task}
-                                    startDate={task.startDate}
-                                    endDate={task.endDate}
+                            startDate={task.startDate}
+                            endDate={task.endDate}
                                     boardTitle={task.boardTitle}
                                     style={{gridColumn: `${task.startCol} / ${task.endCol}`}}
-                                />
+                        />
                             ))
                         ) : (
                             <div className="no-tasks-message">

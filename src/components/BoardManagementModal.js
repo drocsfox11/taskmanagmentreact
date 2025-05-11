@@ -480,13 +480,40 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                             <div className="participant-info">
                                                 <img src={participant.avatarURL || Girl} alt={participant.name || participant.username} />
                                                 <span>{participant.name || participant.username}</span>
+                                                {board.ownerId === participant.id && (
+                                                    <span style={{ 
+                                                        marginLeft: '8px', 
+                                                        fontSize: '12px', 
+                                                        color: '#666',
+                                                        backgroundColor: '#f0f0f0', 
+                                                        padding: '2px 6px', 
+                                                        borderRadius: '4px' 
+                                                    }}>
+                                                        Владелец
+                                                    </span>
+                                                )}
+                                                {currentUser && currentUser.id === participant.id && (
+                                                    <span style={{ 
+                                                        marginLeft: '8px', 
+                                                        fontSize: '12px', 
+                                                        color: '#666',
+                                                        backgroundColor: '#e6f7ff', 
+                                                        padding: '2px 6px', 
+                                                        borderRadius: '4px' 
+                                                    }}>
+                                                        Вы
+                                                    </span>
+                                                )}
                                             </div>
-                                            <button
-                                                className="project-management-remove-participant-button"
-                                                onClick={() => handleRemoveUser(participant.id)}
-                                            >
-                                                Удалить
-                                            </button>
+                                            {/* Показываем кнопку удаления только если пользователь не является владельцем доски и не является текущим пользователем */}
+                                            {board.ownerId !== participant.id && (!currentUser || currentUser.id !== participant.id) && (
+                                                <button
+                                                    className="project-management-remove-participant-button"
+                                                    onClick={() => handleRemoveUser(participant.id)}
+                                                >
+                                                    Удалить
+                                                </button>
+                                            )}
                                         </div>
                                     ))
                                 ) : (

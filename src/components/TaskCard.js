@@ -67,6 +67,7 @@ function TaskCard({ task, onClick }) {
     // Отладочный вывод
     console.log('Отрисовка карточки задачи:', task);
     console.log('Доступные данные пользователей:', usersByUsername);
+    console.log('Права пользователя - редактирование:', canEditTask, 'удаление:', canDeleteTask);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -227,7 +228,7 @@ function TaskCard({ task, onClick }) {
                 )}
 
                 {showOptionsIcon && (
-                    <div ref={optionsRef} onClick={handleOptionsClick}>
+                    <div ref={optionsRef} onClick={handleOptionsClick} style={{ cursor: 'pointer' }}>
                         <img src={OptionsPassive} alt="Options"/>
                     </div>
                 )}

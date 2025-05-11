@@ -7,6 +7,7 @@ import {
 import { PROJECT_RIGHTS, PROJECT_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css';
 import Girl from '../assets/icons/girl.svg';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
 
 function ProjectPermissionsTab({ project }) {
     const [selectedUserId, setSelectedUserId] = useState(null);
@@ -15,6 +16,9 @@ function ProjectPermissionsTab({ project }) {
     
     const [grantRight] = useGrantProjectRightMutation();
     const [revokeRight] = useRevokeProjectRightMutation();
+    
+    // Получаем данные о текущем пользователе
+    const { data: currentUser } = useGetCurrentUserQuery();
     
     const { data: fetchedUserRights, isLoading, refetch } = useGetUserRightsQuery(
         { projectId: project?.id, userId: selectedUserId },
@@ -35,6 +39,12 @@ function ProjectPermissionsTab({ project }) {
 
     const handleToggleRight = async (rightName, hasRight) => {
         if (!selectedUserId) return;
+        
+        // Если выбран текущий пользователь, запрещаем изменение прав
+        if (currentUser && currentUser.id === selectedUserId) {
+            console.log("Нельзя изменять собственные права доступа");
+            return;
+        }
         
         try {
             if (hasRight) {
@@ -59,6 +69,12 @@ function ProjectPermissionsTab({ project }) {
 
     const handleToggleAllBoardsAccess = async (hasAccess) => {
         if (!selectedUserId) return;
+        
+        // Если выбран текущий пользователь, запрещаем изменение прав
+        if (currentUser && currentUser.id === selectedUserId) {
+            console.log("Нельзя изменять собственные права доступа");
+            return;
+        }
         
         try {
             if (hasAccess) {
@@ -86,6 +102,12 @@ function ProjectPermissionsTab({ project }) {
     const projectRightsToDisplay = Object.values(PROJECT_RIGHTS).filter(
         right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS
     );
+    
+    // Проверяем, является ли выбранный пользователь текущим пользователем
+    const isCurrentUser = currentUser && selectedUserId === currentUser.id;
+    
+    // Проверяем, является ли пользователь владельцем проекта
+    const isProjectOwner = selectedUserId === project?.owner?.id;
 
     return (
         <div className="project-permissions-tab">
@@ -99,11 +121,19 @@ function ProjectPermissionsTab({ project }) {
                             project.participants.map((user) => (
                                 <div 
                                     key={user.id} 
-                                    className={`user-item ${selectedUserId === user.id ? 'selected' : ''}`}
+                                    className={`user-item ${selectedUserId === user.id ? 'selected' : ''} ${user.id === project?.owner?.id ? 'owner' : ''}`}
                                     onClick={() => handleUserSelect(user.id)}
                                 >
                                     <img src={user.avatarURL || Girl} alt={user.name} />
-                                    <span>{user.name}</span>
+                                    <div className="user-details">
+                                        <span className="user-name">{user.name}</span>
+                                        {user.id === project?.owner?.id && (
+                                            <span className="user-role">Владелец проекта</span>
+                                        )}
+                                        {currentUser && currentUser.id === user.id && (
+                                            <span className="user-role" style={{ backgroundColor: '#e6f7ff' }}>Вы</span>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         ) : (
@@ -117,6 +147,15 @@ function ProjectPermissionsTab({ project }) {
                 {selectedUserId && (
                     <div className="user-rights-section">
                         <h4>Права пользователя {project?.participants?.find(p => p.id === selectedUserId)?.name}</h4>
+                        
+                        {isProjectOwner && (
+                            <div className="user-role" style={{marginBottom: '10px'}}>Владелец проекта</div>
+                        )}
+                        {isCurrentUser && (
+                            <div className="user-role" style={{marginBottom: '10px', backgroundColor: '#e6f7ff'}}>
+                                Вы не можете редактировать свои права доступа
+                            </div>
+                        )}
                         
                         {isLoading ? (
                             <div className="loading-rights">Загрузка прав...</div>
@@ -132,11 +171,12 @@ function ProjectPermissionsTab({ project }) {
                                                     <div className="right-name">{rightName}</div>
                                                     <div className="right-description">{PROJECT_RIGHT_DESCRIPTIONS[rightName]}</div>
                                                 </div>
-                                                <label className="toggle-switch">
+                                                <label className={`toggle-switch ${isCurrentUser ? 'disabled' : ''}`}>
                                                     <input
                                                         type="checkbox"
                                                         checked={hasRight}
                                                         onChange={() => handleToggleRight(rightName, hasRight)}
+                                                        disabled={isCurrentUser}
                                                     />
                                                     <span className="toggle-slider"></span>
                                                 </label>
@@ -154,11 +194,12 @@ function ProjectPermissionsTab({ project }) {
                                                 Предоставляет доступ ко всем доскам проекта
                                             </div>
                                         </div>
-                                        <label className="toggle-switch">
+                                        <label className={`toggle-switch ${isCurrentUser ? 'disabled' : ''}`}>
                                             <input
                                                 type="checkbox"
                                                 checked={hasAccessToAllBoards}
                                                 onChange={() => handleToggleAllBoardsAccess(hasAccessToAllBoards)}
+                                                disabled={isCurrentUser}
                                             />
                                             <span className="toggle-slider"></span>
                                         </label>

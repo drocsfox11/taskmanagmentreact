@@ -8,6 +8,7 @@ import { BOARD_RIGHTS, BOARD_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css'; // Reuse the same styles
 import Girl from '../assets/icons/girl.svg';
 import { useGetProjectQuery } from '../services/api/projectsApi';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
 
 function BoardPermissionsTab({ board }) {
     const [selectedUserId, setSelectedUserId] = useState(null);
@@ -15,6 +16,9 @@ function BoardPermissionsTab({ board }) {
     
     const [grantRight] = useGrantBoardRightMutation();
     const [revokeRight] = useRevokeBoardRightMutation();
+    
+    // Получаем данные о текущем пользователе
+    const { data: currentUser } = useGetCurrentUserQuery();
     
     // Получаем данные о проекте, чтобы определить владельца
     const { data: project } = useGetProjectQuery(board.projectId, {
@@ -40,6 +44,12 @@ function BoardPermissionsTab({ board }) {
     const handleToggleRight = async (rightName, hasRight, e) => {
         if (e) e.stopPropagation();
         if (!selectedUserId) return;
+        
+        // Если выбран текущий пользователь, запрещаем изменение прав
+        if (currentUser && currentUser.id === selectedUserId) {
+            console.log("Нельзя изменять собственные права доступа");
+            return;
+        }
         
         try {
             if (hasRight) {
@@ -69,6 +79,9 @@ function BoardPermissionsTab({ board }) {
     const isProjectOwner = (userId) => {
         return project && project.owner && project.owner.id === userId;
     };
+    
+    // Проверяем, является ли выбранный пользователь текущим пользователем
+    const isCurrentUser = currentUser && selectedUserId === currentUser.id;
 
     return (
         <div className="project-permissions-tab" onClick={(e) => e.stopPropagation()}>
@@ -91,6 +104,9 @@ function BoardPermissionsTab({ board }) {
                                         {isProjectOwner(user.id) && (
                                             <span className="user-role">Владелец проекта</span>
                                         )}
+                                        {currentUser && currentUser.id === user.id && (
+                                            <span className="user-role" style={{ backgroundColor: '#e6f7ff' }}>Вы</span>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -107,6 +123,11 @@ function BoardPermissionsTab({ board }) {
                     {isProjectOwner(selectedUserId) && (
                         <div className="user-role" style={{marginBottom: '10px'}}>Владелец проекта</div>
                     )}
+                    {isCurrentUser && (
+                        <div className="user-role" style={{marginBottom: '10px', backgroundColor: '#e6f7ff'}}>
+                            Вы не можете редактировать свои права доступа
+                        </div>
+                    )}
                     
                     {isLoading ? (
                         <div className="loading-rights">Загрузка прав...</div>
@@ -122,11 +143,12 @@ function BoardPermissionsTab({ board }) {
                                                 <div className="right-name">{rightName}</div>
                                                 <div className="right-description">{BOARD_RIGHT_DESCRIPTIONS[rightName]}</div>
                                             </div>
-                                            <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
+                                            <label className={`toggle-switch ${isCurrentUser ? 'disabled' : ''}`} onClick={(e) => e.stopPropagation()}>
                                                 <input
                                                     type="checkbox"
                                                     checked={hasRight}
                                                     onChange={(e) => handleToggleRight(rightName, hasRight, e)}
+                                                    disabled={isCurrentUser}
                                                 />
                                                 <span className="toggle-slider"></span>
                                             </label>

@@ -85,7 +85,7 @@ function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
                 </div>
 
                 {task.checklist && task.checklist.length > 0 && (
-                    <div className='calendar-card-points-list'>
+            <div className='calendar-card-points-list'>
                         <img src={TaskListIcon} className='calendar-card-points-list-icon' alt="Task list" />
                         <div className='calendar-card-points-list-counter'>{progress}</div>
                     </div>
@@ -96,7 +96,7 @@ function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
 
             <div className='calendar-card-down-container'>
                 {participants.length > 0 && (
-                    <div className="calendar-card-people">
+                <div className="calendar-card-people">
                         {participants.slice(0, 4).map((user, index) => (
                             <div key={index} className="calendar-card-people-item">
                                 {user.avatarURL ? (
@@ -104,13 +104,13 @@ function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
                                 ) : (
                                     <img src={Girl} alt="Default user" />
                                 )}
-                            </div>
+                    </div>
                         ))}
-                        
+
                         {participants.length > 4 && (
                             <div className="calendar-card-people-item-more">
                                 +{participants.length - 4}
-                            </div>
+                    </div>
                         )}
                     </div>
                 )}

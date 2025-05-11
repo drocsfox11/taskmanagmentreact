@@ -184,6 +184,16 @@
     margin-left: 10px;
 }
 
+.toggle-switch.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.toggle-switch.disabled .toggle-slider {
+    cursor: not-allowed;
+    background-color: #e0e0e0;
+}
+
 .toggle-switch input {
     opacity: 0;
     width: 0;
@@ -216,6 +226,10 @@
 
 input:checked + .toggle-slider {
     background-color: #2196F3;
+}
+
+input:disabled:checked + .toggle-slider {
+    background-color: #90caf9;
 }
 
 input:checked + .toggle-slider:before {
