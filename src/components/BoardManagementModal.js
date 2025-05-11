@@ -14,6 +14,9 @@ import { BoardRightGuard } from './permissions';
 import { useProjectRights } from './permissions';
 import { useSearchUsersQuery } from '../services/api/usersApi';
 import { useGetCurrentUserQuery } from '../services/api/usersApi';
+import EmojiPicker from './EmojiPicker';
+import { EmojiProvider, Emoji } from "react-apple-emojis";
+import emojiData from "react-apple-emojis/src/data.json";
 
 function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [activeTab, setActiveTab] = useState('info');
@@ -23,10 +26,12 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [form, setForm] = useState({
         title: board?.title || '',
         description: board?.description || '',
-        tags: board?.tags || []
+        tags: board?.tags || [],
+        emoji: board?.emoji || 'clipboard'
     });
     const [tagName, setTagName] = useState('');
     const [tagColor, setTagColor] = useState('#FFD700');
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const modalRef = useRef(null);
     
     // Для поиска пользователей
@@ -90,6 +95,8 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         console.log("BoardManagementModal: Диагностика прав доступа");
         console.log("projectId:", board.projectId);
         console.log("boardId:", board.id);
+        console.log("boardEmoji:", board.emoji);
+        console.log("formEmoji:", form.emoji);
         console.log("isProjectRightsLoading:", isProjectRightsLoading);
         console.log("isBoardRightsLoading:", isBoardRightsLoading);
         console.log("projectRights:", projectRights);
@@ -100,6 +107,8 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     }, [
         board.projectId, 
         board.id, 
+        board.emoji,
+        form.emoji,
         projectRights, 
         boardRights, 
         isProjectRightsLoading, 
@@ -217,11 +226,15 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
 
     useEffect(() => {
         if (board) {
-            setForm({
+            console.log("BoardManagementModal: Обновление формы из board:", board);
+            const newForm = {
                 title: board.title || '',
                 description: board.description || '',
-                tags: board.tags || []
-            });
+                tags: board.tags || [],
+                emoji: board.emoji || 'clipboard'
+            };
+            console.log("BoardManagementModal: Новые значения формы:", newForm);
+            setForm(newForm);
         }
     }, [board]);
 
@@ -247,6 +260,17 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
             ...form,
             [name]: value
         });
+    };
+
+    const handleEmojiSelect = (emoji) => {
+        setForm({
+            ...form,
+            emoji
+        });
+    };
+
+    const handleOpenEmojiPicker = () => {
+        setIsEmojiPickerOpen(true);
     };
 
     const handleSubmit = async (e) => {
@@ -314,6 +338,20 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         e.stopPropagation();
     };
 
+    // Добавим дополнительный эффект для инициализации формы при монтировании
+    useEffect(() => {
+        if (isOpen && board) {
+            console.log("BoardManagementModal: модальное окно открыто, обновляем форму");
+            // Принудительно обновляем форму с актуальными данными доски
+            setForm({
+                title: board.title || '',
+                description: board.description || '',
+                tags: board.tags || [],
+                emoji: board.emoji || 'clipboard'
+            });
+        }
+    }, [isOpen, board]);
+
     if (!isOpen) return null;
 
     return (
@@ -352,6 +390,17 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                 <div className="project-management-modal-content">
                     {activeTab === 'info' ? (
                         <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label htmlFor="emoji">Иконка доски</label>
+                                <div className="project-emoji-selector" onClick={handleOpenEmojiPicker}>
+                                    <div className="selected-emoji">
+                                        <EmojiProvider data={emojiData}>
+                                            <Emoji name={form.emoji || 'clipboard'} width={24} />
+                                        </EmojiProvider>
+                                    </div>
+                                    <span>Выбрать иконку</span>
+                                </div>
+                            </div>
                             <div className="form-group">
                                 <label htmlFor="title">Название доски</label>
                                 <input
@@ -528,6 +577,14 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                     ) : null}
                 </div>
             </div>
+
+            {/* Emoji Picker */}
+            <EmojiPicker 
+                isOpen={isEmojiPickerOpen} 
+                onClose={() => setIsEmojiPickerOpen(false)}
+                selectedEmoji={form.emoji}
+                onSelectEmoji={handleEmojiSelect}
+            />
         </div>
     );
 }

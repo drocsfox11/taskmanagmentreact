@@ -10,6 +10,9 @@ import DashboardCard from "../components/DashboardCard";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ProjectRightGuard } from "../components/permissions";
 import { PROJECT_RIGHTS } from "../constants/rights";
+import EmojiPicker from "../components/EmojiPicker";
+import { EmojiProvider, Emoji } from "react-apple-emojis";
+import emojiData from "react-apple-emojis/src/data.json";
 
 function ProjectDashBoardsDashboard() {
     const { projectId } = useParams();
@@ -21,26 +24,35 @@ function ProjectDashBoardsDashboard() {
     const [createBoard] = useCreateBoardMutation();
     
     const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
-    const [boardForm, setBoardForm] = useState({ title: '', description: '', tags: [] });
+    const [boardForm, setBoardForm] = useState({ title: '', description: '', tags: [], emoji: 'clipboard' });
     const [tagTitle, setTagTitle] = useState('');
     const [tagColor, setTagColor] = useState('#FFD700');
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const modalRef = useRef(null);
     const navigate = useNavigate();
     
     const isLoading = isProjectLoading || isBoardsLoading;
 
     const handleOpenBoardModal = () => {
-        setBoardForm({ title: '', description: '', tags: [] });
+        setBoardForm({ title: '', description: '', tags: [], emoji: 'clipboard' });
         setIsBoardModalOpen(true);
     };
     
     const handleCloseBoardModal = () => {
         setIsBoardModalOpen(false);
-        setBoardForm({ title: '', description: '', tags: [] });
+        setBoardForm({ title: '', description: '', tags: [], emoji: 'clipboard' });
     };
     
     const handleBoardFormChange = (e) => {
         setBoardForm({ ...boardForm, [e.target.name]: e.target.value });
+    };
+    
+    const handleEmojiSelect = (emoji) => {
+        setBoardForm({ ...boardForm, emoji });
+    };
+
+    const handleOpenEmojiPicker = () => {
+        setIsEmojiPickerOpen(true);
     };
     
     const handleBoardClick = (boardId) => {
@@ -70,12 +82,19 @@ function ProjectDashBoardsDashboard() {
         if (!project) return;
         
         // Get participant IDs directly from the project
-        const participantIds = project.participants 
-            ? project.participants.map(user => user.username)
-            : [];
+        const participantIds = [];
         
-        // Add owner if not already in the list
-        if (project.owner && !participantIds.includes(project.owner.username)) {
+        // Добавляем участников только если они имеют валидные username
+        if (project.participants && Array.isArray(project.participants)) {
+            project.participants.forEach(user => {
+                if (user && user.username) {
+                    participantIds.push(user.username);
+                }
+            });
+        }
+        
+        // Add owner if not already in the list and if owner has valid username
+        if (project.owner && project.owner.username && !participantIds.includes(project.owner.username)) {
             participantIds.push(project.owner.username);
         }
         
@@ -106,7 +125,7 @@ function ProjectDashBoardsDashboard() {
                 <ProjectMenu />
                 <div className='project-dashboards-main-content'>
                     <div className='project-dashboards-header'>
-                        <div className='project-dashboards-header-title'>{project?.title} • Дашборды</div>
+                        <div className='project-dashboards-header-title'>{project?.title}</div>
                         <ProjectRightGuard projectId={numericProjectId} requires={PROJECT_RIGHTS.CREATE_BOARDS}>
                             <button className='project-dashboards-header-button' onClick={handleOpenBoardModal}>
                                 + Создать доску
@@ -153,6 +172,17 @@ function ProjectDashBoardsDashboard() {
                             <div className="create-project-modal-title">Создать доску</div>
                             <img src={CloseCross} alt="close" className="create-task-modal-close" onClick={handleCloseBoardModal}/>
                         </div>
+
+                        <div className="create-project-modal-label">Иконка доски</div>
+                        <div className="project-emoji-selector" onClick={handleOpenEmojiPicker}>
+                            <div className="selected-emoji">
+                                <EmojiProvider data={emojiData}>
+                                    <Emoji name={boardForm.emoji || "clipboard"} width={24} />
+                                </EmojiProvider>
+                            </div>
+                            <span>Выбрать иконку</span>
+                        </div>
+
                         <div className="create-project-modal-label">Название доски</div>
                         <input className="create-project-modal-input" name="title" value={boardForm.title} onChange={handleBoardFormChange} placeholder="Введите название доски"/>
                         <div className="create-project-modal-label">Описание доски</div>
@@ -180,6 +210,14 @@ function ProjectDashBoardsDashboard() {
                     </form>
                 </div>
             )}
+
+            {/* Emoji Picker */}
+            <EmojiPicker 
+                isOpen={isEmojiPickerOpen} 
+                onClose={() => setIsEmojiPickerOpen(false)}
+                selectedEmoji={boardForm.emoji}
+                onSelectEmoji={handleEmojiSelect}
+            />
         </div>
     );
 }

@@ -1058,8 +1058,40 @@ button.create-project-modal-add-button:hover {
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 40px;
-    height: 22px;
+    width: 50px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.toggle-switch.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.toggle-switch.disabled .toggle-slider {
+    cursor: not-allowed;
+    background-color: #e0e0e0;
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+}
+
+.toggle-switch input:checked:disabled + .toggle-slider:before {
+    background-color: #a0a0a0;
+}
+
+.current-user-warning {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #fff9e0;
+    border: 1px solid #ffe082;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 14px;
+    color: #7a5700;
 }
 
 .toggle-switch input {
@@ -1176,4 +1208,39 @@ input:checked + .toggle-slider:before {
 
 .kick-user-button:hover {
     background-color: #f1b0b7;
+}
+
+.project-emoji-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    padding: 10px 16px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: background-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.project-emoji-selector:hover {
+    background-color: #ECECEC;
+}
+
+.selected-emoji {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.project-emoji-selector span {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #666;
 } 

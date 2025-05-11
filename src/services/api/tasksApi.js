@@ -32,6 +32,15 @@ export const tasksApi = baseApi.injectEndpoints({
         { type: 'Tasks', id: `project-${projectId}` }
       ]
     }),
+    getTasksHistoryByBoard: builder.query({
+      query: (boardId) => ({
+        url: `api/task-history/board/${boardId}`,
+        method: 'GET'
+      }),
+      providesTags: (result, error, boardId) => [
+        { type: 'Tasks', id: `board-history-${boardId}` }
+      ]
+    }),
     createTask: builder.mutation({
       query: (task) => ({
         url: 'api/tasks',
@@ -291,6 +300,7 @@ export const {
   useGetTaskQuery,
   useGetTasksByColumnQuery,
   useGetTasksByProjectQuery,
+  useGetTasksHistoryByBoardQuery,
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,

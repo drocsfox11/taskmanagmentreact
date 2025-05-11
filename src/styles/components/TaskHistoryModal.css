@@ -1,0 +1,285 @@
+.task-history-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: all;
+}
+
+.task-history-modal {
+    background-color: white;
+    border-radius: 8px;
+    width: 750px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+}
+
+.task-history-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #DBDBDB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.task-history-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-family: 'Ruberoid Bold', sans-serif;
+    color: #000000;
+    flex: 1;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    position: relative;
+    z-index: 5;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-button img {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.task-history-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 70px);
+}
+
+.task-history-timeline {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.task-history-event {
+    display: flex;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.task-history-event-time {
+    width: 160px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    color: #666;
+    padding-top: 5px;
+    text-align: right;
+    padding-right: 15px;
+    flex-shrink: 0;
+}
+
+.task-history-event-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 15px;
+}
+
+.task-history-event-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+    z-index: 2;
+    font-family: 'Ruberoid Bold', sans-serif;
+}
+
+.task-history-event-line {
+    position: absolute;
+    top: 30px;
+    width: 2px;
+    background-color: #DBDBDB;
+    bottom: -25px;
+    left: 175px;
+}
+
+.task-history-event:last-child .task-history-event-line {
+    display: none;
+}
+
+.task-history-event-content {
+    flex: 1;
+    background-color: #F9F9F9;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #EFEFEF;
+}
+
+.task-history-event-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.task-history-event-type {
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.task-history-event-task-title {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #333;
+    margin-right: 8px;
+}
+
+.task-history-event-task-id {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #777;
+}
+
+.task-history-event-user {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.task-history-event-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.task-history-event-user-name {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    color: #666;
+}
+
+.task-history-event-changes {
+    background-color: white;
+    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid #EFEFEF;
+}
+
+.task-history-event-changes h4 {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.task-history-changes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.task-history-changes-table th,
+.task-history-changes-table td {
+    padding: 8px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 1px solid #EFEFEF;
+}
+
+.task-history-changes-table th {
+    font-family: 'Ruberoid Medium', sans-serif;
+    color: #333;
+}
+
+.task-history-changes-table td {
+    font-family: 'Ruberoid Regular', sans-serif;
+    color: #555;
+}
+
+.task-history-old-value {
+    text-decoration: line-through;
+    color: #f44336;
+}
+
+.task-history-new-value {
+    color: #4caf50;
+}
+
+.task-history-no-data {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #777;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 16px;
+}
+
+/* Стили для различных типов событий */
+.history-event-create {
+    background-color: #4CAF50;
+}
+
+.history-event-update {
+    background-color: #2196F3;
+}
+
+.history-event-delete {
+    background-color: #F44336;
+}
+
+.history-event-move {
+    background-color: #FF9800;
+}
+
+/* Медиа-запрос для мобильных устройств */
+@media (max-width: 768px) {
+    .task-history-modal {
+        width: 95%;
+    }
+    
+    .task-history-event {
+        flex-direction: column;
+        margin-left: 30px;
+    }
+    
+    .task-history-event-time {
+        width: 100%;
+        text-align: left;
+        padding-right: 0;
+        padding-bottom: 5px;
+    }
+    
+    .task-history-event-connector {
+        position: absolute;
+        left: -30px;
+        height: 100%;
+    }
+    
+    .task-history-event-line {
+        left: -30px;
+        top: 30px;
+    }
+} 

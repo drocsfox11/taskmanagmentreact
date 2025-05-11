@@ -19,6 +19,10 @@ import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
 import { useGetCurrentUserQuery } from '../services/api/usersApi';
 import { ProjectRightGuard, useProjectRights } from './permissions';
+import ProjectPermissionsTab from './ProjectPermissionsTab';
+import EmojiPicker from './EmojiPicker';
+import { EmojiProvider, Emoji } from "react-apple-emojis";
+import emojiData from "react-apple-emojis/src/data.json";
 
 function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const {data: project, isLoading} = useGetProjectQuery(projectId)
@@ -33,7 +37,8 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const [removeParticipant] = useRemoveProjectParticipantMutation();
     const [form, setForm] = useState({
         title: project?.title || '',
-        description: project?.description || ''
+        description: project?.description || '',
+        emoji: project?.emoji || 'teacher-light-skin-tone'
     });
     const modalRef = useRef(null);
     const [inputValue, setInputValue] = useState('');
@@ -96,6 +101,9 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
             setHasAccessToAllBoards(fetchedUserRights.includes(PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
         }
     }, [fetchedUserRights]);
+
+    // Определяем, является ли выбранный пользователь текущим пользователем
+    const isCurrentUser = currentUser && selectedUserId === currentUser.id;
 
     const users = searchData? searchData.users : [];
     const hasNextPage = searchData? searchData.hasNext : true;
@@ -187,7 +195,8 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         if (project) {
             setForm({
                 title: project.title || '',
-                description: project.description || ''
+                description: project.description || '',
+                emoji: project.emoji || 'teacher-light-skin-tone'
             });
         }
     }, [project]);
@@ -221,12 +230,22 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         
         try {
             await updateProject({
-                id: project.id,
-                ...form
+                id: projectId,
+                title: form.title,
+                description: form.description,
+                emoji: form.emoji
             }).unwrap();
-            onClose();
+            
+            // Reset form state after successful update
+            if (project) {
+                setForm({
+                    title: project.title,
+                    description: project.description,
+                    emoji: project.emoji || 'teacher-light-skin-tone'
+                });
+            }
         } catch (error) {
-            console.error('Error updating project:', error);
+            console.error('Failed to update project:', error);
         }
     };
 
@@ -296,7 +315,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     };
 
     const handleToggleRight = async (rightName, hasRight) => {
-        if (!selectedUserId) return;
+        if (!selectedUserId || isCurrentUser) return;
         
         try {
             if (hasRight) {
@@ -320,7 +339,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     };
 
     const handleToggleAllBoardsAccess = async (hasAccess) => {
-        if (!selectedUserId) return;
+        if (!selectedUserId || isCurrentUser) return;
         
         try {
             if (hasAccess) {
@@ -381,6 +400,17 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS
     );
 
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+
+    const handleEmojiSelect = (emojiName) => {
+        setForm({ ...form, emoji: emojiName });
+    };
+
+    const handleOpenEmojiPicker = (e) => {
+        e.stopPropagation(); // Предотвращаем всплытие события
+        setIsEmojiPickerOpen(true);
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -419,6 +449,17 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                 <div className="project-management-modal-content">
                     {activeTab === 'info' && (
                         <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label htmlFor="emoji">Иконка проекта</label>
+                                <div className="project-emoji-selector" onClick={handleOpenEmojiPicker}>
+                                    <div className="selected-emoji">
+                                        <EmojiProvider data={emojiData}>
+                                            <Emoji name={form.emoji || 'teacher-light-skin-tone'} width={24} />
+                                        </EmojiProvider>
+                                    </div>
+                                    <span>Выбрать иконку</span>
+                                </div>
+                            </div>
                             <div className="form-group">
                                 <label htmlFor="title">Название проекта</label>
                                 <input
@@ -502,11 +543,12 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                                                                     <div className="right-name">{rightName}</div>
                                                                     <div className="right-description">{PROJECT_RIGHT_DESCRIPTIONS[rightName]}</div>
                                                                 </div>
-                                                                <label className="toggle-switch">
+                                                                <label className={`toggle-switch ${isCurrentUser ? 'disabled' : ''}`}>
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={hasRight}
                                                                         onChange={() => handleToggleRight(rightName, hasRight)}
+                                                                        disabled={isCurrentUser}
                                                                     />
                                                                     <span className="toggle-slider"></span>
                                                                 </label>
@@ -524,19 +566,26 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                                                                 Предоставляет доступ ко всем доскам проекта
                                                             </div>
                                                         </div>
-                                                        <label className="toggle-switch">
+                                                        <label className={`toggle-switch ${isCurrentUser ? 'disabled' : ''}`}>
                                                             <input
                                                                 type="checkbox"
                                                                 checked={hasAccessToAllBoards}
                                                                 onChange={() => handleToggleAllBoardsAccess(hasAccessToAllBoards)}
+                                                                disabled={isCurrentUser}
                                                             />
                                                             <span className="toggle-slider"></span>
                                                         </label>
                                                     </div>
                                                 </div>
 
+                                                {isCurrentUser && (
+                                                    <div className="current-user-warning">
+                                                        <p>Вы не можете изменять свои собственные права доступа</p>
+                                                    </div>
+                                                )}
+
                                                 {/* Кнопка "Выгнать" в панели настройки прав */}
-                                                {selectedUserId !== project?.owner?.id && (
+                                                {selectedUserId !== project?.owner?.id && selectedUserId !== currentUser?.id && (
                                                     <div className="kick-user-section">
                                                         <h4>Удаление из проекта</h4>
                                                         <div className="kick-user-description">
@@ -548,6 +597,12 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                                                         >
                                                             Выгнать участника
                                                         </button>
+                                                    </div>
+                                                )}
+                                                
+                                                {selectedUserId === currentUser?.id && (
+                                                    <div className="current-user-warning">
+                                                        <p>Вы не можете удалить себя из проекта</p>
                                                     </div>
                                                 )}
                                             </>
@@ -669,6 +724,12 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                     )}
                 </div>
             </div>
+            <EmojiPicker 
+                isOpen={isEmojiPickerOpen} 
+                onClose={() => setIsEmojiPickerOpen(false)}
+                selectedEmoji={form.emoji}
+                onSelectEmoji={handleEmojiSelect}
+            />
         </div>
     );
 }

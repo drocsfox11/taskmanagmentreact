@@ -54,7 +54,7 @@ function DashboardCard({ board, onClick }) {
     // Получаем boardWithData, чтобы получить дополнительную информацию о доске, включая projectId, если он отсутствует
     // Это важно для корректной работы прав
     const { data: boardWithData, isLoading: isBoardDataLoading } = useGetBoardWithDataQuery(boardId, {
-        skip: !boardId || (!!projectId && isManagementModalOpen) // Получаем данные, если projectId отсутствует или нужно открыть модалку
+        skip: !boardId // Всегда загружаем данные доски, если есть boardId
     });
     
     // Если projectId не был указан изначально, но получен через API, используем его
@@ -135,7 +135,18 @@ function DashboardCard({ board, onClick }) {
     const handleManage = (e) => {
         e.stopPropagation();
         setIsModalOpen(false);
-        setIsManagementModalOpen(true);
+        // Убедимся, что boardWithData загружено перед открытием модалки
+        console.log("DashboardCard: Открываем модальное окно управления доской");
+        console.log("DashboardCard: board:", board);
+        console.log("DashboardCard: boardWithData:", boardWithData);
+        
+        if (boardWithData) {
+            console.log("DashboardCard: Используем boardWithData для управления доской");
+            setIsManagementModalOpen(true);
+        } else {
+            console.warn("DashboardCard: boardWithData не загружено, используем оригинальный board");
+            setIsManagementModalOpen(true);
+        }
     };
 
     useEffect(() => {
@@ -153,7 +164,7 @@ function DashboardCard({ board, onClick }) {
             <div className='project-card-icon-row-container'>
                 <div className='project-card-icon-container'>
                     <EmojiProvider data={emojiData}>
-                        <Emoji name="clipboard" width={22}/>
+                        <Emoji name={board.emoji || "clipboard"} width={22}/>
                     </EmojiProvider>
                 </div>
                 {finalShowOptionsIcon && (

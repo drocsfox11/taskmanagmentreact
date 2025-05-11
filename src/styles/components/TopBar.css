@@ -1,7 +1,7 @@
 .top-bar-container{
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 20px;
     border-width: 0.7px;
@@ -11,32 +11,6 @@
     border-left:none;
     border-right:none;
     background-color: #FFFFFF;
-}
-
-.top-bar-search-container{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    background: #F2F2F2;
-    padding: 10px;
-    border-radius: 8px;
-    width: 250px;
-}
-
-.top-bar-search-input{
-    border: none;
-    outline: none;
-    background: none;
-    width: 100%;
-    font-family: 'Ruberoid Regular';
-    font-size: 18px;
-    color: #969595;
-
-}
-
-.top-bar-search-input::placeholder {
-    color: #969595;
 }
 
 .top-bar-profile-container{

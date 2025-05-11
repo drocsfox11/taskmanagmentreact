@@ -11,7 +11,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useGetTagsQuery } from '../services/api/tagsApi';
 import { useParams } from 'react-router-dom';
 import { 
-    useUploadTaskAttachmentMutation, 
+    useUploadTaskAttachmentMutation,
+    useUploadTaskAttachmentsMutation,
     useDeleteAttachmentMutation,
     useDeleteAllTaskAttachmentsMutation
 } from '../services/api/attachmentsApi';
@@ -25,6 +26,7 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
     
     // Инициализируем хуки для работы с вложениями
     const [uploadAttachment] = useUploadTaskAttachmentMutation();
+    const [uploadAttachments] = useUploadTaskAttachmentsMutation();
     const [deleteAttachment] = useDeleteAttachmentMutation();
     const [deleteAllAttachments] = useDeleteAllTaskAttachmentsMutation();
     

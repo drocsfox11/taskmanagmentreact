@@ -18,6 +18,7 @@ import { useBoardRights } from "../components/permissions";
 import { BOARD_RIGHTS } from "../constants/rights";
 import { BoardRightGuard } from "../components/permissions";
 import TaskColumn from "../components/TaskColumn";
+import { useDispatch, useSelector } from "react-redux";
 
 // Import RTK Query hooks
 import { 
@@ -28,8 +29,9 @@ import {
     useDeleteColumnMutation,
     useReorderColumnsMutation,
     useMoveTaskMutation,
-    useUploadTaskAttachmentsMutation
+    useUploadTaskAttachmentMutation
 } from '../services/api';
+import { useGetTasksHistoryByBoardQuery } from '../services/api/tasksApi';
 
 function TaskDashboard() {
     const navigate = useNavigate();
@@ -50,6 +52,15 @@ function TaskDashboard() {
     } = useGetBoardWithDataQuery(boardIdNum, {
         skip: isNaN(boardIdNum)
     });
+    
+    // Получение истории задач доски
+    const {
+        data: tasksHistory,
+        isLoading: isLoadingTasksHistory,
+        error: tasksHistoryError
+    } = useGetTasksHistoryByBoardQuery(boardIdNum, {
+        skip: isNaN(boardIdNum)
+    });
 
     const [createTask] = useCreateTaskMutation();
     const [createColumn] = useCreateColumnMutation();
@@ -57,7 +68,7 @@ function TaskDashboard() {
     const [deleteColumn] = useDeleteColumnMutation();
     const [reorderColumns] = useReorderColumnsMutation();
     const [moveTask] = useMoveTaskMutation();
-    const [uploadTaskAttachments] = useUploadTaskAttachmentsMutation();
+    const [uploadTaskAttachment] = useUploadTaskAttachmentMutation();
     
     // Filter out duplicate columns and sort them by position
     const columns = useMemo(() => {
@@ -102,9 +113,51 @@ function TaskDashboard() {
     const boardParticipants = board?.participants || [];
     
     const [usersByUsername, setUsersByUsername] = useState({});
+    const dispatch = useDispatch();
     
     // Получаем права пользователя
     const { hasRight } = useBoardRights(boardIdNum);
+    
+    // Загружаем данные о пользователях доски
+    useEffect(() => {
+        if (boardParticipants && boardParticipants.length > 0) {
+            console.log('Загрузка данных о пользователях:', boardParticipants);
+            
+            boardParticipants.forEach(participant => {
+                // Получаем имя пользователя, которое может быть в разных полях
+                const username = participant.username || participant.name || participant;
+                
+                if (username) {
+                    console.log('Запрос данных пользователя:', username);
+                    dispatch({ 
+                        type: 'users/fetchUser', 
+                        payload: username 
+                    });
+                    
+                    // Также добавляем данные напрямую в Redux store
+                    if (typeof participant === 'object' && participant !== null) {
+                        dispatch({ 
+                            type: 'users/addUserData', 
+                            payload: { 
+                                username: username,
+                                avatarURL: participant.avatarURL,
+                                userId: participant.id,
+                                displayName: participant.name || participant.username
+                            } 
+                        });
+                    }
+                }
+            });
+        }
+    }, [boardParticipants, dispatch]);
+    
+    // Получаем актуальные данные о пользователях из Redux store
+    const reduxUsersByUsername = useSelector(state => state.users?.byUsername || {});
+    
+    // Обновляем локальное состояние из Redux
+    useEffect(() => {
+        setUsersByUsername(reduxUsersByUsername);
+    }, [reduxUsersByUsername]);
     
     useEffect(() => {
         console.log('Board data received:', {
@@ -123,6 +176,17 @@ function TaskDashboard() {
             console.error('Error loading board data:', boardError);
         }
     }, [boardWithData, isLoadingBoardData, boardError, boardIdNum]);
+    
+    // Логирование полученной истории задач
+    useEffect(() => {
+        if (tasksHistory) {
+            console.log('Tasks history loaded:', tasksHistory);
+        }
+        
+        if (tasksHistoryError) {
+            console.error('Error loading tasks history:', tasksHistoryError);
+        }
+    }, [tasksHistory, tasksHistoryError]);
 
     const [loadAttempts, setLoadAttempts] = useState(0);
     const maxLoadAttempts = 3;
@@ -170,16 +234,25 @@ function TaskDashboard() {
                         console.log('Uploading files for taskId:', createdTask.id);
                         console.log('Files to upload:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
                         
-                        uploadTaskAttachments({
-                            taskId: createdTask.id,
-                            files: files
-                        })
-                        .unwrap()
-                        .then(result => {
-                            console.log('Files uploaded successfully:', result);
-                        })
-                        .catch(error => {
-                            console.error('Failed to upload files:', error);
+                        // Последовательная загрузка каждого файла отдельно
+                        const uploadFiles = async () => {
+                            for (const file of files) {
+                                try {
+                                    console.log(`Uploading file: ${file.name}`);
+                                    await uploadTaskAttachment({
+                                        taskId: createdTask.id,
+                                        file: file
+                                    }).unwrap();
+                                    console.log(`File uploaded successfully: ${file.name}`);
+                                } catch (error) {
+                                    console.error(`Failed to upload file ${file.name}:`, error);
+                                }
+                            }
+                            console.log('All files uploaded');
+                        };
+                        
+                        uploadFiles().catch(error => {
+                            console.error('Error in file upload sequence:', error);
                         });
                     }
                 })
@@ -372,14 +445,28 @@ function TaskDashboard() {
                             onClick={() => setIsParticipantsModalOpen(true)}
                             style={{ cursor: 'pointer' }}
                         >
-                            {boardParticipants.slice(0, 4).map((username, index) => {
-                                const user = usersByUsername[username];
+                            {boardParticipants.slice(0, 4).map((participant, index) => {
+                                // Обработка участников в разных форматах
+                                const username = typeof participant === 'string' 
+                                    ? participant 
+                                    : participant.username || participant.name || '';
+                                
+                                // Найти данные пользователя в Redux store
+                                const userData = usersByUsername[username] || {};
+                                
+                                // Используем данные из usersByUsername или из объекта participant
+                                const displayName = userData.displayName || userData.name || 
+                                                  (typeof participant === 'object' && participant.name) || username;
+                                const avatarURL = userData.avatarURL || 
+                                                (typeof participant === 'object' && participant.avatarURL) || '';
+                                
                                 return (
-                                    <div className="task-dashboard-people-item" key={index} title={username}>
+                                    <div className="task-dashboard-people-item" key={index} title={displayName}>
                                         <img 
-                                            src={user?.avatarURL || Girl} 
-                                            alt={username} 
+                                            src={avatarURL || Girl} 
+                                            alt={displayName} 
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                            onError={(e) => { e.target.src = Girl; }}
                                         />
                                     </div>
                                 );
@@ -396,11 +483,13 @@ function TaskDashboard() {
                             )}
                         </div>
 
-                        <BoardRightGuard boardId={Number(boardId)} requires={BOARD_RIGHTS.CREATE_SECTIONS}>
-                            <div className='task-dashboard-add-bar-add-button' onClick={() => setIsAddSectionModalOpen(true)}>
-                                + Добавить раздел
-                            </div>
-                        </BoardRightGuard>
+                        <div className="task-dashboard-button-container">
+                            <BoardRightGuard boardId={Number(boardId)} requires={BOARD_RIGHTS.CREATE_SECTIONS}>
+                                <div className='task-dashboard-add-bar-add-button' onClick={() => setIsAddSectionModalOpen(true)}>
+                                    + Добавить раздел
+                                </div>
+                            </BoardRightGuard>
+                        </div>
                     </div>
                 </div>
 
@@ -482,8 +571,21 @@ function TaskDashboard() {
                         
                         <div style={{ marginTop: '20px' }}>
                             {boardParticipants.length > 0 ? (
-                                boardParticipants.map((username, index) => {
-                                    const user = usersByUsername[username];
+                                boardParticipants.map((participant, index) => {
+                                    // Обработка участников в разных форматах
+                                    const username = typeof participant === 'string' 
+                                        ? participant 
+                                        : participant.username || participant.name || '';
+                                    
+                                    // Найти данные пользователя в Redux store
+                                    const userData = usersByUsername[username] || {};
+                                    
+                                    // Используем данные из usersByUsername или из объекта participant
+                                    const displayName = userData.displayName || userData.name || 
+                                                       (typeof participant === 'object' && participant.name) || username;
+                                    const avatarURL = userData.avatarURL || 
+                                                     (typeof participant === 'object' && participant.avatarURL) || '';
+                                    
                                     return (
                                         <div key={index} style={{ 
                                             display: 'flex', 
@@ -500,14 +602,15 @@ function TaskDashboard() {
                                                 background: '#FED9D9'
                                             }}>
                                                 <img 
-                                                    src={user?.avatarURL || Girl} 
-                                                    alt={username} 
+                                                    src={avatarURL || Girl} 
+                                                    alt={displayName} 
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    onError={(e) => { e.target.src = Girl; }}
                                                 />
                                             </div>
                                             <div>
                                                 <div style={{ fontFamily: 'Ruberoid Bold', fontSize: '14px' }}>
-                                                    {user?.displayName || username}
+                                                    {displayName}
                                                 </div>
                                                 <div style={{ fontFamily: 'Ruberoid Regular', fontSize: '12px', color: '#969595' }}>
                                                     {username}

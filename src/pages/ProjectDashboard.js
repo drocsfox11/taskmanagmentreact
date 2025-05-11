@@ -6,6 +6,9 @@ import {useState, useRef, useEffect} from "react";
 import { useGetProjectsQuery, useCreateProjectMutation } from '../services/api/projectsApi';
 import CloseCross from '../assets/icons/close_cross.svg';
 import LoadingSpinner from "../components/LoadingSpinner";
+import EmojiPicker from "../components/EmojiPicker";
+import { EmojiProvider, Emoji } from "react-apple-emojis";
+import emojiData from "react-apple-emojis/src/data.json";
 
 
 function ProjectDashboard() {
@@ -13,6 +16,7 @@ function ProjectDashboard() {
     const { data: projects = [], isLoading } = useGetProjectsQuery();
     const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const modalRef = useRef(null);
 
     console.log(projects);
@@ -47,14 +51,31 @@ function ProjectDashboard() {
         };
     }, [isModalOpen]);
 
-    const [form, setForm] = useState({ title: '', description: '' });
+    const [form, setForm] = useState({ 
+        title: '', 
+        description: '',
+        emoji: 'teacher-light-skin-tone' // Эмодзи по умолчанию
+    });
     
     useEffect(() => {
-        setForm({ title: '', description: '' });
+        setForm({ 
+            title: '', 
+            description: '',
+            emoji: 'teacher-light-skin-tone'
+        });
     }, [isModalOpen]);
 
     const handleFormChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const handleEmojiSelect = (emojiName) => {
+        setForm({ ...form, emoji: emojiName });
+    };
+
+    const handleOpenEmojiPicker = (e) => {
+        e.stopPropagation(); // Предотвращаем всплытие события
+        setIsEmojiPickerOpen(true);
     };
 
     const handleSubmit = async (e) => {
@@ -62,6 +83,7 @@ function ProjectDashboard() {
         const projectData = {
             title: form.title,
             description: form.description,
+            emoji: form.emoji
         };
         
         try {
@@ -104,6 +126,16 @@ function ProjectDashboard() {
                             <img src={CloseCross} alt="close" className="create-task-modal-close" onClick={handleCloseModal}/>
                         </div>
                         
+                        <div className="create-project-modal-label">Иконка</div>
+                        <div className="create-project-emoji-selector" onClick={handleOpenEmojiPicker}>
+                            <div className="selected-emoji">
+                                <EmojiProvider data={emojiData}>
+                                    <Emoji name={form.emoji} width={24} />
+                                </EmojiProvider>
+                            </div>
+                            <span>Выбрать иконку</span>
+                        </div>
+                        
                         <div className="create-project-modal-label">Название</div>
                         <input 
                             className="create-project-modal-input" 
@@ -137,6 +169,14 @@ function ProjectDashboard() {
                     </form>
                 </div>
             )}
+            
+            {/* Emoji Picker */}
+            <EmojiPicker 
+                isOpen={isEmojiPickerOpen} 
+                onClose={() => setIsEmojiPickerOpen(false)}
+                selectedEmoji={form.emoji}
+                onSelectEmoji={handleEmojiSelect}
+            />
         </div>
     );
 }

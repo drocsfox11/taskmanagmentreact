@@ -80,7 +80,7 @@ function ProjectCard({ project, onClick }) {
             <div className='project-card-icon-row-container'>
                 <div className='project-card-icon-container'>
                     <EmojiProvider data={emojiData}>
-                        <Emoji name="teacher-light-skin-tone" width={22}/>
+                        <Emoji name={project.emoji || "teacher-light-skin-tone"} width={22}/>
                     </EmojiProvider>
                 </div>
                 {showOptionsIcon && (

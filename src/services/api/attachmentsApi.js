@@ -33,13 +33,18 @@ export const attachmentsApi = baseApi.injectEndpoints({
       query: ({ taskId, files }) => {
         const formData = new FormData();
         
+        // Log for debugging
+        console.log(`uploadTaskAttachments called with taskId=${taskId} and ${files?.length || 0} files`);
+        
         // Don't append taskId to FormData, it should be a request parameter
         // The server expects taskId as a request parameter, not in the form data
         
         // Append each file to the FormData with the correct parameter name 'file' 
         if (Array.isArray(files)) {
-          files.forEach(file => {
+          console.log('Files to upload:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+          files.forEach((file, index) => {
             // The server expects each file with the parameter name 'file'
+            console.log(`Appending file ${index+1}/${files.length}: ${file.name}`);
             formData.append('file', file);
           });
         }

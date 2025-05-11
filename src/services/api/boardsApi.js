@@ -183,6 +183,7 @@ export const boardsApi = baseApi.injectEndpoints({
                   draft.title = data.payload.title || draft.title;
                   draft.description = data.payload.description || draft.description;
                   draft.projectId = data.payload.projectId || draft.projectId;
+                  draft.emoji = data.payload.emoji || draft.emoji;
                   
                   // Обновляем участников, если они предоставлены
                   if (data.payload.participants) {

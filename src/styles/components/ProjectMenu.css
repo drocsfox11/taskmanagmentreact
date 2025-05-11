@@ -226,10 +226,20 @@
     border-color: #DBDBDB;
     border-style: solid;
     gap: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.project-menu-events-window:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-1px);
+}
+
+.project-menu-events-window:active {
+    transform: translateY(0);
 }
 
 .project-menu-events-window-all{
-
     font-family: "Ruberoid Semi Bold";
     font-size: 10px;
     color: #969595;
@@ -237,21 +247,16 @@
 
 .project-menu-events-window-events{
     display: flex;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    justify-content: center;
     padding: 5px;
     border-radius: 4px;
-}
-
-.project-menu-events-window-events:hover {
-    background-color: #f5f5f5;
 }
 
 .project-menu-events-window-events-counter{
     font-family: "Ruberoid Bold";
     font-size: 18px;
     color: black;
+    text-align: center;
 }
 
 .project-menu-events-window-events-added{
@@ -305,18 +310,24 @@
 
 /* Project list modal styles */
 .project-menu-list-modal {
-    max-width: 500px !important;
-    width: 500px !important;
-    max-height: 70vh;
-    overflow-y: auto;
+    background-color: white;
+    border-radius: 8px;
+    width: 30%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+    padding-bottom: 20px;
 }
 
 .project-menu-list-container {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    margin-top: 15px;
+    padding: 0 20px;
     gap: 10px;
+    overflow-y: auto;
+    max-height: 70vh;
 }
 
 .project-menu-list-item {
@@ -448,6 +459,158 @@
     right: 0;
     top: 100%;
     z-index: 1000;
+}
+
+/* Project list modal overlay styles */
+.project-list-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: all;
+}
+
+.project-menu-list-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #DBDBDB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.project-menu-list-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-family: 'Ruberoid Bold', sans-serif;
+    color: #000000;
+}
+
+.project-modal-close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+    padding: 0 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+}
+
+.project-modal-close-button:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Participants list modal styles */
+.participant-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #EFEFEF;
+    margin-bottom: 10px;
+    background-color: #FFFFFF;
+    transition: all 0.2s ease;
+}
+
+.participant-list-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.participant-list-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.participant-list-item-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #FED9D9;
+    flex-shrink: 0;
+}
+
+.participant-list-item-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.participant-list-item-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.participant-list-item-name {
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.participant-list-item-username {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #777;
+}
+
+.participant-list-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.participant-action-button {
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.participant-action-button.message {
+    background-color: #5558FF;
+    color: white;
+}
+
+.participant-action-button.message:hover {
+    background-color: #4245cc;
+}
+
+/* Стили для мобильных устройств */
+@media (max-width: 768px) {
+    .project-menu-list-modal {
+        width: 95%;
+    }
+    
+    .participant-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .participant-list-item-actions {
+        margin-top: 10px;
+        align-self: flex-end;
+    }
 }
 
 
