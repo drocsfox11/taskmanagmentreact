@@ -70,16 +70,19 @@ function TaskDashboard() {
     
     // Process project tasks when they're loaded
     useEffect(() => {
-        if (projectTasks && projectTasks.length > 0) {
-            // Process tasks if needed
-            const processedTasks = projectTasks.map(task => ({
-                ...task,
-                // Add any necessary field transformations here
-            }));
-            
-            setCalendarTasks(processedTasks);
-        } else {
-            setCalendarTasks([]);
+        if (projectTasks) {
+            if (projectTasks.length > 0) {
+                // Process tasks if needed
+                const processedTasks = projectTasks.map(task => ({
+                    ...task,
+                    // Add any necessary field transformations here
+                }));
+                
+                setCalendarTasks(processedTasks);
+            } else if (calendarTasks.length !== 0) {
+                // Only set empty array if current state is not already empty
+                setCalendarTasks([]);
+            }
         }
     }, [projectTasks]);
     
@@ -310,14 +313,14 @@ function TaskDashboard() {
                     <div className="calendar-body">
                         {mappedTasks.length > 0 ? (
                             mappedTasks.map((task, index) => (
-                        <CalendarCard
+                                <CalendarCard
                                     key={task.id || index}
                                     task={task}
-                            startDate={task.startDate}
-                            endDate={task.endDate}
+                                    startDate={task.startDate}
+                                    endDate={task.endDate}
                                     boardTitle={task.boardTitle}
                                     style={{gridColumn: `${task.startCol} / ${task.endCol}`}}
-                        />
+                                />
                             ))
                         ) : (
                             <div className="no-tasks-message">

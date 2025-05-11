@@ -7,12 +7,13 @@ import MessengerPassive from '../assets/icons/messenger_passive.svg';
 import CalendarActive from '../assets/icons/calender_active.svg';
 import CalendarPassive from '../assets/icons/calender_passive.svg';
 import Logout from '../assets/icons/logout.svg';
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useLocation} from "react-router-dom";
 import { useLogoutMutation } from '../services/api';
 
 function LeftMenu() {
     const [activeIcon, setActiveIcon] = useState('work');
     const navigate = useNavigate();
+    const location = useLocation();
     const [logout, { isLoading, error, isSuccess }] = useLogoutMutation();
 
     const routeMap = {
@@ -21,9 +22,20 @@ function LeftMenu() {
         calendar:   '/system/calendar'
     };
 
+    useEffect(() => {
+        // Определяем активную иконку по текущему маршруту
+        if (location.pathname.startsWith('/system/calendar')) {
+            setActiveIcon('calendar');
+        } else if (location.pathname.startsWith('/system/messenger')) {
+            setActiveIcon('messenger');
+        } else {
+            setActiveIcon('work');
+        }
+    }, [location.pathname]);
+
     const handleIconClick = (icon) => {
         setActiveIcon(icon);
-        navigate(routeMap[icon]);
+        navigate(routeMap[icon], { replace: true });
     };
 
     const handleLogout = async () => {
