@@ -142,10 +142,26 @@ export const projectsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: { userId, rightName },
       }),
-      invalidatesTags: (result, error, { projectId }) => [
-        { type: 'Projects', id: projectId },
-        'ProjectRights'
-      ],
+      async onQueryStarted({ projectId, userId, rightName }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getAllUserRights', userId, (draft) => {
+            if (!draft[projectId]) {
+              draft[projectId] = [];
+            }
+            
+            if (!draft[projectId].includes(rightName)) {
+              draft[projectId].push(rightName);
+            }
+          })
+        );
+        
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          patchResult.undo();
+          console.error('Failed to grant project right:', error);
+        }
+      },
     }),
     revokeProjectRight: builder.mutation({
       query: ({ projectId, userId, rightName }) => ({
@@ -153,10 +169,22 @@ export const projectsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: { userId, rightName },
       }),
-      invalidatesTags: (result, error, { projectId }) => [
-        { type: 'Projects', id: projectId },
-        'ProjectRights'
-      ],
+      async onQueryStarted({ projectId, userId, rightName }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getAllUserRights', userId, (draft) => {
+            if (draft[projectId]) {
+              draft[projectId] = draft[projectId].filter(right => right !== rightName);
+            }
+          })
+        );
+        
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          patchResult.undo();
+          console.error('Failed to revoke project right:', error);
+        }
+      },
     }),
     getUserRights: builder.query({
       query: ({ projectId, userId }) => ({

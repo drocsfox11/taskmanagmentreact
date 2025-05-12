@@ -11,9 +11,8 @@ import Girl from '../assets/icons/girl.svg';
 import { useBoardRights } from './permissions';
 import { BOARD_RIGHTS, PROJECT_RIGHTS } from '../constants/rights';
 import { BoardRightGuard } from './permissions';
-import { useProjectRights } from './permissions';
-import { useSearchUsersQuery } from '../services/api/usersApi';
-import { useGetCurrentUserQuery } from '../services/api/usersApi';
+import { useGetAllUserRightsQuery, useGetProjectQuery } from '../services/api/projectsApi';
+import { useSearchUsersQuery, useGetCurrentUserQuery } from '../services/api/usersApi';
 import EmojiPicker from './EmojiPicker';
 import { EmojiProvider, Emoji } from "react-apple-emojis";
 import emojiData from "react-apple-emojis/src/data.json";
@@ -47,22 +46,57 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     const timeoutRef = useRef(null);
     const [isScrollLoading, setIsScrollLoading] = useState(false);
     const { data: currentUser } = useGetCurrentUserQuery();
-
-    // Получаем права пользователя на уровне доски
-    const { hasRight: hasBoardRight, rights: boardRights, isLoading: isBoardRightsLoading } = useBoardRights(board.id);
     
-    // Получаем права пользователя на уровне проекта
-    const { hasRight: hasProjectRight, rights: projectRights, isLoading: isProjectRightsLoading } = useProjectRights(board.projectId);
+    // Получаем данные о проекте для определения владельца
+    const { data: projectData } = useGetProjectQuery(board.projectId, {
+        skip: !board.projectId
+    });
+    
+    // Получаем все права пользователя на всех проектах
+    const { data: allProjectRights = {} } = useGetAllUserRightsQuery(
+        currentUser?.id,
+        { skip: !currentUser?.id }
+    );
+
+    // Получаем права пользователя на уровне доски, но только если активен соответствующий таб
+    const { hasRight: hasBoardRight, rights: boardRights, isLoading: isBoardRightsLoading } = useBoardRights(board.id, {
+        skip: activeTab !== 'permissions' && activeTab !== 'participants'
+    });
+    
+    // Проверяем, является ли текущий пользователь владельцем проекта
+    const isProjectOwner = currentUser && projectData && projectData.owner && 
+                          currentUser.id === projectData.owner.id;
+    
+    // Проверяем, является ли текущий пользователь владельцем доски
+    const isBoardOwner = currentUser && board.ownerId && currentUser.id === board.ownerId;
+    
+    // Получаем права пользователя для текущего проекта из всех прав
+    const projectRights = allProjectRights[board.projectId] || [];
+    
+    // Проверяем права на уровне проекта напрямую
+    const hasProjectRight = (rightName) => {
+        return projectRights.includes(rightName);
+    };
     
     // Проверяем, имеет ли пользователь право управлять участниками доски
-    // Это возможно если у него есть право MANAGE_MEMBERS на доске ИЛИ MANAGE_ACCESS на проекте
-    const canManageMembers = hasBoardRight(BOARD_RIGHTS.MANAGE_MEMBERS) || hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS);
+    // Владелец проекта и владелец доски всегда имеют это право
+    // Иначе проверяем наличие соответствующих прав
+    const canManageMembers = 
+        isProjectOwner || 
+        isBoardOwner || 
+        hasBoardRight?.(BOARD_RIGHTS.MANAGE_MEMBERS) || 
+        hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS);
     
     // Проверяем, имеет ли пользователь право управлять правами на доске
-    // Это возможно если у него есть право MANAGE_RIGHTS на доске ИЛИ MANAGE_BOARD_RIGHTS на проекте
-    const canManageRights = hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS) || hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS);
+    // Владелец проекта и владелец доски всегда имеют это право
+    // Иначе проверяем наличие соответствующих прав
+    const canManageRights = 
+        isProjectOwner || 
+        isBoardOwner || 
+        hasBoardRight?.(BOARD_RIGHTS.MANAGE_RIGHTS) || 
+        hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS);
     
-    // Запрос поиска пользователей
+    // Запрос поиска пользователей, выполняется только если таб участников активен
     const queryArg = {
         name: searchParams.query,
         page: searchParams.page,
@@ -76,7 +110,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     } = useSearchUsersQuery(
         queryArg,
         { 
-            skip: !searchParams.query,
+            skip: !searchParams.query || activeTab !== 'participants',
             refetchOnMountOrArgChange: true,
             refetchOnFocus: false
         }
@@ -90,31 +124,41 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         (currentUser ? user.id !== currentUser.id : true)
     );
     
+    // Обновляем форму при изменении исходных данных доски
+    useEffect(() => {
+        setForm({
+            title: board?.title || '',
+            description: board?.description || '',
+            tags: board?.tags || [],
+            emoji: board?.emoji || 'clipboard'
+        });
+    }, [board]);
+
     // Добавляем логирование для диагностики
     useEffect(() => {
-        console.log("BoardManagementModal: Диагностика прав доступа");
+        console.log("BoardManagementModal: Диагностика доступа");
         console.log("projectId:", board.projectId);
         console.log("boardId:", board.id);
-        console.log("boardEmoji:", board.emoji);
-        console.log("formEmoji:", form.emoji);
-        console.log("isProjectRightsLoading:", isProjectRightsLoading);
-        console.log("isBoardRightsLoading:", isBoardRightsLoading);
+        console.log("currentUser:", currentUser);
+        console.log("projectData:", projectData);
+        console.log("board.ownerId:", board.ownerId);
+        console.log("isProjectOwner:", isProjectOwner);
+        console.log("isBoardOwner:", isBoardOwner);
         console.log("projectRights:", projectRights);
-        console.log("boardRights:", boardRights);
         console.log("hasProjectRight(MANAGE_BOARD_RIGHTS):", hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS));
-        console.log("hasBoardRight(MANAGE_RIGHTS):", hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS));
+        console.log("hasProjectRight(MANAGE_ACCESS):", hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS));
+        console.log("canManageMembers:", canManageMembers);
         console.log("canManageRights:", canManageRights);
     }, [
         board.projectId, 
         board.id, 
-        board.emoji,
-        form.emoji,
-        projectRights, 
-        boardRights, 
-        isProjectRightsLoading, 
-        isBoardRightsLoading, 
-        hasProjectRight, 
-        hasBoardRight, 
+        currentUser,
+        projectData,
+        board.ownerId,
+        isProjectOwner,
+        isBoardOwner,
+        projectRights,
+        canManageMembers,
         canManageRights
     ]);
 
@@ -223,20 +267,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
             document.removeEventListener('mousedown', handleClickOutsideSearch);
         };
     }, []);
-
-    useEffect(() => {
-        if (board) {
-            console.log("BoardManagementModal: Обновление формы из board:", board);
-            const newForm = {
-                title: board.title || '',
-                description: board.description || '',
-                tags: board.tags || [],
-                emoji: board.emoji || 'clipboard'
-            };
-            console.log("BoardManagementModal: Новые значения формы:", newForm);
-            setForm(newForm);
-        }
-    }, [board]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -370,22 +400,20 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                     >
                         Информация
                     </button>
-                    {canManageMembers && (
-                        <button 
-                            className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('participants')}
-                        >
-                            Участники
-                        </button>
-                    )}
-                    {canManageRights && (
-                        <button 
-                            className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('permissions')}
-                        >
-                            Права доступа
-                        </button>
-                    )}
+                    <button 
+                        className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('participants')}
+                        style={{ display: canManageMembers ? 'inline-block' : 'none' }}
+                    >
+                        Участники
+                    </button>
+                    <button 
+                        className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('permissions')}
+                        style={{ display: canManageRights ? 'inline-block' : 'none' }}
+                    >
+                        Права доступа
+                    </button>
                 </div>
                 <div className="project-management-modal-content">
                     {activeTab === 'info' ? (

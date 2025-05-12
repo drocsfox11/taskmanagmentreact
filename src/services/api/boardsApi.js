@@ -350,6 +350,11 @@ export const boardsApi = baseApi.injectEndpoints({
                     console.log(`Column ${taskData.columnId} not found for adding task ${taskData.id}`);
                   }
                 });
+                
+                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
+                dispatch(baseApi.util.invalidateTags([
+                  { type: 'Tasks', id: `board-history-${boardId}` }
+                ]));
                 break;
                 
               case 'TASK_UPDATED':
@@ -380,6 +385,11 @@ export const boardsApi = baseApi.injectEndpoints({
                     console.log(`Column ${taskData.columnId} not found for task ${taskData.id} update`);
                   }
                 });
+                
+                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
+                dispatch(baseApi.util.invalidateTags([
+                  { type: 'Tasks', id: `board-history-${boardId}` }
+                ]));
                 break;
                 
               case 'TASK_DELETED':
@@ -405,6 +415,11 @@ export const boardsApi = baseApi.injectEndpoints({
                     }
                   });
                 });
+                
+                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
+                dispatch(baseApi.util.invalidateTags([
+                  { type: 'Tasks', id: `board-history-${boardId}` }
+                ]));
                 break;
                 
               case 'TASK_MOVED':
@@ -482,6 +497,11 @@ export const boardsApi = baseApi.injectEndpoints({
                   
                   console.log(`Task ${taskId} successfully moved via WebSocket`);
                 });
+                
+                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
+                dispatch(baseApi.util.invalidateTags([
+                  { type: 'Tasks', id: `board-history-${boardId}` }
+                ]));
                 break;
                 
               default:
@@ -515,15 +535,12 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body: { ...data, socketEvent: true },
       }),
-      // Добавляем инвалидацию нужных тегов
-      invalidatesTags: (result, error, arg) => [
-        { type: 'Board', id: arg.id },
-        'Boards',
-        'Tags'
-      ],
-      // Делаем оптимистичное обновление
+      // Удаляем invalidatesTags, чтобы избежать рефетчей
+      // Вместо этого полностью полагаемся на оптимистичное обновление
       async onQueryStarted({ id, ...updates }, { dispatch, queryFulfilled }) {
         console.log('Starting board update with data:', updates);
+        
+        // Оптимистично обновляем данные доски
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', id, (draft) => {
             // Обновляем основные поля доски
@@ -539,25 +556,66 @@ export const boardsApi = baseApi.injectEndpoints({
           })
         );
         
+        // Обновляем данные доски в списке досок проекта
+        if (updates.projectId) {
+          try {
+            dispatch(
+              baseApi.util.updateQueryData('getBoards', updates.projectId, (draft) => {
+                if (Array.isArray(draft)) {
+                  const boardIndex = draft.findIndex(board => board.id === id);
+                  if (boardIndex !== -1) {
+                    draft[boardIndex] = {
+                      ...draft[boardIndex],
+                      ...updates
+                    };
+                  }
+                }
+              })
+            );
+          } catch (error) {
+            console.error('Error updating board in project boards list:', error);
+          }
+        }
+        
         try {
           const result = await queryFulfilled;
           console.log('Board update response:', result);
           
           if (result && result.data) {
-            console.log('Updating cache with server data:', result.data);
-            // Принудительно обновляем кэш с данными с сервера, полностью заменяя локальные данные
+            // Обновляем кэш с данными с сервера, но без инвалидации и рефетча
             dispatch(
               baseApi.util.updateQueryData('getBoardWithData', id, (draft) => {
                 // Сохраняем колонки и задачи, так как они отдельно обрабатываются
                 const columns = draft.columns ? [...draft.columns] : []; 
                 
-                // Полная замена данных доски с сервера
+                // Обновляем данные доски, полученные с сервера
                 Object.assign(draft, result.data);
                 
                 // Восстанавливаем колонки и задачи, так как их нет в ответе updateBoard
                 draft.columns = columns;
               })
             );
+            
+            // Если в ответе есть projectId, обновляем доску и в списке досок проекта
+            if (result.data.projectId) {
+              dispatch(
+                baseApi.util.updateQueryData('getBoards', result.data.projectId, (draft) => {
+                  if (Array.isArray(draft)) {
+                    const boardIndex = draft.findIndex(board => board.id === id);
+                    if (boardIndex !== -1) {
+                      // Обновляем данные доски в списке
+                      draft[boardIndex] = {
+                        ...draft[boardIndex],
+                        ...result.data
+                      };
+                    } else if (result.data) {
+                      // Если доска не найдена в списке, добавляем её
+                      draft.push(result.data);
+                    }
+                  }
+                })
+              );
+            }
           }
         } catch (error) {
           console.error('Error updating board:', error);
@@ -571,7 +629,49 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'DELETE',
         body: { socketEvent: true },
       }),
-      invalidatesTags: ['Boards'],
+      // Удаляем invalidatesTags, чтобы избежать рефетчей
+      async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
+        try {
+          // Получаем текущее состояние доски перед удалением
+          const state = getState();
+          const boardData = state.api.queries[`getBoardWithData(${id})`]?.data;
+          const projectId = boardData?.projectId;
+          
+          console.log(`Optimistically deleting board ${id} from project ${projectId}`);
+          
+          // Оптимистично удаляем доску из списка досок проекта, если projectId известен
+          if (projectId) {
+            const boardsInProjectPatchResult = dispatch(
+              baseApi.util.updateQueryData('getBoards', projectId, (draft) => {
+                if (Array.isArray(draft)) {
+                  const boardIndex = draft.findIndex(board => board.id === id);
+                  if (boardIndex !== -1) {
+                    // Удаляем доску из списка
+                    draft.splice(boardIndex, 1);
+                    console.log(`Removed board ${id} from project ${projectId} boards list`);
+                  }
+                }
+              })
+            );
+            
+            // Ждём результат запроса
+            try {
+              await queryFulfilled;
+              console.log(`Delete board ${id} request successful`);
+            } catch (error) {
+              // При ошибке отменяем оптимистичное обновление
+              boardsInProjectPatchResult.undo();
+              console.error(`Error deleting board ${id}:`, error);
+            }
+          } else {
+            // Если projectId неизвестен, просто ждём результат запроса
+            await queryFulfilled;
+            console.log(`Delete board ${id} request successful without projectId`);
+          }
+        } catch (error) {
+          console.error(`Error during board deletion optimistic update:`, error);
+        }
+      }
     }),
     createColumn: builder.mutation({
       query: ({ boardId, ...column }) => ({

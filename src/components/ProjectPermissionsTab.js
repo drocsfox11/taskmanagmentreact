@@ -58,15 +58,21 @@ function ProjectPermissionsTab({ project }) {
                     userId: selectedUserId,
                     rightName,
                 }).unwrap();
+                
+                // Локально обновляем состояние вместо refetch
+                setUserRights(prev => prev.filter(right => right !== rightName));
             } else {
                 await grantRight({
                     projectId: project.id,
                     userId: selectedUserId,
                     rightName,
                 }).unwrap();
+                
+                // Локально обновляем состояние вместо refetch
+                setUserRights(prev => [...prev, rightName]);
             }
             
-            refetch();
+            // Убираем вызов refetch(), так как теперь используем оптимистичные обновления
         } catch (error) {
             console.error("Failed to update right:", error);
         }
@@ -88,16 +94,23 @@ function ProjectPermissionsTab({ project }) {
                     userId: selectedUserId,
                     rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
+                
+                // Локально обновляем состояние вместо refetch
+                setHasAccessToAllBoards(false);
+                setUserRights(prev => prev.filter(right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
             } else {
                 await grantRight({
                     projectId: project.id,
                     userId: selectedUserId,
                     rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
+                
+                // Локально обновляем состояние вместо refetch
+                setHasAccessToAllBoards(true);
+                setUserRights(prev => [...prev, PROJECT_RIGHTS.ACCESS_ALL_BOARDS]);
             }
             
-            setHasAccessToAllBoards(!hasAccess);
-            refetch(); // Refresh rights in case this impacts other rights
+            // Убираем вызов refetch(), так как теперь используем оптимистичные обновления
         } catch (error) {
             console.error("Failed to update board access:", error);
         }

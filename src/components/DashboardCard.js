@@ -4,9 +4,8 @@ import '../styles/components/ProjectAndDashboardCard.css'
 import OptionsPassive from "../assets/icons/options_passive.svg";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDeleteBoardMutation, useGetBoardWithDataQuery } from "../services/api/boardsApi";
+import { useDeleteBoardMutation } from "../services/api/boardsApi";
 import BoardManagementModal from "./BoardManagementModal";
-import { useProjectRights } from "./permissions";
 import { PROJECT_RIGHTS } from "../constants/rights";
 import { useGetAllUserRightsQuery } from "../services/api/projectsApi";
 import { useGetCurrentUserQuery } from "../services/api/usersApi";
@@ -21,12 +20,11 @@ function DashboardCard({ board, onClick }) {
     
     // Для отображения нужны эти данные из объекта board
     const boardId = board?.id;
-    // Важно получить корректный projectId, так как он может быть не установлен
     const projectId = board?.projectId;
     const title = board?.title;
     const description = board?.description;
     
-    // Получаем текущего пользователя напрямую для отладки
+    // Получаем текущего пользователя
     const { data: currentUser } = useGetCurrentUserQuery();
     const userId = currentUser?.id;
     
@@ -36,21 +34,12 @@ function DashboardCard({ board, onClick }) {
         { skip: !userId }
     );
     
-    // Получаем boardWithData, чтобы получить дополнительную информацию о доске, включая projectId, если он отсутствует
-    // Это важно для корректной работы прав
-    const { data: boardWithData, isLoading: isBoardDataLoading } = useGetBoardWithDataQuery(boardId, {
-        skip: !boardId // Всегда загружаем данные доски, если есть boardId
-    });
-    
-    // Если projectId не был указан изначально, но получен через API, используем его
-    const effectiveProjectId = projectId || boardWithData?.projectId;
-    
     // Проверяем доступность прав на основе projectId
     const checkRights = (rightName) => {
-        // Если есть effectiveProjectId и права загружены в allProjectRights
-        if (effectiveProjectId && allProjectRights && !isRightsLoading) {
+        // Если есть projectId и права загружены в allProjectRights
+        if (projectId && allProjectRights && !isRightsLoading) {
             // Получаем права для этого проекта
-            const projectRights = allProjectRights[effectiveProjectId];
+            const projectRights = allProjectRights[projectId];
             // Проверяем наличие права
             return projectRights && Array.isArray(projectRights) && projectRights.includes(rightName);
         }
@@ -67,12 +56,12 @@ function DashboardCard({ board, onClick }) {
     // Отладочный вывод для проверки прав
     useEffect(() => {
         console.log(`DashboardCard for board ${boardId}:`);
-        console.log(`effectiveProjectId: ${effectiveProjectId}`);
+        console.log(`projectId: ${projectId}`);
         console.log(`allProjectRights:`, allProjectRights);
         console.log(`isRightsLoading: ${isRightsLoading}`);
         console.log(`Final permissions: canEdit=${canEditBoard}, canDelete=${canDeleteBoard}`);
         console.log(`Show options icon: ${showOptionsIcon}`);
-    }, [boardId, effectiveProjectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, showOptionsIcon]);
+    }, [boardId, projectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, showOptionsIcon]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -94,9 +83,9 @@ function DashboardCard({ board, onClick }) {
             return;
         }
         
-        // Используем effectiveProjectId, если он доступен
-        if (boardId && effectiveProjectId) {
-            navigate(`/system/project/${effectiveProjectId}/board/${boardId}/tasks`);
+        // Переходим на страницу доски
+        if (boardId && projectId) {
+            navigate(`/system/project/${projectId}/board/${boardId}/tasks`);
         } else if (onClick) {
             onClick();
         }
@@ -170,9 +159,9 @@ function DashboardCard({ board, onClick }) {
                 </div>
             )}
             
-            {isManagementModalOpen && (boardWithData || board) && (
+            {isManagementModalOpen && board && (
                 <BoardManagementModal 
-                    board={boardWithData || board} 
+                    board={board} 
                     onClose={() => setIsManagementModalOpen(false)}
                     isOpen={isManagementModalOpen}
                 />

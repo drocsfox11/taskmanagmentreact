@@ -434,7 +434,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                             className={`tab-button ${activeTab === 'participants' ? 'active' : ''}`}
                             onClick={() => setActiveTab('participants')}
                         >
-                            Участники
+                            Права доступа
                         </button>
                     </ProjectRightGuard>
                     <ProjectRightGuard projectId={projectId} requires={PROJECT_RIGHTS.MANAGE_RIGHTS}>
@@ -442,7 +442,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                             className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
                             onClick={() => setActiveTab('permissions')}
                         >
-                            Права доступа
+                            Участники
                         </button>
                     </ProjectRightGuard>
                 </div>
