@@ -5,7 +5,7 @@ import {
     useRemoveUserFromBoardMutation
 } from '../services/api/boardsApi';
 import BoardPermissionsTab from './BoardPermissionsTab';
-import '../styles/components/ProjectManagementModal.css'; // Reuse the same styles
+import '../styles/components/ProjectManagementModal.css';
 import CloseCross from '../assets/icons/close_cross.svg';
 import Girl from '../assets/icons/girl.svg';
 import { useBoardRights } from './permissions';
@@ -33,7 +33,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const modalRef = useRef(null);
     
-    // Для поиска пользователей
     const usersOnPage = 2;
     const [inputValue, setInputValue] = useState('');
     const [searchParams, setSearchParams] = useState({
@@ -47,56 +46,44 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     const [isScrollLoading, setIsScrollLoading] = useState(false);
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    // Получаем данные о проекте для определения владельца
     const { data: projectData } = useGetProjectQuery(board.projectId, {
         skip: !board.projectId
     });
     
-    // Получаем все права пользователя на всех проектах
     const { data: allProjectRights = {} } = useGetAllUserRightsQuery(
         currentUser?.id,
         { skip: !currentUser?.id }
     );
 
-    // Получаем права пользователя на уровне доски, но только если активен соответствующий таб
     const { hasRight: hasBoardRight, rights: boardRights, isLoading: isBoardRightsLoading } = useBoardRights(board.id, {
         skip: activeTab !== 'permissions' && activeTab !== 'participants'
     });
     
-    // Проверяем, является ли текущий пользователь владельцем проекта
-    const isProjectOwner = currentUser && projectData && projectData.owner && 
+    const isProjectOwner = currentUser && projectData && projectData.owner &&
                           currentUser.id === projectData.owner.id;
     
-    // Проверяем, является ли текущий пользователь владельцем доски
     const isBoardOwner = currentUser && board.ownerId && currentUser.id === board.ownerId;
     
-    // Получаем права пользователя для текущего проекта из всех прав
     const projectRights = allProjectRights[board.projectId] || [];
     
-    // Проверяем права на уровне проекта напрямую
     const hasProjectRight = (rightName) => {
         return projectRights.includes(rightName);
     };
     
-    // Проверяем, имеет ли пользователь право управлять участниками доски
-    // Владелец проекта и владелец доски всегда имеют это право
-    // Иначе проверяем наличие соответствующих прав
+
     const canManageMembers = 
         isProjectOwner || 
         isBoardOwner || 
         hasBoardRight?.(BOARD_RIGHTS.MANAGE_MEMBERS) || 
         hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS);
     
-    // Проверяем, имеет ли пользователь право управлять правами на доске
-    // Владелец проекта и владелец доски всегда имеют это право
-    // Иначе проверяем наличие соответствующих прав
+
     const canManageRights = 
         isProjectOwner || 
         isBoardOwner || 
         hasBoardRight?.(BOARD_RIGHTS.MANAGE_RIGHTS) || 
         hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS);
     
-    // Запрос поиска пользователей, выполняется только если таб участников активен
     const queryArg = {
         name: searchParams.query,
         page: searchParams.page,
@@ -124,7 +111,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         (currentUser ? user.id !== currentUser.id : true)
     );
     
-    // Обновляем форму при изменении исходных данных доски
     useEffect(() => {
         setForm({
             title: board?.title || '',
@@ -134,7 +120,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         });
     }, [board]);
 
-    // Добавляем логирование для диагностики
     useEffect(() => {
         console.log("BoardManagementModal: Диагностика доступа");
         console.log("projectId:", board.projectId);
@@ -162,7 +147,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         canManageRights
     ]);
 
-    // Функция загрузки следующей страницы результатов поиска
     const loadNextPage = useCallback(() => {
         if (hasNextPage && !isFetching) {
             setSearchParams(prev => ({
@@ -172,7 +156,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         }
     }, [hasNextPage, isFetching]);
 
-    // Обработчик прокрутки результатов поиска
     const handleScroll = useCallback(() => {
         if (!scrollableResultsRef.current || !hasNextPage || isFetching || isScrollLoading) {
             return;
@@ -186,7 +169,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         }
     }, [hasNextPage, isFetching, isScrollLoading, loadNextPage]);
 
-    // Устанавливаем обработчик прокрутки
     useEffect(() => {
         const scrollableElement = scrollableResultsRef.current;
         if (scrollableElement) {
@@ -197,14 +179,12 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         }
     }, [handleScroll]);
 
-    // Сбрасываем состояние загрузки при завершении запроса
     useEffect(() => {
         if (!isFetching) {
             setIsScrollLoading(false);
         }
     }, [isFetching]);
 
-    // Автоматически загружаем следующую страницу, если результатов мало
     useEffect(() => {
         if (searchParams.query && 
             !isSearching && 
@@ -217,7 +197,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         }
     }, [filteredUsers, searchParams.query, isSearching, isFetching, hasNextPage, isScrollLoading, usersOnPage, loadNextPage]);
 
-    // Устанавливаем поисковый запрос
     const setSearchQuery = useCallback((query) => {
         setSearchParams({
             query,
@@ -225,7 +204,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         });
     }, []);
 
-    // Обрабатываем изменение поискового запроса с задержкой
     useEffect(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -246,21 +224,18 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         };
     }, [inputValue, setSearchQuery]);
 
-    // Обработчик изменения поля поиска
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setInputValue(value);
         setShowSearchResults(!!value);
     };
 
-    // Обработчик клика вне окна поиска
     const handleClickOutsideSearch = (event) => {
         if (searchResultsRef.current && !searchResultsRef.current.contains(event.target)) {
             setShowSearchResults(false);
         }
     };
 
-    // Устанавливаем обработчик клика вне окна поиска
     useEffect(() => {
         document.addEventListener('mousedown', handleClickOutsideSearch);
         return () => {
@@ -368,11 +343,9 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         e.stopPropagation();
     };
 
-    // Добавим дополнительный эффект для инициализации формы при монтировании
     useEffect(() => {
         if (isOpen && board) {
             console.log("BoardManagementModal: модальное окно открыто, обновляем форму");
-            // Принудительно обновляем форму с актуальными данными доски
             setForm({
                 title: board.title || '',
                 description: board.description || '',

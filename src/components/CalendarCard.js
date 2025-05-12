@@ -3,7 +3,6 @@ import TaskListIcon from "../assets/icons/task_list.svg";
 import Girl from "../assets/icons/profile_picture.svg";
 
 function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
-    // Format dates for display
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -13,7 +12,6 @@ function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
         });
     };
 
-    // Calculate progress based on checklist items if available
     const calculateProgress = () => {
         if (task && task.checklist && task.checklist.length > 0) {
             const total = task.checklist.length;
@@ -22,15 +20,13 @@ function CalendarCard({ task, startDate, endDate, boardTitle, style }) {
         return '0';
     };
 
-    // Get tag color if available
     const getTagColor = () => {
         if (task && task.tag && task.tag.color) {
             return task.tag.color;
         }
-        return '#FFD700'; // Default color как на скриншоте
+        return '#FFD700';
     };
 
-    // Get tag name if available
     const getTagName = () => {
         if (task && task.tag && task.tag.name) {
             return task.tag.name;

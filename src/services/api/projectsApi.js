@@ -26,49 +26,39 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['ProjectRights'],
       async onQueryStarted(projectData, { dispatch, queryFulfilled }) {
-        // Создаем временный ID для оптимистичного обновления
         const tempId = `temp-${Date.now()}`;
         
-        // Оптимистично добавляем проект в кэш
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
-            // Создаем объект проекта с временным ID и данными формы
             const optimisticProject = {
               id: tempId,
               ...projectData,
-              // Добавляем пустой массив участников и владельца (текущего пользователя)
               participants: [],
               owner: {
-                username: 'me' // Будет заменено реальными данными после ответа сервера
+                username: 'me'
               },
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             };
             
-            // Добавляем в начало списка проектов
             draft.unshift(optimisticProject);
           })
         );
         
         try {
-          // Ждем ответа от сервера
           const { data: createdProject } = await queryFulfilled;
           
-          // Обновляем кэш с реальными данными проекта
           dispatch(
             baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
-              // Находим и удаляем временный проект
               const tempIndex = draft.findIndex(p => p.id === tempId);
               if (tempIndex !== -1) {
                 draft.splice(tempIndex, 1);
               }
               
-              // Добавляем реальный проект в начало списка
               draft.unshift(createdProject);
             })
           );
         } catch (error) {
-          // Если произошла ошибка, отменяем оптимистичное обновление
           patchResult.undo();
           console.error('Failed to create project:', error);
         }
@@ -104,33 +94,25 @@ export const projectsApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        // Оптимистично удаляем проект из кэша
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
-            // Находим индекс проекта по id
             const projectIndex = draft.findIndex(project => project.id === id);
             
-            // Если проект найден, удаляем его из массива
             if (projectIndex !== -1) {
-              // Сохраняем копию проекта для возможного восстановления
               const deletedProject = draft[projectIndex];
               console.log(`Оптимистично удаляем проект с ID ${id}:`, deletedProject);
               
-              // Удаляем проект из массива
               draft.splice(projectIndex, 1);
             }
           })
         );
         
         try {
-          // Ждем ответа от сервера
           await queryFulfilled;
           console.log(`Проект с ID ${id} успешно удален на сервере`);
           
-          // Также инвалидируем кэш прав, так как удаление проекта влияет на права пользователя
           dispatch(baseApi.util.invalidateTags(['ProjectRights']));
         } catch (error) {
-          // Если произошла ошибка, отменяем оптимистичное обновление
           patchResult.undo();
           console.error(`Ошибка при удалении проекта с ID ${id}:`, error);
         }

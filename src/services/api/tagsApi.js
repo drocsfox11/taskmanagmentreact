@@ -15,37 +15,30 @@ export const tagsApi = baseApi.injectEndpoints({
       query: (tagId) => ({url: `api/tags/${tagId}`}),
       providesTags: (result, error, id) => [{ type: 'Tags', id }],
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     createTag: builder.mutation({
       query: (tag) => ({
         url: 'api/tags',
         method: 'POST',
         body: { ...tag, socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     updateTag: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `api/tags/${id}`,
         method: 'PUT',
         body: { ...data, socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     deleteTag: builder.mutation({
       query: (id) => ({
         url: `api/tags/${id}`,
         method: 'DELETE',
         body: { socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
   }),
 });
 
-// Экспортируем только хуки для чтения, мутации теперь доступны из boardsApi
 export const {
   useGetTagsQuery,
   useGetTagQuery,

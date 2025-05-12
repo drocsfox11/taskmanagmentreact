@@ -17,23 +17,18 @@ function ProjectPermissionsTab({ project }) {
     const [grantRight] = useGrantProjectRightMutation();
     const [revokeRight] = useRevokeProjectRightMutation();
     
-    // Получаем данные о текущем пользователе
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    // Получаем все права выбранного пользователя
     const { data: allProjectRights = {}, isLoading, refetch } = useGetAllUserRightsQuery(
         selectedUserId,
         { skip: !selectedUserId }
     );
     
-    // При изменении выбранного пользователя или проекта
     useEffect(() => {
         if (selectedUserId && project?.id && allProjectRights) {
-            // Извлекаем права для текущего проекта
             const projectRights = allProjectRights[project.id] || [];
             setUserRights(projectRights);
             
-            // Проверяем наличие права ACCESS_ALL_BOARDS в списке
             setHasAccessToAllBoards(projectRights.includes(PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
         }
     }, [selectedUserId, project?.id, allProjectRights]);
@@ -45,7 +40,6 @@ function ProjectPermissionsTab({ project }) {
     const handleToggleRight = async (rightName, hasRight) => {
         if (!selectedUserId) return;
         
-        // Если выбран текущий пользователь, запрещаем изменение прав
         if (currentUser && currentUser.id === selectedUserId) {
             console.log("Нельзя изменять собственные права доступа");
             return;
@@ -59,7 +53,6 @@ function ProjectPermissionsTab({ project }) {
                     rightName,
                 }).unwrap();
                 
-                // Локально обновляем состояние вместо refetch
                 setUserRights(prev => prev.filter(right => right !== rightName));
             } else {
                 await grantRight({
@@ -68,11 +61,9 @@ function ProjectPermissionsTab({ project }) {
                     rightName,
                 }).unwrap();
                 
-                // Локально обновляем состояние вместо refetch
                 setUserRights(prev => [...prev, rightName]);
             }
             
-            // Убираем вызов refetch(), так как теперь используем оптимистичные обновления
         } catch (error) {
             console.error("Failed to update right:", error);
         }
@@ -81,7 +72,6 @@ function ProjectPermissionsTab({ project }) {
     const handleToggleAllBoardsAccess = async (hasAccess) => {
         if (!selectedUserId) return;
         
-        // Если выбран текущий пользователь, запрещаем изменение прав
         if (currentUser && currentUser.id === selectedUserId) {
             console.log("Нельзя изменять собственные права доступа");
             return;
@@ -95,7 +85,6 @@ function ProjectPermissionsTab({ project }) {
                     rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
                 
-                // Локально обновляем состояние вместо refetch
                 setHasAccessToAllBoards(false);
                 setUserRights(prev => prev.filter(right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
             } else {
@@ -105,26 +94,21 @@ function ProjectPermissionsTab({ project }) {
                     rightName: PROJECT_RIGHTS.ACCESS_ALL_BOARDS,
                 }).unwrap();
                 
-                // Локально обновляем состояние вместо refetch
                 setHasAccessToAllBoards(true);
                 setUserRights(prev => [...prev, PROJECT_RIGHTS.ACCESS_ALL_BOARDS]);
             }
             
-            // Убираем вызов refetch(), так как теперь используем оптимистичные обновления
         } catch (error) {
             console.error("Failed to update board access:", error);
         }
     };
 
-    // Фильтруем стандартные права проекта, исключая ACCESS_ALL_BOARDS
     const projectRightsToDisplay = Object.values(PROJECT_RIGHTS).filter(
         right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS
     );
     
-    // Проверяем, является ли выбранный пользователь текущим пользователем
     const isCurrentUser = currentUser && selectedUserId === currentUser.id;
     
-    // Проверяем, является ли пользователь владельцем проекта
     const isProjectOwner = selectedUserId === project?.owner?.id;
 
     return (

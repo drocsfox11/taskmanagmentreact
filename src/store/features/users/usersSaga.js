@@ -1,7 +1,6 @@
 import { call, put, takeEvery } from 'redux-saga/effects';
 import { fetchUserStart, fetchUserSuccess, fetchUserFailure } from './usersSlice';
 
-// Функция для получения данных пользователя по имени
 function* fetchUser(action) {
   const username = action.payload;
   

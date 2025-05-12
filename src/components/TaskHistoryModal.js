@@ -7,13 +7,11 @@ import { ru } from 'date-fns/locale';
 function TaskHistoryModal({ isOpen, onClose, historyData }) {
     if (!isOpen) return null;
     
-    // Функция для форматирования даты
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
     };
     
-    // Функция для получения стиля события в зависимости от типа
     const getEventTypeClass = (actionType) => {
         switch (actionType) {
             case 'CREATE':
@@ -29,7 +27,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
         }
     };
     
-    // Функция для получения иконки события
     const getEventIcon = (actionType) => {
         switch (actionType) {
             case 'CREATE':
@@ -45,7 +42,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
         }
     };
     
-    // Функция для форматирования типа события на русском
     const formatActionType = (actionType) => {
         switch (actionType) {
             case 'CREATE':
@@ -61,7 +57,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
         }
     };
     
-    // Функция для получения изменений между старой и новой версией задачи
     const getTaskChanges = (oldJson, newJson) => {
         if (!oldJson || !newJson) return null;
         
@@ -71,7 +66,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
             
             const changes = [];
             
-            // Проверяем изменения заголовка
             if (oldTask.title !== newTask.title) {
                 changes.push({
                     field: 'Заголовок',
@@ -80,7 +74,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
                 });
             }
             
-            // Проверяем изменения описания
             if (oldTask.description !== newTask.description) {
                 changes.push({
                     field: 'Описание',
@@ -89,7 +82,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
                 });
             }
             
-            // Проверяем изменения дат
             if (JSON.stringify(oldTask.startDate) !== JSON.stringify(newTask.startDate)) {
                 changes.push({
                     field: 'Дата начала',
@@ -106,7 +98,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
                 });
             }
             
-            // Проверяем изменения в участниках
             const oldParticipantsCount = oldTask.participants ? oldTask.participants.length : 0;
             const newParticipantsCount = newTask.participants ? newTask.participants.length : 0;
             
@@ -118,7 +109,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
                 });
             }
             
-            // Проверяем изменения в списке задач
             const oldChecklistCount = oldTask.checklist ? oldTask.checklist.length : 0;
             const newChecklistCount = newTask.checklist ? newTask.checklist.length : 0;
             
@@ -130,7 +120,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
                 });
             }
             
-            // Проверяем изменения в вложениях
             const oldAttachmentsCount = oldTask.attachments ? oldTask.attachments.length : 0;
             const newAttachmentsCount = newTask.attachments ? newTask.attachments.length : 0;
             
@@ -142,7 +131,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
                 });
             }
             
-            // Проверяем изменения тега
             if (JSON.stringify(oldTask.tag) !== JSON.stringify(newTask.tag)) {
                 changes.push({
                     field: 'Тег',
@@ -158,18 +146,15 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
         }
     };
     
-    // Форматирование массива даты в строку
     const formatDateArray = (dateArray) => {
         if (!dateArray || dateArray.length < 3) return 'Некорректная дата';
         
-        // Типичный формат [год, месяц, день, час, минута]
         const year = dateArray[0];
         const month = dateArray[1];
         const day = dateArray[2];
         
         let result = `${day}.${month}.${year}`;
         
-        // Если есть время, добавляем его
         if (dateArray.length >= 5) {
             const hour = dateArray[3].toString().padStart(2, '0');
             const minute = dateArray[4].toString().padStart(2, '0');
@@ -179,7 +164,6 @@ function TaskHistoryModal({ isOpen, onClose, historyData }) {
         return result;
     };
     
-    // Получение информации о задаче из снапшота
     const getTaskInfo = (taskSnapshot) => {
         if (!taskSnapshot) return { title: 'Нет данных' };
         

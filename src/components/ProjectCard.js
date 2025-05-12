@@ -18,19 +18,14 @@ function ProjectCard({ project, onClick }) {
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
     
-    // Получаем текущего пользователя
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    // Получаем права пользователя для проверки
     const { hasRight } = useProjectRights(project.id);
     
-    // Проверяем, есть ли у пользователя права на редактирование
     const canEditProject = hasRight(PROJECT_RIGHTS.EDIT_PROJECT);
     
-    // Проверяем, является ли пользователь владельцем проекта (только владелец может удалять проект)
     const isProjectOwner = currentUser && project.owner && currentUser.id === project.owner.id;
     
-    // Показывать троеточие только если есть хотя бы одно право
     const showOptionsIcon = canEditProject || isProjectOwner;
 
     const handleOptionsClick = (e) => {
@@ -55,19 +50,15 @@ function ProjectCard({ project, onClick }) {
     const handleDelete = async (e) => {
         e.stopPropagation();
         
-        // Оптимистично скрываем карточку
         setIsDeleted(true);
         setIsModalOpen(false);
         
         try {
-            // Отправляем запрос на удаление
             await deleteProject(project.id);
             console.log(`Проект ${project.id} успешно удален`);
         } catch (error) {
-            // В случае ошибки возвращаем карточку
             setIsDeleted(false);
             console.error('Error deleting project:', error);
-            // Показываем уведомление пользователю
             alert('Не удалось удалить проект. Пожалуйста, попробуйте снова.');
         }
     };
@@ -78,7 +69,6 @@ function ProjectCard({ project, onClick }) {
         setIsManagementModalOpen(true);
     };
 
-    // Не рендерим карточку, если проект был удален
     if (isDeleted || !project) return null;
     
     return (

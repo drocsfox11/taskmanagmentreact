@@ -15,78 +15,64 @@ import { useGetTasksByProjectQuery } from "../services/api/tasksApi";
 import { useState, useEffect } from 'react';
 
 function TaskDashboard() {
-    // States for calendar management
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
     const [projectsDropdownOpen, setProjectsDropdownOpen] = useState(false);
     
-    // Get URL params and navigation
     const { projectId } = useParams();
     const navigate = useNavigate();
     
-    // Fetch projects and tasks data using RTK Query
     const { data: projects = [], isLoading: isProjectsLoading } = useGetProjectsQuery();
     const { 
         data: projectTasks = [], 
         isLoading: isTasksLoading 
     } = useGetTasksByProjectQuery(projectId, { skip: !projectId });
     
-    // Current selected project
     const [selectedProject, setSelectedProject] = useState(null);
     
-    // Processed tasks for calendar
     const [calendarTasks, setCalendarTasks] = useState([]);
     
-    // Setup initial dates for two-week view
     useEffect(() => {
         const currentDate = new Date();
         const firstDayOfWeek = new Date(currentDate);
         const dayOfWeek = currentDate.getDay();
-        const diff = currentDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
+        const diff = currentDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
         firstDayOfWeek.setDate(diff);
         
         const lastDayOfNextWeek = new Date(firstDayOfWeek);
-        lastDayOfNextWeek.setDate(firstDayOfWeek.getDate() + 13); // 14 days (2 weeks) minus 1
+        lastDayOfNextWeek.setDate(firstDayOfWeek.getDate() + 13);
         
         setStartDate(firstDayOfWeek);
         setEndDate(lastDayOfNextWeek);
     }, []);
     
-    // Find selected project when projectId changes
     useEffect(() => {
         if (projectId && projects.length > 0) {
             const project = projects.find(p => p.id.toString() === projectId.toString());
             setSelectedProject(project || null);
         } else if (projects.length > 0 && !projectId) {
-            // Select first project by default if none is selected
             setSelectedProject(projects[0]);
-            // Only navigate if not already navigating (prevent infinite loop)
             if (!window.location.pathname.includes(`/system/calendar/${projects[0].id}`)) {
                 navigate(`/system/calendar/${projects[0].id}`);
             }
         }
     }, [projectId, projects]);
     
-    // Process project tasks when they're loaded
     useEffect(() => {
         if (projectTasks) {
             if (projectTasks.length > 0) {
-                // Process tasks if needed
                 const processedTasks = projectTasks.map(task => ({
                     ...task,
-                    // Add any necessary field transformations here
                 }));
                 
                 setCalendarTasks(processedTasks);
             } else if (calendarTasks.length !== 0) {
-                // Only set empty array if current state is not already empty
                 setCalendarTasks([]);
             }
         }
     }, [projectTasks]);
     
-    // Format date for display
     const formatDate = (date) => {
         return new Date(date).toLocaleDateString('ru-RU', {
             day: 'numeric',
@@ -94,14 +80,12 @@ function TaskDashboard() {
         });
     };
     
-    // Handle project selection
     const handleProjectSelect = (project) => {
         setSelectedProject(project);
         navigate(`/system/calendar/${project.id}`);
         setProjectsDropdownOpen(false);
     };
     
-    // Generate array of dates for the calendar grid
     const getDatesArray = () => {
         const dates = [];
         const currentDate = new Date(startDate);
@@ -114,23 +98,18 @@ function TaskDashboard() {
         return dates;
     };
     
-    // Map tasks to the calendar grid
     const mapTasksToCalendar = () => {
         const calendarDates = getDatesArray();
         const mappedTasks = [];
         
         calendarTasks.forEach(task => {
-            // Проверяем, что у задачи есть хотя бы одна дата (startDate или endDate)
             if (!task.startDate && !task.endDate) {
-                return; // Пропускаем задачи без дат
+                return;
             }
             
-            // Используем startDate если есть, иначе endDate для начальной даты
             const taskStartDate = task.startDate ? new Date(task.startDate) : new Date(task.endDate);
-            // Используем endDate если есть, иначе startDate для конечной даты
             const taskEndDate = task.endDate ? new Date(task.endDate) : new Date(task.startDate);
             
-            // Установить время на полночь для корректного сравнения только по дате
             const taskStartDay = new Date(taskStartDate);
             taskStartDay.setHours(0, 0, 0, 0);
             
@@ -140,44 +119,36 @@ function TaskDashboard() {
             const startDateDay = new Date(startDate);
             startDateDay.setHours(0, 0, 0, 0);
             
-            // Check if task overlaps with current calendar view
             if (taskEndDay >= startDateDay && taskStartDay <= endDate) {
-                // Получаем день месяца из дат
                 const taskStartDayOfMonth = taskStartDate.getDate();
                 const taskEndDayOfMonth = taskEndDate.getDate();
                 const startDateDayOfMonth = startDate.getDate();
                 
-                // Calculate grid positioning by comparing calendar days with task days
-                // Find matching day in calendar array for start column
-                let startCol = 1; // По умолчанию первая колонка
-                let endCol = 14; // По умолчанию последняя колонка
+                let startCol = 1;
+                let endCol = 14;
                 
-                // Находим индекс ячейки для начала задачи
                 for (let i = 0; i < calendarDates.length; i++) {
                     if (calendarDates[i].getDate() === taskStartDayOfMonth &&
                         calendarDates[i].getMonth() === taskStartDate.getMonth() &&
                         calendarDates[i].getFullYear() === taskStartDate.getFullYear()) {
-                        startCol = i + 1; // +1 потому что grid-column начинается с 1
+                        startCol = i + 1;
                         break;
                     }
                 }
                 
-                // Находим индекс ячейки для конца задачи
                 for (let i = 0; i < calendarDates.length; i++) {
                     if (calendarDates[i].getDate() === taskEndDayOfMonth &&
                         calendarDates[i].getMonth() === taskEndDate.getMonth() &&
                         calendarDates[i].getFullYear() === taskEndDate.getFullYear()) {
-                        endCol = i + 2; // +2 потому что grid-column-end не включает последнюю колонку
+                        endCol = i + 2;
                         break;
                     }
                 }
                 
-                // Если задача начинается раньше текущего диапазона
                 if (taskStartDay < startDateDay) {
                     startCol = 1;
                 }
                 
-                // Если задача заканчивается позже текущего диапазона
                 if (taskEndDay > endDate) {
                     endCol = calendarDates.length + 1;
                 }
@@ -193,7 +164,6 @@ function TaskDashboard() {
         return mappedTasks;
     };
     
-    // Handle navigation to previous/next week
     const navigatePreviousPeriod = () => {
         const newStartDate = new Date(startDate);
         newStartDate.setDate(newStartDate.getDate() - 14);
@@ -216,7 +186,6 @@ function TaskDashboard() {
         setEndDate(newEndDate);
     };
     
-    // Format month and year for the header
     const getMonthYearDisplay = () => {
         const startMonth = startDate.toLocaleString('ru-RU', { month: 'long' });
         const startYear = startDate.getFullYear();
@@ -232,11 +201,9 @@ function TaskDashboard() {
         }
     };
     
-    // Generate calendar header cells
     const renderCalendarHeader = () => {
         const datesArray = getDatesArray();
         return datesArray.map((date, index) => {
-            // Сначала день недели сокращенно, затем номер
             const dayName = date.toLocaleString('ru-RU', { weekday: 'short' }).toLowerCase();
             const dayNumber = date.getDate();
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
@@ -249,10 +216,8 @@ function TaskDashboard() {
         });
     };
     
-    // Loading state
     const isLoading = isProjectsLoading || isTasksLoading;
     
-    // Map tasks to calendar
     const mappedTasks = mapTasksToCalendar();
 
     return (

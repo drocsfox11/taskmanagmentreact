@@ -10,12 +10,10 @@ import Girl from "../assets/icons/profile_picture.svg";
 function TaskInfoModal({ isOpen, onClose, task }) {
     const usersByUsername = useSelector(state => state.users?.byUsername || {});
 
-    // Helper function to extract username from participant
     const extractUsername = (participant) => {
         if (typeof participant === 'string') {
             return participant;
         } else if (participant) {
-            // Check for name as well, as per task data structure
             return participant.username || participant.name || '';
         }
         return '';
@@ -35,13 +33,10 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                         onClick={onClose}
                     />
                 </div>
-                {/* Title */}
                 <div className="create-task-modal-label">Название</div>
                 <div className="create-task-modal-input" style={{ background: 'none', border: 'none', padding: 0 }}>{task.title}</div>
-                {/* Description */}
                 <div className="create-task-modal-label">Описание</div>
                 <div className="create-task-modal-textarea" style={{ background: 'none', border: 'none', padding: 0 }}>{task.description || '-'}</div>
-                {/* Checklist */}
                 <div className="create-task-modal-label">Чеклист</div>
                 <div className="create-task-modal-checklist-items">
                     {task.checklist && task.checklist.length > 0 ? task.checklist.map((item, index) => (
@@ -53,7 +48,6 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                         </div>
                     )) : <div style={{ color: '#969595', fontSize: 14 }}>Нет пунктов</div>}
                 </div>
-                {/* Timeline */}
                 <div className="create-task-modal-label">Таймлайн</div>
                 <div className="create-task-modal-timeline">
                     <div className="create-task-modal-timeline-row">
@@ -70,16 +64,13 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                         </div>
                     </div>
                 </div>
-                {/* Participants */}
                 <div className="create-task-modal-label">Участники</div>
                 {task.participants && task.participants.length > 0 ? (
                     <div className="create-task-modal-participants">
                         {task.participants.map((participant, index) => {
                             const username = extractUsername(participant);
                             const user = usersByUsername ? usersByUsername[username] : null;
-                            // Use participant.avatarURL from task data if user or user.avatarURL is not found in Redux
                             const avatar = user?.avatarURL || participant?.avatarURL || Girl;
-                            // Display participant.name from task data if user.displayName or user.name is not found
                             const displayName = user?.displayName || user?.name || (typeof participant === 'object' ? participant.name : username) || 'Unknown User';
                             return (
                                 <div key={index} className="create-task-modal-participant">

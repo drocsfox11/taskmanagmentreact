@@ -15,32 +15,26 @@ const withProjectRights = (
   Component,
   { requires, requireAll = false, fallback: FallbackComponent = null }
 ) => {
-  // Создаем и возвращаем новый компонент
   return function WrappedWithRights(props) {
     const { projectId, ...restProps } = props;
     
-    // Получаем права - важно всегда вызывать хук, даже если projectId не определён
     const { hasRight, hasAllRights, hasAnyRight, isLoading } = useProjectRights(projectId || 0);
     
-    // Если не передан projectId, показываем предупреждение и возвращаем исходный компонент
     if (!projectId) {
       console.warn('withProjectRights: projectId is required for rights checking');
       return <Component {...props} />;
     }
     
-    // Во время загрузки прав не отображаем компонент
     if (isLoading) return null;
     
-    // Проверяем наличие прав
-    const hasAccess = 
+    const hasAccess =
       typeof requires === 'string' 
         ? hasRight(requires) 
         : requireAll 
           ? hasAllRights(requires) 
           : hasAnyRight(requires);
     
-    // Возвращаем компонент или fallback в зависимости от прав
-    return hasAccess 
+    return hasAccess
       ? <Component {...props} />
       : FallbackComponent
         ? <FallbackComponent {...restProps} />

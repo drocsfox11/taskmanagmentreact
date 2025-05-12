@@ -5,14 +5,10 @@ import SockJS from 'sockjs-client';
 const apiPrefix = 'api/boards';
 const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost:8080';
 
-// Глобальная переменная для STOMP-соединений по boardId
 const stompConnections = {};
 
-// Функция для получения или создания STOMP-соединения
 const getStompConnection = (boardId) => {
   if (!stompConnections[boardId]) {
-    // Создаем SockJS соединение 
-    // SockJS должен подключаться к основному эндпоинту сокета, обычно это /ws
     const socket = new SockJS(`${WS_URL}/ws`, {
       method: 'GET',
       credentials: 'include',
@@ -28,15 +24,12 @@ const getStompConnection = (boardId) => {
       heartbeatOutgoing: 4000,
     });
 
-    // Состояние подписок
     const subscriptions = {};
     
-    // Обработчик при установке соединения
     client.onConnect = (frame) => {
       console.log(`STOMP connection established for board ${boardId}:`, frame);
       
-      // Подписываемся на события доски
-      // Правильный формат для подписки на события в Spring WebSocket
+
       subscriptions.boardEvents = client.subscribe(
         `/topic/boards/${boardId}`, 
         (message) => {
@@ -53,7 +46,6 @@ const getStompConnection = (boardId) => {
       );
     };
     
-    // Обработчики ошибок
     client.onStompError = (frame) => {
       console.error(`STOMP error for board ${boardId}:`, frame.headers['message'], frame.body);
     };
@@ -66,18 +58,14 @@ const getStompConnection = (boardId) => {
       console.log(`STOMP disconnected for board ${boardId}`);
     };
     
-    // Настраиваем логирование для лучшей отладки
     client.beforeConnect = () => {
       console.log(`Attempting to connect to STOMP server for board ${boardId}...`);
     };
     
-    // Активируем соединение
     client.activate();
     
-    // Метод для отправки действий
     const sendAction = (action, payload) => {
       if (client.connected) {
-        // Стандартное соглашение для отправки сообщений в Spring WebSocket через STOMP
         client.publish({
           destination: `/app/boards/${boardId}`,
           body: JSON.stringify({
@@ -93,33 +81,27 @@ const getStompConnection = (boardId) => {
       }
     };
     
-    // Создаем объект соединения с необходимыми методами
     stompConnections[boardId] = {
       client,
       subscriptions,
       sendAction,
       messageHandler: null,
       
-      // Метод для установки обработчика сообщений
       setMessageHandler: (handler) => {
         stompConnections[boardId].messageHandler = handler;
       },
       
-      // Метод для отключения (используется при удалении компонента)
       disconnect: () => {
-        // Отписываемся от всех подписок
         Object.values(subscriptions).forEach(subscription => {
           if (subscription && subscription.unsubscribe) {
             subscription.unsubscribe();
           }
         });
         
-        // Отключаем клиент
         if (client.connected) {
           client.deactivate();
         }
         
-        // Удаляем соединение из кеша
         delete stompConnections[boardId];
       }
     };
@@ -140,21 +122,16 @@ export const boardsApi = baseApi.injectEndpoints({
         { type: 'Board', id }
       ],
       
-      // STOMP-подписка для обновлений в режиме реального времени
       async onCacheEntryAdded(
         boardId,
         { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch, getState }
       ) {
-        // Ждём, пока данные загрузятся в кеш
         await cacheDataLoaded;
         
         try {
-          // Устанавливаем STOMP-соединение для конкретной доски
           const stompConn = getStompConnection(boardId);
           
-          // Устанавливаем обработчик сообщений
           stompConn.setMessageHandler((data) => {
-            // Получаем данные о текущем пользователе из store
             const state = getState();
             const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
             const currentUserId = currentUser?.id;
@@ -163,41 +140,33 @@ export const boardsApi = baseApi.injectEndpoints({
             console.log("WS event received:", data.type, "payload:", data.payload);
             console.log("Current user:", currentUserId, currentUsername);
             
-            // Проверяем, инициировано ли это событие текущим пользователем
-            // Проверяем как initiatedById (числовой ID), так и initiatedBy (имя пользователя/логин)
             if (data.payload && (
                 (data.payload.initiatedById && data.payload.initiatedById === currentUserId) || 
                 (data.payload.initiatedBy && data.payload.initiatedBy === currentUsername)
             )) {
               console.log(`Игнорируем собственное действие: ${data.type}`);
-              return; // Пропускаем обработку своих событий
+              return;
             }
             
-            // Обрабатываем события различных типов
             switch (data.type) {
-              // События обновления доски
               case 'BOARD_UPDATED':
                 updateCachedData((draft) => {
-                  // Обновляем основные данные доски
                   draft.id = data.payload.id || draft.id;
                   draft.title = data.payload.title || draft.title;
                   draft.description = data.payload.description || draft.description;
                   draft.projectId = data.payload.projectId || draft.projectId;
                   draft.emoji = data.payload.emoji || draft.emoji;
                   
-                  // Обновляем участников, если они предоставлены
                   if (data.payload.participants) {
                     draft.participants = data.payload.participants;
                   }
                   
-                  // Обновляем теги, если они предоставлены
                   if (data.payload.tags) {
                     draft.tags = data.payload.tags;
                   }
                 });
                 break;
               
-              // События тегов
               case 'TAG_CREATED':
                 updateCachedData((draft) => {
                   draft.tags.push(data.payload);
@@ -222,18 +191,15 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
               
-              // События колонок
               case 'COLUMN_CREATED':
                 console.log('Processing COLUMN_CREATED websocket event from another user');
                 updateCachedData((draft) => {
-                  // Check if column already exists to prevent duplicates
-                  const existingColumnIndex = draft.columns.findIndex(col => 
+                  const existingColumnIndex = draft.columns.findIndex(col =>
                     col.id === data.payload.columnId || 
                     col.columnId === data.payload.columnId
                   );
                   
                   if (existingColumnIndex === -1) {
-                    // Only add if column doesn't already exist
                     const newColumn = {
                       id: data.payload.columnId,
                       columnId: data.payload.columnId,
@@ -254,14 +220,12 @@ export const boardsApi = baseApi.injectEndpoints({
                 
               case 'COLUMN_UPDATED':
                 updateCachedData((draft) => {
-                  // Check both id and columnId properties but make sure they are an exact match
-                  const index = draft.columns.findIndex(col => 
+                  const index = draft.columns.findIndex(col =>
                     col.id === data.payload.id || 
                     (data.payload.columnId && col.id === data.payload.columnId)
                   );
                   
                   if (index !== -1) {
-                    // Обновляем только поля колонки, сохраняя задачи
                     const tasks = draft.columns[index].tasks || [];
                     draft.columns[index] = { 
                       ...draft.columns[index],
@@ -274,7 +238,6 @@ export const boardsApi = baseApi.injectEndpoints({
                     };
                   } else {
                     console.log('Column not found for update, adding new one:', data.payload);
-                    // If column doesn't exist, add it with empty tasks array
                     draft.columns.push({
                       ...data.payload,
                       tasks: []
@@ -286,8 +249,7 @@ export const boardsApi = baseApi.injectEndpoints({
               case 'COLUMN_DELETED':
                 console.log('WebSocket COLUMN_DELETED event received:', data.payload);
                 updateCachedData((draft) => {
-                  // Fix: Check both id and columnId properties since the payload might use either one
-                  const index = draft.columns.findIndex(col => 
+                  const index = draft.columns.findIndex(col =>
                     col.id === data.payload.columnId || col.id === data.payload.id
                   );
                   
@@ -302,17 +264,13 @@ export const boardsApi = baseApi.injectEndpoints({
                 
               case 'COLUMNS_REORDERED':
                 updateCachedData((draft) => {
-                  // Получаем текущие колонки и их задачи
                   const currentColumns = [...draft.columns];
                   
-                  // Создаем новый порядок колонок
                   const newColumns = [];
                   
-                  // Для каждого id в новом порядке находим соответствующую колонку
                   data.payload.columns.forEach(({ id, position }) => {
                     const column = currentColumns.find(col => col.id === id);
                     if (column) {
-                      // Обновляем позицию и добавляем в новый массив
                       newColumns.push({
                         ...column,
                         position
@@ -324,24 +282,19 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
               
-              // События задач
               case 'TASK_CREATED':
                 console.log('Processing TASK_CREATED websocket event:', data.payload);
                 updateCachedData((draft) => {
-                  // Normalize task ID
                   const taskData = {
                     ...data.payload,
                     id: data.payload.id || data.payload.taskId,
                   };
                   
-                  // Находим колонку, к которой относится задача
                   const columnIndex = draft.columns.findIndex(col => col.id === taskData.columnId);
                   if (columnIndex !== -1) {
                     console.log(`Adding task ${taskData.id} to column ${taskData.columnId}`);
-                    // Проверяем, не существует ли уже такая задача
                     const taskExists = draft.columns[columnIndex].tasks.some(task => task.id === taskData.id);
                     if (!taskExists) {
-                      // Добавляем задачу в массив задач колонки
                       draft.columns[columnIndex].tasks.push(taskData);
                     } else {
                       console.log(`Task ${taskData.id} already exists in column ${taskData.columnId}, not adding duplicate`);
@@ -351,7 +304,6 @@ export const boardsApi = baseApi.injectEndpoints({
                   }
                 });
                 
-                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
                 dispatch(baseApi.util.invalidateTags([
                   { type: 'Tasks', id: `board-history-${boardId}` }
                 ]));
@@ -360,21 +312,17 @@ export const boardsApi = baseApi.injectEndpoints({
               case 'TASK_UPDATED':
                 console.log('Processing TASK_UPDATED websocket event:', data.payload);
                 updateCachedData((draft) => {
-                  // Normalize task ID
                   const taskData = {
                     ...data.payload,
                     id: data.payload.id || data.payload.taskId,
                   };
                   
-                  // Находим колонку, содержащую задачу
                   const columnIndex = draft.columns.findIndex(col => col.id === taskData.columnId);
                   if (columnIndex !== -1) {
-                    // Находим индекс задачи в колонке
                     const taskIndex = draft.columns[columnIndex].tasks.findIndex(task => task.id === taskData.id);
                     if (taskIndex !== -1) {
                       console.log(`Updating task ${taskData.id} in column ${taskData.columnId}`);
-                      // Обновляем задачу
-                      draft.columns[columnIndex].tasks[taskIndex] = { 
+                      draft.columns[columnIndex].tasks[taskIndex] = {
                         ...draft.columns[columnIndex].tasks[taskIndex],
                         ...taskData 
                       };
@@ -386,7 +334,6 @@ export const boardsApi = baseApi.injectEndpoints({
                   }
                 });
                 
-                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
                 dispatch(baseApi.util.invalidateTags([
                   { type: 'Tasks', id: `board-history-${boardId}` }
                 ]));
@@ -395,18 +342,14 @@ export const boardsApi = baseApi.injectEndpoints({
               case 'TASK_DELETED':
                 console.log('Processing TASK_DELETED websocket event:', data.payload);
                 updateCachedData((draft) => {
-                  // Проходим по всем колонкам
                   draft.columns.forEach(column => {
-                    // Находим индекс задачи, проверяем как id, так и taskId
                     const taskId = data.payload.id || data.payload.taskId;
                     const taskIndex = column.tasks.findIndex(task => task.id === taskId);
                     
                     if (taskIndex !== -1) {
                       console.log(`Found task to delete at index ${taskIndex} in column ${column.id}`);
-                      // Удаляем задачу
                       column.tasks.splice(taskIndex, 1);
                       
-                      // Update the position of remaining tasks
                       column.tasks.forEach((task, index) => {
                         task.position = index;
                       });
@@ -416,7 +359,6 @@ export const boardsApi = baseApi.injectEndpoints({
                   });
                 });
                 
-                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
                 dispatch(baseApi.util.invalidateTags([
                   { type: 'Tasks', id: `board-history-${boardId}` }
                 ]));
@@ -425,71 +367,56 @@ export const boardsApi = baseApi.injectEndpoints({
               case 'TASK_MOVED':
                 console.log('Processing TASK_MOVED websocket event:', data.payload);
                 updateCachedData((draft) => {
-                  // Normalize task ID
                   const taskId = data.payload.taskId || data.payload.id;
                   const { sourceColumnId, targetColumnId, newPosition } = data.payload;
                   
                   console.log(`Moving task ${taskId} from column ${sourceColumnId} to column ${targetColumnId} at position ${newPosition}`);
                   
-                  // Находим исходную колонку
                   const sourceColIndex = draft.columns.findIndex(col => col.id === sourceColumnId);
                   if (sourceColIndex === -1) {
                     console.log(`Source column ${sourceColumnId} not found`);
                     return;
                   }
                   
-                  // Находим задачу в исходной колонке
                   const taskIndex = draft.columns[sourceColIndex].tasks.findIndex(task => task.id === taskId);
                   if (taskIndex === -1) {
                     console.log(`Task ${taskId} not found in source column ${sourceColumnId}`);
                     return;
                   }
                   
-                  // Копируем задачу перед удалением
                   const task = { ...draft.columns[sourceColIndex].tasks[taskIndex] };
                   
-                  // Удаляем задачу из исходной колонки
                   draft.columns[sourceColIndex].tasks.splice(taskIndex, 1);
                   console.log(`Removed task from source column ${sourceColumnId}`);
                   
-                  // Если перемещение в другую колонку
                   if (sourceColumnId !== targetColumnId) {
-                    // Находим целевую колонку
                     const destColIndex = draft.columns.findIndex(col => col.id === targetColumnId);
                     if (destColIndex === -1) {
                       console.log(`Target column ${targetColumnId} not found`);
                       return;
                     }
                     
-                    // Обновляем columnId задачи
                     task.columnId = targetColumnId;
                     
-                    // Вставляем задачу в новую позицию в целевой колонке
                     draft.columns[destColIndex].tasks.splice(newPosition, 0, task);
                     console.log(`Added task to target column ${targetColumnId} at position ${newPosition}`);
                   } else {
-                    // Вставляем задачу в новую позицию в той же колонке
                     draft.columns[sourceColIndex].tasks.splice(newPosition, 0, task);
                     console.log(`Moved task within same column ${sourceColumnId} to position ${newPosition}`);
                   }
                   
-                  // Обновляем позиции всех задач в затронутых колонках
                   if (sourceColumnId !== targetColumnId) {
-                    // Обновляем позиции в исходной колонке
                     draft.columns[sourceColIndex].tasks.forEach((task, index) => {
                       task.position = index;
                     });
                     
-                    // Находим индекс целевой колонки
                     const destColIndex = draft.columns.findIndex(col => col.id === targetColumnId);
                     if (destColIndex !== -1) {
-                      // Обновляем позиции в целевой колонке
                       draft.columns[destColIndex].tasks.forEach((task, index) => {
                         task.position = index;
                       });
                     }
                   } else {
-                    // Обновляем позиции только в одной колонке
                     draft.columns[sourceColIndex].tasks.forEach((task, index) => {
                       task.position = index;
                     });
@@ -498,7 +425,6 @@ export const boardsApi = baseApi.injectEndpoints({
                   console.log(`Task ${taskId} successfully moved via WebSocket`);
                 });
                 
-                // Инвалидируем кэш истории задач для доски, чтобы обновить историю событий
                 dispatch(baseApi.util.invalidateTags([
                   { type: 'Tasks', id: `board-history-${boardId}` }
                 ]));
@@ -510,7 +436,6 @@ export const boardsApi = baseApi.injectEndpoints({
             }
           });
           
-          // Закрываем соединение, когда компонент размонтирован
           await cacheEntryRemoved;
           
           if (stompConnections[boardId]) {
@@ -535,28 +460,22 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body: { ...data, socketEvent: true },
       }),
-      // Удаляем invalidatesTags, чтобы избежать рефетчей
-      // Вместо этого полностью полагаемся на оптимистичное обновление
       async onQueryStarted({ id, ...updates }, { dispatch, queryFulfilled }) {
         console.log('Starting board update with data:', updates);
         
-        // Оптимистично обновляем данные доски
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', id, (draft) => {
-            // Обновляем основные поля доски
             Object.assign(draft, {
               ...draft,
               ...updates,
             });
             
-            // Обрабатываем обновление тегов отдельно, если они есть
             if (updates.tags) {
               draft.tags = updates.tags;
             }
           })
         );
         
-        // Обновляем данные доски в списке досок проекта
         if (updates.projectId) {
           try {
             dispatch(
@@ -582,34 +501,27 @@ export const boardsApi = baseApi.injectEndpoints({
           console.log('Board update response:', result);
           
           if (result && result.data) {
-            // Обновляем кэш с данными с сервера, но без инвалидации и рефетча
             dispatch(
               baseApi.util.updateQueryData('getBoardWithData', id, (draft) => {
-                // Сохраняем колонки и задачи, так как они отдельно обрабатываются
-                const columns = draft.columns ? [...draft.columns] : []; 
+                const columns = draft.columns ? [...draft.columns] : [];
                 
-                // Обновляем данные доски, полученные с сервера
                 Object.assign(draft, result.data);
                 
-                // Восстанавливаем колонки и задачи, так как их нет в ответе updateBoard
                 draft.columns = columns;
               })
             );
             
-            // Если в ответе есть projectId, обновляем доску и в списке досок проекта
             if (result.data.projectId) {
               dispatch(
                 baseApi.util.updateQueryData('getBoards', result.data.projectId, (draft) => {
                   if (Array.isArray(draft)) {
                     const boardIndex = draft.findIndex(board => board.id === id);
                     if (boardIndex !== -1) {
-                      // Обновляем данные доски в списке
                       draft[boardIndex] = {
                         ...draft[boardIndex],
                         ...result.data
                       };
                     } else if (result.data) {
-                      // Если доска не найдена в списке, добавляем её
                       draft.push(result.data);
                     }
                   }
@@ -629,24 +541,20 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'DELETE',
         body: { socketEvent: true },
       }),
-      // Удаляем invalidatesTags, чтобы избежать рефетчей
       async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
         try {
-          // Получаем текущее состояние доски перед удалением
           const state = getState();
           const boardData = state.api.queries[`getBoardWithData(${id})`]?.data;
           const projectId = boardData?.projectId;
           
           console.log(`Optimistically deleting board ${id} from project ${projectId}`);
           
-          // Оптимистично удаляем доску из списка досок проекта, если projectId известен
           if (projectId) {
             const boardsInProjectPatchResult = dispatch(
               baseApi.util.updateQueryData('getBoards', projectId, (draft) => {
                 if (Array.isArray(draft)) {
                   const boardIndex = draft.findIndex(board => board.id === id);
                   if (boardIndex !== -1) {
-                    // Удаляем доску из списка
                     draft.splice(boardIndex, 1);
                     console.log(`Removed board ${id} from project ${projectId} boards list`);
                   }
@@ -654,17 +562,14 @@ export const boardsApi = baseApi.injectEndpoints({
               })
             );
             
-            // Ждём результат запроса
             try {
               await queryFulfilled;
               console.log(`Delete board ${id} request successful`);
             } catch (error) {
-              // При ошибке отменяем оптимистичное обновление
               boardsInProjectPatchResult.undo();
               console.error(`Error deleting board ${id}:`, error);
             }
           } else {
-            // Если projectId неизвестен, просто ждём результат запроса
             await queryFulfilled;
             console.log(`Delete board ${id} request successful without projectId`);
           }
@@ -684,8 +589,7 @@ export const boardsApi = baseApi.injectEndpoints({
         
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            // Check if a column with similar properties already exists to prevent duplicates
-            const existingColumn = draft.columns.find(col => 
+            const existingColumn = draft.columns.find(col =>
               (col.title === column.title && col.position === column.position) ||
               col.tempId === tempId
             );
@@ -694,7 +598,7 @@ export const boardsApi = baseApi.injectEndpoints({
               draft.columns.push({
                 ...column,
                 id: tempId,
-                tempId: tempId, // Add a tempId to track this column
+                tempId: tempId,
                 tasks: []
               });
             } else {
@@ -708,25 +612,21 @@ export const boardsApi = baseApi.injectEndpoints({
           
           dispatch(
             baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-              // Find and remove any temporary columns with the same tempId
               const tempColumnIndex = draft.columns.findIndex(col => col.tempId === tempId);
               if (tempColumnIndex !== -1) {
                 draft.columns.splice(tempColumnIndex, 1);
               }
               
-              // Check if column with the same ID already exists
-              const existingColumnIndex = draft.columns.findIndex(col => 
+              const existingColumnIndex = draft.columns.findIndex(col =>
                 col.id === createdColumn.id || col.columnId === createdColumn.id
               );
               
               if (existingColumnIndex === -1) {
-                // Only add if it doesn't already exist
                 draft.columns.push({
                   ...createdColumn,
                   tasks: []
                 });
               } else {
-                // Update existing column with server data
                 draft.columns[existingColumnIndex] = {
                   ...draft.columns[existingColumnIndex],
                   ...createdColumn,
@@ -753,7 +653,6 @@ export const boardsApi = baseApi.injectEndpoints({
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
             const columnIndex = draft.columns.findIndex(col => col.id === columnId);
             if (columnIndex !== -1) {
-              // Create a new object instead of using Object.assign to prevent reference issues
               draft.columns[columnIndex] = {
                 ...draft.columns[columnIndex],
                 ...updates
@@ -782,7 +681,6 @@ export const boardsApi = baseApi.injectEndpoints({
         console.log('Starting optimistic update for column deletion:', { boardId, columnId });
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardWithData', boardId, (draft) => {
-            // Fix: Check both id and columnId properties
             const columnIndex = draft.columns.findIndex(col => col.id === columnId || col.columnId === columnId);
             if (columnIndex !== -1) {
               console.log('Optimistically removing column at index:', columnIndex);
@@ -799,9 +697,7 @@ export const boardsApi = baseApi.injectEndpoints({
         } catch (error) {
           console.error('Delete column request failed. Raw error object: ', error);
           console.error('Delete column request failed. Stringified error object: ', JSON.stringify(error));
-          // Don't undo the optimistic update if we got a 500 response with a JSON parsing error
-          // This is likely because the server successfully deleted the column but returned an empty/non-JSON response
-          if (!(error.error && error.error.status === 500 && 
+          if (!(error.error && error.error.status === 500 &&
                 typeof error.error.data === 'string' &&
                 error.error.data.startsWith("Failed to execute 'json' on 'Response': Unexpected end of JSON input"))) {
             patchResult.undo();
@@ -820,7 +716,6 @@ export const boardsApi = baseApi.injectEndpoints({
         body: { columns },
       }),
       async onQueryStarted({ boardId, columns }, { dispatch, queryFulfilled, getState }) {
-        // Получаем текущее состояние доски
         const state = getState();
         const boardData = state.api.queries[`getBoardWithData(${boardId})`]?.data;
         
@@ -953,13 +848,10 @@ export const boardsApi = baseApi.injectEndpoints({
         body: { userId, rightName },
       }),
       async onQueryStarted({ boardId, userId, rightName }, { dispatch, queryFulfilled }) {
-        // Получаем ключ для запроса прав конкретного пользователя на доске
         const queryKey = { boardId, userId };
         
-        // Оптимистично обновляем права пользователя локально
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardUserRights', queryKey, (draft) => {
-            // Убедимся, что draft - это массив и что право еще не добавлено
             if (Array.isArray(draft) && !draft.includes(rightName)) {
               draft.push(rightName);
             }
@@ -967,10 +859,8 @@ export const boardsApi = baseApi.injectEndpoints({
         );
         
         try {
-          // Ждем завершения запроса
           await queryFulfilled;
         } catch (error) {
-          // В случае ошибки отменяем оптимистичное обновление
           patchResult.undo();
           console.error('Failed to grant board right:', error);
         }
@@ -982,20 +872,14 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: { userId, rightName },
       }),
-      // Используем optimistic updates вместо invalidatesTags
       async onQueryStarted({ boardId, userId, rightName }, { dispatch, queryFulfilled }) {
-        // Получаем ключ для запроса прав конкретного пользователя на доске
         const queryKey = { boardId, userId };
         
-        // Оптимистично обновляем права пользователя локально
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoardUserRights', queryKey, (draft) => {
-            // Убедимся, что draft - это массив
             if (Array.isArray(draft)) {
-              // Находим индекс права, которое нужно удалить
               const index = draft.indexOf(rightName);
               if (index !== -1) {
-                // Удаляем право из массива
                 draft.splice(index, 1);
               }
             }
@@ -1003,10 +887,8 @@ export const boardsApi = baseApi.injectEndpoints({
         );
         
         try {
-          // Ждем завершения запроса
           await queryFulfilled;
         } catch (error) {
-          // В случае ошибки отменяем оптимистичное обновление
           patchResult.undo();
           console.error('Failed to revoke board right:', error);
         }

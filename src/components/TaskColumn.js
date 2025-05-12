@@ -19,15 +19,12 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     const tasks = column?.tasks || [];
     const taskCount = tasks.length;
     
-    // Получаем права пользователя для текущей доски
     const { hasRight, hasAnyRight } = useBoardRights(column.boardId);
     
-    // Проверяем права на редактирование и удаление
     const canEdit = hasRight(BOARD_RIGHTS.EDIT_SECTIONS);
     const canDelete = hasRight(BOARD_RIGHTS.DELETE_SECTIONS);
     const canMoveTasks = hasRight(BOARD_RIGHTS.MOVE_TASKS);
     
-    // Проверяем, есть ли хотя бы одно из прав для отображения троеточия
     const showOptionsButton = hasAnyRight([BOARD_RIGHTS.EDIT_SECTIONS, BOARD_RIGHTS.DELETE_SECTIONS]);
     
     useEffect(() => {
@@ -83,7 +80,6 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
 
     const handleUpdateColumn = () => {
         if (editColumnName.trim()) {
-            // Construct update payload with only necessary fields
             const updatePayload = {
                 columnId,
                 boardId: column.boardId,
@@ -91,8 +87,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                 name: editColumnName.trim()
             };
             
-            // Store current state for comparison
-            console.log('Updating column:', { 
+            console.log('Updating column:', {
                 oldTitle: columnTitle, 
                 newTitle: editColumnName,
                 columnId

@@ -23,7 +23,6 @@ function LeftMenu() {
     };
 
     useEffect(() => {
-        // Определяем активную иконку по текущему маршруту
         if (location.pathname.startsWith('/system/calendar')) {
             setActiveIcon('calendar');
         } else if (location.pathname.startsWith('/system/messenger')) {

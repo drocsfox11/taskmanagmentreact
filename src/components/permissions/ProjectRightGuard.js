@@ -22,18 +22,15 @@ const ProjectRightGuard = ({
 }) => {
   const { hasRight, hasAllRights, hasAnyRight, isLoading } = useProjectRights(projectId);
 
-  // Во время загрузки прав не отображаем ничего
   if (isLoading) return null;
 
-  // Проверяем наличие прав
-  const hasAccess = 
+  const hasAccess =
     typeof requires === 'string' 
       ? hasRight(requires) 
       : requireAll 
         ? hasAllRights(requires) 
         : hasAnyRight(requires);
 
-  // Отображаем содержимое только если есть доступ
   return hasAccess ? children : fallback;
 };
 

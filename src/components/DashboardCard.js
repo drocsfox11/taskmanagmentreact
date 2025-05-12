@@ -18,42 +18,32 @@ function DashboardCard({ board, onClick }) {
     const navigate = useNavigate();
     const [deleteBoard] = useDeleteBoardMutation();
     
-    // Для отображения нужны эти данные из объекта board
     const boardId = board?.id;
     const projectId = board?.projectId;
     const title = board?.title;
     const description = board?.description;
     
-    // Получаем текущего пользователя
     const { data: currentUser } = useGetCurrentUserQuery();
     const userId = currentUser?.id;
     
-    // Получаем все права пользователя на всех проектах
     const { data: allProjectRights = {}, isLoading: isRightsLoading } = useGetAllUserRightsQuery(
         userId,
         { skip: !userId }
     );
     
-    // Проверяем доступность прав на основе projectId
     const checkRights = (rightName) => {
-        // Если есть projectId и права загружены в allProjectRights
         if (projectId && allProjectRights && !isRightsLoading) {
-            // Получаем права для этого проекта
             const projectRights = allProjectRights[projectId];
-            // Проверяем наличие права
             return projectRights && Array.isArray(projectRights) && projectRights.includes(rightName);
         }
         return false;
     };
     
-    // Проверяем права редактирования и удаления доски
     const canEditBoard = checkRights(PROJECT_RIGHTS.EDIT_BOARDS);
     const canDeleteBoard = checkRights(PROJECT_RIGHTS.DELETE_BOARDS);
     
-    // Показывать троеточие если есть хотя бы одно право
     const showOptionsIcon = canEditBoard || canDeleteBoard;
     
-    // Отладочный вывод для проверки прав
     useEffect(() => {
         console.log(`DashboardCard for board ${boardId}:`);
         console.log(`projectId: ${projectId}`);
@@ -76,14 +66,12 @@ function DashboardCard({ board, onClick }) {
     };
 
     const handleCardClick = (e) => {
-        // Если клик был внутри модалки, то не выполняем навигацию
-        if (isManagementModalOpen || 
+        if (isManagementModalOpen ||
             e.target.closest('.project-management-modal-overlay') || 
             e.target.closest('.project-card-modal-container')) {
             return;
         }
         
-        // Переходим на страницу доски
         if (boardId && projectId) {
             navigate(`/system/project/${projectId}/board/${boardId}/tasks`);
         } else if (onClick) {
@@ -114,7 +102,6 @@ function DashboardCard({ board, onClick }) {
         };
     }, []);
 
-    // Если board не определен, не отображаем карточку
     if (!board) return null;
 
     return (

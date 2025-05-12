@@ -24,29 +24,23 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
     const usersByUsername = useSelector(state => state.users?.byUsername || {});
     const { data: boardTags = [] } = useGetTagsQuery(boardId);
     
-    // Инициализируем хуки для работы с вложениями
     const [uploadAttachment] = useUploadTaskAttachmentMutation();
     const [uploadAttachments] = useUploadTaskAttachmentsMutation();
     const [deleteAttachment] = useDeleteAttachmentMutation();
     const [deleteAllAttachments] = useDeleteAllTaskAttachmentsMutation();
     
-    // Отслеживаем добавленные и удаленные вложения
     const [filesToUpload, setFilesToUpload] = useState([]);
     const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
     
-    // Локальная копия вложений для отображения в UI
     const [localAttachments, setLocalAttachments] = useState([]);
     
-    // Сохраняем ID существующих вложений
     const [oldAttachmentIds, setOldAttachmentIds] = useState([]);
     
-    // Get board participants from store
-    const boardData = useSelector(state => 
+    const boardData = useSelector(state =>
         state.boards?.entities?.find(board => board.id === boardId) || 
         state.api?.queries?.[`getBoardWithData(${boardId})`]?.data
     );
     
-    // Создаем маппинг имен пользователей на их ID
     const participantIdsByName = React.useMemo(() => {
         const mapping = {};
         if (boardData && boardData.participants) {
@@ -59,7 +53,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         return mapping;
     }, [boardData]);
     
-    // Normalize board participants to ensure they are in a consistent format
     const normalizedBoardParticipants = React.useMemo(() => {
         const participants = boardData?.participants || [];
         return participants.map(participant => {
@@ -68,14 +61,12 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
             } else if (participant && participant.username) {
                 return participant.username;
             } else if (participant && participant.name) {
-                // Добавляем поддержку формата с полем name вместо username
                 return participant.name;
             }
             return null;
-        }).filter(Boolean); // Remove any null values
+        }).filter(Boolean);
     }, [boardData]);
     
-    // Отладочный вывод для диагностики
     useEffect(() => {
         if (isOpen && boardData) {
             console.log('Board participants:', boardData.participants);
@@ -85,7 +76,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     }, [isOpen, boardData, normalizedBoardParticipants, task.participants, participantIdsByName]);
     
-    // Инициализируем форму данными существующей задачи
     const [form, setForm] = useState({
         title: task.title || '',
         description: task.description || '',
@@ -95,20 +85,15 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         files: task.files || []
     });
     
-    // Инициализируем значения формы из переданной задачи при открытии модального окна
     useEffect(() => {
         if (task && isOpen) {
             console.log('Initializing form with task data:', task);
             
-            // Убедимся, что участники представлены как массив ID
             let participants = [];
             if (Array.isArray(task.participants)) {
                 participants = task.participants.map(p => {
-                    // Если участник уже представлен как ID, используем его
                     if (typeof p === 'number') return p;
-                    // Если участник - объект с ID, извлекаем ID
                     if (typeof p === 'object' && p !== null) return p.id || p;
-                    // Иначе используем как есть
                     return p;
                 });
             }
@@ -122,11 +107,9 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                 files: Array.isArray(task.files) ? [...task.files] : []
             });
             
-            // Сбрасываем состояние вложений при открытии модального окна
             setFilesToUpload([]);
             setAttachmentsToDelete([]);
             
-            // Устанавливаем даты и время
             if (task.startDate) {
                 const startDateTime = new Date(task.startDate);
                 setStartDate(startDateTime.toISOString().split('T')[0]);
@@ -145,7 +128,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                 setEndTime('');
             }
             
-            // Инициализируем массив существующих вложений
             if (task.attachments) {
                 setOldAttachmentIds(task.attachments.map(a => a.id));
                 setLocalAttachments(Array.isArray(task.attachments) ? [...task.attachments] : []);
@@ -168,7 +150,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
     const fileInputRef = useRef(null);
     const prevBoardTagsRef = useRef([]);
 
-    // Cохраняем id существующих вложений при открытии модального окна
     useEffect(() => {
         if (task && isOpen && task.attachments) {
             setOldAttachmentIds(task.attachments.map(a => a.id));
@@ -176,7 +157,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     }, [task, isOpen]);
 
-    // Handle clicking outside modal to close
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -195,7 +175,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         };
     }, [isOpen, onClose]);
 
-    // Загружаем данные пользователей через Redux
     useEffect(() => {
         form.participants.forEach(username => {
             if (username && (!usersByUsername || !usersByUsername[username])) {
@@ -208,7 +187,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         if (isOpen && boardId) {
             console.log('Fetching board data for boardId:', boardId);
             
-            // Force fetch board data to get updated participants list
             dispatch({
                 type: 'api/executeQuery',
                 payload: {
@@ -219,9 +197,7 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     }, [isOpen, boardId, dispatch]);
 
-    // Update availableTags only when boardTags changes
     useEffect(() => {
-        // Don't update if boardTags is the same as what we already set
         const prevTagsJSON = JSON.stringify(prevBoardTagsRef.current);
         const currentTagsJSON = JSON.stringify(boardTags);
         
@@ -231,7 +207,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     }, [boardTags]);
 
-    // Handle form field changes
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         setForm(prev => ({
@@ -240,7 +215,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }));
     };
 
-    // Handle adding checklist item
     const handleAddChecklistItem = () => {
         if (checklistItem.trim()) {
             setForm(prev => ({
@@ -254,7 +228,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     };
 
-    // Handle removing checklist item
     const handleRemoveChecklistItem = (index) => {
         setForm(prev => ({
             ...prev,
@@ -262,11 +235,9 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }));
     };
 
-    // Add participant from dropdown
     const handleAddParticipant = () => {
         if (!selectedParticipant || !selectedParticipant.trim()) return;
         
-        // Ищем участника по имени в списке участников доски
         const participant = boardData?.participants?.find(p => p.name === selectedParticipant);
         
         if (!participant || !participant.id) {
@@ -276,7 +247,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         
         const participantId = participant.id;
         
-        // Проверяем, не добавлен ли уже этот участник
         if (form.participants.includes(participantId)) {
             console.log('Участник уже добавлен:', selectedParticipant);
             setSelectedParticipant('');
@@ -285,7 +255,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         
         console.log('Adding participant:', selectedParticipant, 'with ID:', participantId);
         
-        // Используем функциональную форму setState для гарантированного доступа к актуальному состоянию
         setForm(prevForm => {
             const updatedParticipants = [...prevForm.participants, participantId];
             
@@ -297,13 +266,10 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
             };
         });
         
-        // Сбрасываем выбранного участника
         setSelectedParticipant('');
     };
 
-    // Handle removing participant
     const handleRemoveParticipant = (index) => {
-        // Используем функциональную форму setState чтобы избежать устаревших данных
         setForm(prevForm => {
             const newParticipants = [...prevForm.participants];
             newParticipants.splice(index, 1);
@@ -314,25 +280,21 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         });
     };
 
-    // Handle file upload
     const handleFileUpload = (e) => {
         const newFiles = Array.from(e.target.files);
         setFilesToUpload(prev => [...prev, ...newFiles]);
         
-        // Обновляем форму с новыми файлами
         setForm(prev => ({
             ...prev,
             files: [...prev.files, ...newFiles]
         }));
     };
 
-    // Handle removing new file
     const handleRemoveFile = (index) => {
         setForm(prev => {
             const updatedFiles = [...prev.files];
             const removedFile = updatedFiles.splice(index, 1)[0];
             
-            // Если файл был в списке для загрузки, удаляем его оттуда
             if (removedFile instanceof File) {
                 setFilesToUpload(prevFiles => 
                     prevFiles.filter(file => file !== removedFile)
@@ -346,44 +308,32 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         });
     };
     
-    // Handle removing existing attachment
     const handleRemoveAttachment = (attachmentId) => {
-        // Добавляем ID вложения в список на удаление
         setAttachmentsToDelete(prev => [...prev, attachmentId]);
         
-        // Обновляем список существующих вложений
         setOldAttachmentIds(prev => prev.filter(id => id !== attachmentId));
         
-        // Обновляем локальную копию списка вложений для UI
         setLocalAttachments(prev => prev.filter(attachment => attachment.id !== attachmentId));
     };
 
-    // Handle removing all attachments
     const handleRemoveAllAttachments = () => {
         if (!localAttachments || localAttachments.length === 0) return;
         
-        // Запрашиваем подтверждение
         if (!window.confirm('Вы уверены, что хотите удалить все вложения?')) return;
         
-        // Помечаем задачу для массового удаления вложений
         setAttachmentsToDelete(["DELETE_ALL"]);
         
-        // Очищаем список существующих вложений
         setOldAttachmentIds([]);
         
-        // Очищаем локальную копию вложений
         setLocalAttachments([]);
     };
 
-    // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         
         try {
-            // Prepare task data
             let taskData = { ...form };
             
-            // Combine date and time for start and end dates
             if (startDate) {
                 const time = startTime ? startTime : '00:00:00';
                 const normTime = time.length === 5 ? time + ':00' : time;
@@ -402,38 +352,29 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                 taskData.endDate = null;
             }
             
-            // Сначала создаем полный объект с данными задачи для отправки
             const updatedTaskData = {
                 ...taskData, 
                 id: task.id,
                 boardId: task.boardId,
                 columnId: task.columnId,
-                // Используем существующие вложения 
                 attachments: oldAttachmentIds
             };
             
-            // Закрываем модальное окно до обработки вложений
             onClose();
             
-            // Вызываем обработчик обновления задачи, не дожидаясь загрузки/удаления вложений
-            // Это обеспечит мгновенное обновление UI
             onSubmit(updatedTaskData);
             
-            // В фоновом режиме обрабатываем вложения
-            
-            // Обработка удаления вложений
+
             if (attachmentsToDelete.includes("DELETE_ALL")) {
                 console.log(`Deleting all attachments for task: ${task.id}`);
                 await deleteAllAttachments(task.id).unwrap();
             } else if (attachmentsToDelete.length > 0) {
-                // Иначе удаляем выбранные вложения по одному
                 for (const attachmentId of attachmentsToDelete) {
                     console.log(`Deleting attachment: ${attachmentId}`);
                     await deleteAttachment(attachmentId).unwrap();
                 }
             }
             
-            // Затем загружаем новые файлы
             if (filesToUpload.length > 0) {
                 for (const file of filesToUpload) {
                     console.log(`Uploading file: ${file.name}`);
@@ -449,7 +390,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     };
 
-    // Handle keypress for checklist input
     const handleChecklistKeyPress = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -457,7 +397,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }
     };
 
-    // Toggle checklist item completion
     const handleToggleChecklistItem = (index) => {
         setForm(prev => ({
             ...prev,
@@ -467,7 +406,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         }));
     };
 
-    // Handle tag selection
     const handleTagSelect = (tagId) => {
         setForm({
             ...form,
@@ -475,7 +413,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         });
     };
 
-    // Функция для получения имени пользователя по ID
     const getParticipantNameById = (participantId) => {
         if (!boardData || !boardData.participants) return '';
         
@@ -483,7 +420,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         return participant ? participant.name : `Участник #${participantId}`;
     };
     
-    // Функция для получения URL аватарки пользователя по ID
     const getParticipantAvatarById = (participantId) => {
         if (!boardData || !boardData.participants) return Girl;
         
@@ -491,7 +427,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
         return participant && participant.avatarURL ? participant.avatarURL : Girl;
     };
 
-    // Проверяем есть ли участник с указанным ID в списке участников задачи
     const isParticipantInTask = (participantId) => {
         return form.participants.includes(participantId);
     };
@@ -511,7 +446,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     />
                 </div>
                 
-                {/* Title */}
                 <div className="create-task-modal-label">Название</div>
                 <input 
                     className="create-task-modal-input" 
@@ -522,7 +456,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     required
                 />
                 
-                {/* Description */}
                 <div className="create-task-modal-label">Описание</div>
                 <textarea 
                     className="create-task-modal-textarea" 
@@ -533,7 +466,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     rows={3}
                 />
                 
-                {/* Checklist */}
                 <div className="create-task-modal-label">Чеклист</div>
                 <div className="create-task-modal-checklist-container">
                     <div className="create-task-modal-input-row">
@@ -581,7 +513,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     </div>
                 </div>
                 
-                {/* Timeline */}
                 <div className="create-task-modal-label">Таймлайн</div>
                 <div className="create-task-modal-timeline">
                     <div className="create-task-modal-timeline-row">
@@ -623,7 +554,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     </div>
                 </div>
                 
-                {/* Participants */}
                 <div className="create-task-modal-label">Участники</div>
                 <div className="create-task-modal-participants-section">
                     <div className="create-task-modal-participants-header">
@@ -664,7 +594,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     </div>
                 </div>
                 
-                {/* Добавление участника */}
                 <div className="create-task-modal-input-row">
                     <select
                         className="create-task-modal-input"
@@ -673,9 +602,7 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     >
                         <option value="">Выберите участника</option>
                         {boardData?.participants
-                            // Фильтруем участников, которые уже добавлены к задаче
                             .filter(participant => {
-                                // Проверяем, что участник ещё не добавлен в задачу
                                 return !form.participants.includes(participant.id);
                             })
                             .map((participant) => (
@@ -769,8 +696,7 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                             ))}
                         </div>
                     )}
-                    {/* Новые файлы */}
-                    <input 
+                    <input
                         type="file" 
                         ref={fileInputRef}
                         onChange={handleFileUpload}
@@ -798,14 +724,12 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                                 <span 
                                     className="create-task-modal-file-remove"
                                     onClick={() => {
-                                        // Находим индекс файла в списке filesToUpload и удаляем его
                                         const fileIndex = filesToUpload.indexOf(file);
                                         if (fileIndex !== -1) {
                                             const newFiles = [...filesToUpload];
                                             newFiles.splice(fileIndex, 1);
                                             setFilesToUpload(newFiles);
                                             
-                                            // Также удаляем из списка files в form
                                             setForm(prev => ({
                                                 ...prev,
                                                 files: prev.files.filter(f => f !== file)
@@ -821,7 +745,6 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                     </div>
                 </div>
                 
-                {/* Submit Button */}
                 <button type="submit" className="create-task-modal-submit">
                     Сохранить изменения
                 </button>

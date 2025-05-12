@@ -6,18 +6,17 @@ import { useSearchUsersQuery } from '../services/api';
 import { useCreateChatMutation } from '../services/api';
 
 function CreateChatModal({ isOpen, onClose, onChatCreated }) {
-    const [type, setType] = useState('private'); // 'private' | 'group'
+    const [type, setType] = useState('private');
     const [search, setSearch] = useState('');
     const [searchPage, setSearchPage] = useState(0);
-    const [selectedUser, setSelectedUser] = useState(null); // for private
+    const [selectedUser, setSelectedUser] = useState(null);
     const [groupName, setGroupName] = useState('');
     const [groupAvatar, setGroupAvatar] = useState(null);
-    const [groupUsers, setGroupUsers] = useState([]); // for group
+    const [groupUsers, setGroupUsers] = useState([]);
     const [createChat, { isLoading: isCreating }] = useCreateChatMutation();
     const modalRef = useRef(null);
     const usersPerPage = 10;
 
-    // Поиск пользователей
     const { data: searchData, isLoading: isSearching, isFetching } = useSearchUsersQuery(
         { name: search, page: searchPage, size: usersPerPage },
         { skip: !search }
@@ -36,7 +35,6 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen, onClose]);
 
-    // Сброс состояния при открытии
     useEffect(() => {
         if (isOpen) {
             setType('private');
@@ -49,29 +47,24 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
         }
     }, [isOpen]);
 
-    // Добавление пользователя в группу
     const handleAddGroupUser = (user) => {
         if (!groupUsers.some(u => u.id === user.id)) {
             setGroupUsers([...groupUsers, user]);
         }
     };
-    // Удаление пользователя из группы
     const handleRemoveGroupUser = (id) => {
         setGroupUsers(groupUsers.filter(u => u.id !== id));
     };
-    // Загрузка следующей страницы поиска
     const handleScroll = useCallback((e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
         if (scrollTop + clientHeight >= scrollHeight - 40 && hasNext && !isFetching) {
             setSearchPage(p => p + 1);
         }
     }, [hasNext, isFetching]);
-    // Аватарка
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) setGroupAvatar(file);
     };
-    // Создание чата
     const handleCreate = async (e) => {
         e.preventDefault();
         if (type === 'private' && selectedUser) {

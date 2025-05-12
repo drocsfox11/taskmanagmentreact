@@ -11,10 +11,8 @@ function TaskEventsModal({ isOpen, onClose }) {
     skip: !boardId
   });
   
-  // Get users data from Redux store
   const usersByUsername = useSelector(state => state.users?.byUsername || {});
   
-  // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -31,14 +29,12 @@ function TaskEventsModal({ isOpen, onClose }) {
     };
   }, [isOpen, onClose]);
   
-  // Format date for display
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ru-RU') + ' - ' + 
            date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
   
-  // Get user avatar URL
   const getUserAvatar = (username) => {
     if (usersByUsername[username]?.avatarURL) {
       return usersByUsername[username].avatarURL;
@@ -46,7 +42,6 @@ function TaskEventsModal({ isOpen, onClose }) {
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
   };
   
-  // Group events by date
   const groupedEvents = events.reduce((groups, event) => {
     const date = new Date(event.timestamp).toLocaleDateString('ru-RU');
     if (!groups[date]) {

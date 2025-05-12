@@ -13,14 +13,12 @@ export const columnsApi = baseApi.injectEndpoints({
       query: (boardId) => ({url:`boards/${boardId}/columns`}),
       providesTags: ['Columns'],
       
-      // WebSocket-подписка для обновлений колонок в реальном времени
       async onCacheEntryAdded(
         boardId,
         { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
       ) {
         await cacheDataLoaded;
         
-        // Соединяемся с каналом колонок для конкретной доски
         const ws = new WebSocket(`${WS_URL}/boards/${boardId}/columns`);
         
         const listener = (event) => {
@@ -54,7 +52,6 @@ export const columnsApi = baseApi.injectEndpoints({
                 
               case 'COLUMNS_REORDERED':
                 updateCachedData(() => {
-                  // Заменяем список колонок на новый, отсортированный порядок
                   return data.payload.columns;
                 });
                 break;
@@ -66,7 +63,6 @@ export const columnsApi = baseApi.injectEndpoints({
         
         ws.addEventListener('message', listener);
         
-        // Закрываем соединение, когда компонент размонтирован
         await cacheEntryRemoved;
         ws.removeEventListener('message', listener);
         ws.close();
@@ -76,46 +72,40 @@ export const columnsApi = baseApi.injectEndpoints({
       query: (columnId) => ({url:`columns/${columnId}`}),
       providesTags: (result, error, id) => [{ type: 'Columns', id }],
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     createColumn: builder.mutation({
       query: (column) => ({
         url: 'columns',
         method: 'POST',
         body: { ...column, socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     updateColumn: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `columns/${id}`,
         method: 'PUT',
         body: { ...data, socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     deleteColumn: builder.mutation({
       query: (id) => ({
         url: `columns/${id}`,
         method: 'DELETE',
         body: { socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+
     }),
-    // DEPRECATED: Используйте эквивалентные мутации из boardsApi
     reorderColumns: builder.mutation({
       query: (data) => ({
         url: 'columns/reorder',
         method: 'POST',
         body: { ...data, socketEvent: true },
       }),
-      // Не инвалидируем кеш, т.к. WebSocket обновит данные
+
     }),
   }),
 });
 
-// Экспортируем только хуки для чтения, мутации теперь доступны из boardsApi
 export const {
   useGetColumnsQuery,
   useGetColumnQuery,

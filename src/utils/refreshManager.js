@@ -1,8 +1,6 @@
 
-// Устанавливаем флаг "страница была загружена" в sessionStorage
 export const markPageLoad = () => {
   sessionStorage.setItem('pageJustLoaded', 'true');
-  // Сбрасываем счетчик попыток обновления
   sessionStorage.setItem('refreshAttempts', '0');
 };
 

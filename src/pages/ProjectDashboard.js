@@ -20,10 +20,8 @@ function ProjectDashboard() {
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     const modalRef = useRef(null);
     
-    // Получаем данные о текущем пользователе для запроса прав
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    // Получаем права пользователя с возможностью рефетча
     const { refetch: refetchRights } = useGetAllUserRightsQuery(
         currentUser?.id,
         { skip: !currentUser?.id }
@@ -64,7 +62,7 @@ function ProjectDashboard() {
     const [form, setForm] = useState({ 
         title: '', 
         description: '',
-        emoji: 'teacher-light-skin-tone' // Эмодзи по умолчанию
+        emoji: 'teacher-light-skin-tone'
     });
     
     useEffect(() => {
@@ -84,7 +82,7 @@ function ProjectDashboard() {
     };
 
     const handleOpenEmojiPicker = (e) => {
-        e.stopPropagation(); // Предотвращаем всплытие события
+        e.stopPropagation();
         setIsEmojiPickerOpen(true);
     };
 
@@ -97,17 +95,14 @@ function ProjectDashboard() {
         };
         
         try {
-            // Отправляем запрос на создание проекта
             const response = await createProject(projectData).unwrap();
             console.log('Проект успешно создан:', response);
             
-            // Делаем рефетч прав пользователя
             if (currentUser?.id) {
                 await refetchRights();
                 console.log('Права пользователя обновлены');
             }
             
-            // Сразу закрываем модальное окно и сбрасываем форму
             setIsModalOpen(false);
             setForm({ 
                 title: '', 

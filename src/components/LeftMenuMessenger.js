@@ -8,7 +8,6 @@ function formatTime(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
     const now = new Date();
-    // Если сегодня — показываем только время, иначе дату
     if (date.toDateString() === now.toDateString()) {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -53,7 +52,6 @@ function LeftMenuMessenger({ onCreateChat }) {
                     </div>
                 ))}
             </div>
-            {/* Кнопка создания нового чата */}
             <button
                 className="messenger-create-chat-btn"
                 title="Создать чат"

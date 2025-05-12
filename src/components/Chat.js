@@ -38,14 +38,12 @@ function Chat({ chatId }) {
     const [isAtTop, setIsAtTop] = useState(false);
     const messagesContainerRef = useRef(null);
 
-    // Scroll to bottom on new messages
     useEffect(() => {
         if (messagesContainerRef.current && page === 0) {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
     }, [messagesData, page]);
 
-    // Infinity scroll: load more when at top
     const handleScroll = (e) => {
         if (e.target.scrollTop === 0 && hasNext && !isFetching) {
             setPage((prev) => prev + 1);
@@ -58,7 +56,7 @@ function Chat({ chatId }) {
         try {
             await sendMessage({ chatId, content: input });
             setInput('');
-            setPage(0); // сбрасываем пагинацию чтобы увидеть новое сообщение
+            setPage(0);
         } catch (err) {}
     };
 

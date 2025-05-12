@@ -20,7 +20,7 @@ import { BoardRightGuard } from "../components/permissions";
 import TaskColumn from "../components/TaskColumn";
 import { useDispatch, useSelector } from "react-redux";
 
-// Import RTK Query hooks
+
 import { 
     useGetBoardWithDataQuery, 
     useCreateTaskMutation,
@@ -53,7 +53,6 @@ function TaskDashboard() {
         skip: isNaN(boardIdNum)
     });
     
-    // Получение истории задач доски
     const {
         data: tasksHistory,
         isLoading: isLoadingTasksHistory,
@@ -70,36 +69,28 @@ function TaskDashboard() {
     const [moveTask] = useMoveTaskMutation();
     const [uploadTaskAttachment] = useUploadTaskAttachmentMutation();
     
-    // Filter out duplicate columns and sort them by position
     const columns = useMemo(() => {
         if (!boardWithData?.columns) return [];
         
-        // Create a map to track columns by ID to remove duplicates
         const columnMap = new Map();
         
-        // Process all columns and keep only the latest version of each column
         boardWithData.columns.forEach(column => {
-            // Use a consistent ID field
             const id = column.id || column.columnId;
             if (id) {
-                // Sort tasks by position within the column
                 const sortedTasks = [...(column.tasks || [])].sort((a, b) => {
-                    // Handle cases where position might be undefined
                     const posA = typeof a.position === 'number' ? a.position : Number.MAX_SAFE_INTEGER;
                     const posB = typeof b.position === 'number' ? b.position : Number.MAX_SAFE_INTEGER;
                     return posA - posB;
                 });
                 
-                // Normalize column data to ensure consistent structure
                 columnMap.set(id, {
                     ...column,
-                    id: id,  // Use a consistent id field
+                    id: id,
                     tasks: sortedTasks
                 });
             }
         });
         
-        // Convert map back to array and sort by position
         return Array.from(columnMap.values())
             .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }, [boardWithData?.columns]);
@@ -115,16 +106,13 @@ function TaskDashboard() {
     const [usersByUsername, setUsersByUsername] = useState({});
     const dispatch = useDispatch();
     
-    // Получаем права пользователя
     const { hasRight } = useBoardRights(boardIdNum);
     
-    // Загружаем данные о пользователях доски
     useEffect(() => {
         if (boardParticipants && boardParticipants.length > 0) {
             console.log('Загрузка данных о пользователях:', boardParticipants);
             
             boardParticipants.forEach(participant => {
-                // Получаем имя пользователя, которое может быть в разных полях
                 const username = participant.username || participant.name || participant;
                 
                 if (username) {
@@ -134,7 +122,6 @@ function TaskDashboard() {
                         payload: username 
                     });
                     
-                    // Также добавляем данные напрямую в Redux store
                     if (typeof participant === 'object' && participant !== null) {
                         dispatch({ 
                             type: 'users/addUserData', 
@@ -151,10 +138,8 @@ function TaskDashboard() {
         }
     }, [boardParticipants, dispatch]);
     
-    // Получаем актуальные данные о пользователях из Redux store
     const reduxUsersByUsername = useSelector(state => state.users?.byUsername || {});
     
-    // Обновляем локальное состояние из Redux
     useEffect(() => {
         setUsersByUsername(reduxUsersByUsername);
     }, [reduxUsersByUsername]);
@@ -177,7 +162,6 @@ function TaskDashboard() {
         }
     }, [boardWithData, isLoadingBoardData, boardError, boardIdNum]);
     
-    // Логирование полученной истории задач
     useEffect(() => {
         if (tasksHistory) {
             console.log('Tasks history loaded:', tasksHistory);
@@ -210,7 +194,6 @@ function TaskDashboard() {
 
     const handleCreateTask = (taskData) => {
         if (currentColumnId && boardId) {
-            // Extract files from taskData to handle separately
             const { files, ...taskDataWithoutFiles } = taskData;
             
             console.log('Creating task with data:', taskDataWithoutFiles);
@@ -223,18 +206,15 @@ function TaskDashboard() {
                 projectId: Number(projectId)
             };
             
-            // Create task first
             createTask(newTask)
                 .unwrap()
                 .then(createdTask => {
                     console.log('Task created successfully:', createdTask);
                     
-                    // If there are files, upload them
                     if (files && files.length > 0) {
                         console.log('Uploading files for taskId:', createdTask.id);
                         console.log('Files to upload:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
                         
-                        // Последовательная загрузка каждого файла отдельно
                         const uploadFiles = async () => {
                             for (const file of files) {
                                 try {
@@ -262,7 +242,6 @@ function TaskDashboard() {
         }
     };
 
-    // Handle section (column) creation - using RTK Query mutation
     const handleAddSection = (sectionName) => {
         if (sectionName.trim() && boardId) {
             const newColumn = {
@@ -270,7 +249,6 @@ function TaskDashboard() {
                 boardId: Number(boardId),
                 position: columns.length
             };
-            // Use RTK Query mutation
             createColumn(newColumn)
                 .unwrap()
                 .catch(error => {
@@ -285,7 +263,6 @@ function TaskDashboard() {
         if (!destination) return;
         
         if (type === 'column') {
-            // Проверяем права на перемещение колонок
             if (!hasRight(BOARD_RIGHTS.MOVE_COLUMNS)) {
                 console.log('У пользователя нет прав на перемещение колонок');
                 return;
@@ -298,7 +275,6 @@ function TaskDashboard() {
             const [removed] = newColumns.splice(sourceIndex, 1);
             newColumns.splice(destIndex, 0, removed);
             
-            // Обновляем позиции всех колонок
             const updatedColumns = newColumns.map((col, index) => ({
                 id: col.id || col.columnId,
                 position: index
@@ -318,7 +294,6 @@ function TaskDashboard() {
         }
         
         if (type === 'task') {
-            // Проверяем права на перемещение задач
             if (!hasRight(BOARD_RIGHTS.MOVE_TASKS)) {
                 console.log('У пользователя нет прав на перемещение задач');
                 return;
@@ -339,8 +314,7 @@ function TaskDashboard() {
                 boardId: boardIdNum
             });
             
-            // Используем правильные имена параметров для соответствия API
-            moveTask({ 
+            moveTask({
                 taskId, 
                 sourceColumnId, 
                 targetColumnId, 
@@ -379,7 +353,6 @@ function TaskDashboard() {
         );
     }
 
-    // If there's an API error, show it
     if (boardError) {
         return (
             <div style={{ textAlign: 'center', padding: '50px 20px' }}>
@@ -406,7 +379,6 @@ function TaskDashboard() {
         );
     }
 
-    // If the board doesn't exist yet and we're not loading, wait for data to load
     if (!board && !isLoading) {
         return <div><LoadingSpinner /> Загрузка доски...</div>;
     }
@@ -446,16 +418,13 @@ function TaskDashboard() {
                             style={{ cursor: 'pointer' }}
                         >
                             {boardParticipants.slice(0, 4).map((participant, index) => {
-                                // Обработка участников в разных форматах
-                                const username = typeof participant === 'string' 
+                                const username = typeof participant === 'string'
                                     ? participant 
                                     : participant.username || participant.name || '';
                                 
-                                // Найти данные пользователя в Redux store
                                 const userData = usersByUsername[username] || {};
                                 
-                                // Используем данные из usersByUsername или из объекта participant
-                                const displayName = userData.displayName || userData.name || 
+                                const displayName = userData.displayName || userData.name ||
                                                   (typeof participant === 'object' && participant.name) || username;
                                 const avatarURL = userData.avatarURL || 
                                                 (typeof participant === 'object' && participant.avatarURL) || '';
@@ -572,16 +541,13 @@ function TaskDashboard() {
                         <div style={{ marginTop: '20px' }}>
                             {boardParticipants.length > 0 ? (
                                 boardParticipants.map((participant, index) => {
-                                    // Обработка участников в разных форматах
-                                    const username = typeof participant === 'string' 
+                                    const username = typeof participant === 'string'
                                         ? participant 
                                         : participant.username || participant.name || '';
                                     
-                                    // Найти данные пользователя в Redux store
                                     const userData = usersByUsername[username] || {};
                                     
-                                    // Используем данные из usersByUsername или из объекта participant
-                                    const displayName = userData.displayName || userData.name || 
+                                    const displayName = userData.displayName || userData.name ||
                                                        (typeof participant === 'object' && participant.name) || username;
                                     const avatarURL = userData.avatarURL || 
                                                      (typeof participant === 'object' && participant.avatarURL) || '';

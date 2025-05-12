@@ -1,8 +1,6 @@
 import { baseApi } from './baseApi';
 
-// Экспортируем API из всех модулей - избегаем конфликтов
-export { 
-  // Projects API
+export {
   useGetProjectsQuery,
   useGetProjectQuery,
   useCreateProjectMutation,
@@ -11,8 +9,7 @@ export {
   useGetAllUserRightsQuery
 } from './projectsApi';
 
-// Re-export TasksAPI hooks
-// These will now use the updated implementation with fixed delete functionality
+
 export {
   useCreateTaskMutation,
   useUpdateTaskMutation,
@@ -21,25 +18,21 @@ export {
 } from './tasksApi';
 
 export {
-  // Boards API
   useGetBoardsQuery,
   useGetBoardWithDataQuery,
   useCreateBoardMutation,
   useUpdateBoardMutation,
   useDeleteBoardMutation,
-  // Columns mutations - теперь из boardsApi
   useCreateColumnMutation,
   useUpdateColumnMutation, 
   useDeleteColumnMutation,
   useReorderColumnsMutation,
 
-  // Tags mutations - теперь из boardsApi
   useCreateTagMutation,
   useUpdateTagMutation,
   useDeleteTagMutation
 } from './boardsApi';
 
-// API приглашений
 export {
   useSendInvitationMutation,
   useAcceptInvitationMutation,
@@ -48,13 +41,10 @@ export {
   useGetMyPendingInvitationsQuery
 } from './invitationsApi';
 
-// API пользователей
 export * from './usersApi';
 
-// API авторизации
 export * from './authApi';
 
-// Export attachments API hooks
 export {
   useUploadTaskAttachmentMutation,
   useUploadTaskAttachmentsMutation,
@@ -62,7 +52,6 @@ export {
   useGetTaskAttachmentsQuery,
 } from './attachmentsApi';
 
-// Chats API
 export {
   useCreateChatMutation,
   useDeleteChatMutation,
@@ -74,7 +63,6 @@ export {
   useGetPagedChatsQuery,
 } from './ChatsApi';
 
-// Messages API
 export {
   useSendMessageMutation,
   useGetMessagesQuery,

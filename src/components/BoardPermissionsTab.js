@@ -5,7 +5,7 @@ import {
     useGetBoardUserRightsQuery
 } from '../services/api/boardsApi';
 import { BOARD_RIGHTS, BOARD_RIGHT_DESCRIPTIONS } from '../constants/rights';
-import '../styles/components/ProjectPermissionsTab.css'; // Reuse the same styles
+import '../styles/components/ProjectPermissionsTab.css';
 import Girl from '../assets/icons/girl.svg';
 import { useGetProjectQuery } from '../services/api/projectsApi';
 import { useGetCurrentUserQuery } from '../services/api/usersApi';
@@ -17,10 +17,8 @@ function BoardPermissionsTab({ board }) {
     const [grantRight] = useGrantBoardRightMutation();
     const [revokeRight] = useRevokeBoardRightMutation();
     
-    // Получаем данные о текущем пользователе
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    // Получаем данные о проекте, чтобы определить владельца
     const { data: project } = useGetProjectQuery(board.projectId, {
         skip: !board.projectId
     });
@@ -45,7 +43,6 @@ function BoardPermissionsTab({ board }) {
         if (e) e.stopPropagation();
         if (!selectedUserId) return;
         
-        // Если выбран текущий пользователь, запрещаем изменение прав
         if (currentUser && currentUser.id === selectedUserId) {
             console.log("Нельзя изменять собственные права доступа");
             return;
@@ -59,7 +56,6 @@ function BoardPermissionsTab({ board }) {
                     rightName,
                 }).unwrap();
                 
-                // Локально обновляем права пользователя
                 setUserRights(prev => prev.filter(right => right !== rightName));
             } else {
                 await grantRight({
@@ -68,26 +64,21 @@ function BoardPermissionsTab({ board }) {
                     rightName,
                 }).unwrap();
                 
-                // Локально обновляем права пользователя
                 setUserRights(prev => [...prev, rightName]);
             }
             
-            // Убираем рефетч, так как он не нужен
-            // Вместо этого мы обновляем локальное состояние выше
+
         } catch (error) {
             console.error("Failed to update right:", error);
         }
     };
 
-    // All board rights to display
     const boardRightsToDisplay = Object.values(BOARD_RIGHTS);
     
-    // Проверяем, является ли пользователь владельцем проекта
     const isProjectOwner = (userId) => {
         return project && project.owner && project.owner.id === userId;
     };
     
-    // Проверяем, является ли выбранный пользователь текущим пользователем
     const isCurrentUser = currentUser && selectedUserId === currentUser.id;
 
     return (

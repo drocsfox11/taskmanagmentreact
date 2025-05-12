@@ -20,14 +20,12 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
     const overlayRef = useRef(null);
     const sentinelRef = useRef(null);
 
-    // Инициализация списка всех эмодзи
     useEffect(() => {
         const allEmojiKeys = Object.keys(emojiData);
         setAllEmojis(allEmojiKeys);
         setTotalEmojis(allEmojiKeys.length);
     }, []);
 
-    // Загрузка первой страницы эмодзи при открытии
     useEffect(() => {
         if (isOpen) {
             setPage(0);
@@ -35,7 +33,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         }
     }, [isOpen]);
 
-    // Инициализация пересечения для бесконечной подгрузки
     useEffect(() => {
         const options = {
             root: gridRef.current,
@@ -56,7 +53,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         };
     }, [displayedEmojis]);
 
-    // Функция наблюдателя за пересечением
     const handleObserver = useCallback((entries) => {
         const target = entries[0];
         if (target.isIntersecting && !isLoading) {
@@ -64,7 +60,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         }
     }, [isLoading, filteredEmojis, searchQuery]);
 
-    // Загрузка первой партии эмодзи
     const loadInitialEmojis = useCallback(() => {
         if (searchQuery.trim() === '') {
             const initialEmojis = allEmojis.slice(0, EMOJIS_PER_PAGE);
@@ -75,7 +70,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         }
     }, [allEmojis, searchQuery]);
 
-    // Загрузка следующей партии эмодзи
     const loadMoreEmojis = useCallback(() => {
         if (isLoading) return;
         
@@ -97,18 +91,15 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         }, 300);
     }, [page, displayedEmojis, allEmojis, filteredEmojis, searchQuery, isLoading]);
 
-    // Обработка поиска
     const handleSearch = useCallback((query) => {
         const trimmedQuery = query.trim().toLowerCase();
         
         if (trimmedQuery === '') {
-            // Если поиск пустой, показываем первую страницу всех эмодзи
             setFilteredEmojis(allEmojis);
             setDisplayedEmojis(allEmojis.slice(0, EMOJIS_PER_PAGE));
             setTotalEmojis(allEmojis.length);
             setPage(0);
         } else {
-            // Фильтруем эмодзи по поисковому запросу
             const filtered = allEmojis.filter(
                 emojiName => emojiName.toLowerCase().includes(trimmedQuery)
             );
@@ -119,20 +110,17 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
             setPage(0);
         }
         
-        // Прокручиваем грид в начало при изменении поискового запроса
         if (gridRef.current) {
             gridRef.current.scrollTop = 0;
         }
     }, [allEmojis]);
     
-    // Обработчик изменения поля поиска
     const handleSearchChange = (event) => {
         const newQuery = event.target.value;
         setSearchQuery(newQuery);
         handleSearch(newQuery);
     };
     
-    // Фокус на поле поиска при открытии
     useEffect(() => {
         if (isOpen && searchInputRef.current) {
             setTimeout(() => {
@@ -141,7 +129,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         }
     }, [isOpen]);
 
-    // Обработка нажатия клавиши Escape
     useEffect(() => {
         function handleEscapeKey(event) {
             if (event.key === 'Escape') {
@@ -158,12 +145,11 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         };
     }, [isOpen, onClose]);
 
-    // Закрытие пикера при клике вне его
     useEffect(() => {
         function handleOutsideClick(event) {
             if (
                 isOpen &&
-                overlayRef.current === event.target && // Клик только по оверлею (фону), не по контенту
+                overlayRef.current === event.target &&
                 pickerRef.current && 
                 !pickerRef.current.contains(event.target)
             ) {
@@ -178,7 +164,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         };
     }, [isOpen, onClose]);
 
-    // Обработчик выбора эмодзи
     const handleEmojiClick = (emojiName, event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -186,17 +171,14 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         onClose();
     };
 
-    // Обработчик закрытия по кнопке
     const handleCloseButtonClick = (event) => {
         event.preventDefault();
         event.stopPropagation();
         onClose();
     };
 
-    // Если пикер закрыт, не рендерим компонент
     if (!isOpen) return null;
     
-    // Заголовок для отображения
     const getResultsTitle = () => {
         if (searchQuery.trim() !== '') {
             if (totalEmojis === 0) {
@@ -208,7 +190,6 @@ function EmojiPicker({ selectedEmoji, onSelectEmoji, isOpen, onClose }) {
         return `Все эмодзи (${totalEmojis})`;
     };
     
-    // Склонение слов
     function getWordForm(number, words) {
         const cases = [2, 0, 1, 1, 1, 2];
         return words[(number % 100 > 4 && number % 100 < 20) ? 2 : cases[(number % 10 < 5) ? number % 10 : 5]];

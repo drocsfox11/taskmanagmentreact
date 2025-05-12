@@ -1,4 +1,3 @@
-// Project rights constants
 export const PROJECT_RIGHTS = {
   VIEW_PROJECT: 'VIEW_PROJECT',
   EDIT_PROJECT: 'EDIT_PROJECT',
@@ -12,7 +11,6 @@ export const PROJECT_RIGHTS = {
   MANAGE_BOARD_RIGHTS: 'MANAGE_BOARD_RIGHTS'
 };
 
-// Board rights constants
 export const BOARD_RIGHTS = {
   VIEW_BOARD: 'VIEW_BOARD',
   CREATE_TASKS: 'CREATE_TASKS',
@@ -27,7 +25,6 @@ export const BOARD_RIGHTS = {
   DELETE_SECTIONS: 'DELETE_SECTIONS'
 };
 
-// Project rights descriptions
 export const PROJECT_RIGHT_DESCRIPTIONS = {
   [PROJECT_RIGHTS.VIEW_PROJECT]: 'Базовое разрешение просматривать проект',
   [PROJECT_RIGHTS.EDIT_PROJECT]: 'Разрешение редактировать детали проекта',
@@ -41,7 +38,6 @@ export const PROJECT_RIGHT_DESCRIPTIONS = {
   [PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS]: 'Разрешение редактировать права участников на уровне досок',
 };
 
-// Board rights descriptions
 export const BOARD_RIGHT_DESCRIPTIONS = {
   [BOARD_RIGHTS.VIEW_BOARD]: 'Базовое разрешение просматривать доску',
   [BOARD_RIGHTS.CREATE_TASKS]: 'Разрешение создавать задачи',
@@ -56,7 +52,6 @@ export const BOARD_RIGHT_DESCRIPTIONS = {
   [BOARD_RIGHTS.DELETE_SECTIONS]: 'Разрешение удалять разделы',
 };
 
-// Сохраняем общий объект для обратной совместимости, но он будет устаревшим (deprecated)
 export const RIGHT_DESCRIPTIONS = {
   ...PROJECT_RIGHT_DESCRIPTIONS,
   ...BOARD_RIGHT_DESCRIPTIONS

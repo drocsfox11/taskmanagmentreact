@@ -43,17 +43,14 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const modalRef = useRef(null);
     const [inputValue, setInputValue] = useState('');
     
-    // Состояние для прав доступа
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [userRights, setUserRights] = useState([]);
     const [hasAccessToAllBoards, setHasAccessToAllBoards] = useState(false);
     const [showPermissions, setShowPermissions] = useState(false);
     
-    // Мутации для прав доступа
     const [grantRight] = useGrantProjectRightMutation();
     const [revokeRight] = useRevokeProjectRightMutation();
     
-    // Запрос прав пользователя
     const { data: fetchedUserRights, isLoading: isLoadingRights, refetch } = useGetUserRightsQuery(
         { projectId: project?.id, userId: selectedUserId },
         { skip: !selectedUserId || !showPermissions }
@@ -70,7 +67,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const timeoutRef = useRef(null);
     const [isScrollLoading, setIsScrollLoading] = useState(false);
 
-    // Получаем права пользователя
     const { hasRight } = useProjectRights(projectId);
 
     console.log(project?.invitations);
@@ -93,16 +89,13 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         }
     );
 
-    // Эффект для обновления прав пользователя
     useEffect(() => {
         if (fetchedUserRights) {
             setUserRights(fetchedUserRights);
-            // Проверяем наличие права ACCESS_ALL_BOARDS в списке
             setHasAccessToAllBoards(fetchedUserRights.includes(PROJECT_RIGHTS.ACCESS_ALL_BOARDS));
         }
     }, [fetchedUserRights]);
 
-    // Определяем, является ли выбранный пользователь текущим пользователем
     const isCurrentUser = currentUser && selectedUserId === currentUser.id;
 
     const users = searchData? searchData.users : [];
@@ -236,7 +229,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                 emoji: form.emoji
             }).unwrap();
             
-            // Reset form state after successful update
             if (project) {
                 setForm({
                     title: project.title,
@@ -267,7 +259,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                 userId: userId
             }).unwrap();
             
-            // Если удаляем пользователя, для которого показываются права, скрываем панель прав
             if (selectedUserId === userId) {
                 setSelectedUserId(null);
                 setShowPermissions(false);
@@ -308,7 +299,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         };
     }, []);
 
-    // Обработчики для прав доступа
     const handleUserSelect = (userId) => {
         setSelectedUserId(userId);
         setShowPermissions(true);
@@ -357,13 +347,12 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
             }
             
             setHasAccessToAllBoards(!hasAccess);
-            refetch(); // Refresh rights in case this impacts other rights
+            refetch();
         } catch (error) {
             console.error("Failed to update board access:", error);
         }
     };
 
-    // Функция для преобразования статуса приглашения в читаемый текст
     const getInvitationStatus = (status) => {
         switch (status) {
             case 'PENDING':
@@ -379,7 +368,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         }
     };
 
-    // Функция для получения класса стиля в зависимости от статуса
     const getStatusClass = (status) => {
         switch (status) {
             case 'PENDING':
@@ -395,7 +383,6 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         }
     };
 
-    // Фильтруем стандартные права проекта, исключая ACCESS_ALL_BOARDS
     const projectRightsToDisplay = Object.values(PROJECT_RIGHTS).filter(
         right => right !== PROJECT_RIGHTS.ACCESS_ALL_BOARDS
     );
@@ -407,7 +394,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     };
 
     const handleOpenEmojiPicker = (e) => {
-        e.stopPropagation(); // Предотвращаем всплытие события
+        e.stopPropagation();
         setIsEmojiPickerOpen(true);
     };
 

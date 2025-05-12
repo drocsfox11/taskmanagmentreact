@@ -33,7 +33,6 @@ function ProjectMenu() {
     const displayedParticipants = projectParticipants.slice(0, 4);
     const moreParticipants = projectParticipants.length > 4 ? projectParticipants.slice(4) : [];
 
-    // Получение истории задач доски
     const {
         data: tasksHistory,
         isLoading: isLoadingTasksHistory
@@ -59,7 +58,6 @@ function ProjectMenu() {
         };
     }, [isProjectModalOpen]);
 
-    // Close dropdown menu when clicking outside
     useEffect(() => {
         const handleGlobalClick = () => {
             setOpenDropdownId(null);
@@ -72,13 +70,11 @@ function ProjectMenu() {
         };
     }, []);
 
-    // Navigate to project dashboard
     const handleProjectClick = (id) => {
         navigate(`/system/project/dashboards/${id}`);
         setIsProjectModalOpen(false);
     };
 
-    // Navigate to project tasks
     const handleProjectTasksClick = (id, e) => {
         e.stopPropagation();
         navigate(`/system/project/tasks/${id}`);
@@ -119,7 +115,6 @@ function ProjectMenu() {
         setIsEventsModalOpen(false);
     };
 
-    // Добавляем обработчики для модального окна участников
     const handleOpenParticipantsModal = () => {
         setIsParticipantsModalOpen(true);
     };
@@ -237,7 +232,6 @@ function ProjectMenu() {
                 </div>
             )}
 
-            {/* Отображаем блок событий только когда мы находимся на странице доски (есть boardId) */}
             {boardId && (
                 <div className='project-menu-events-container'>
                     <div className='project-menu-events-label'>События</div>
@@ -258,7 +252,6 @@ function ProjectMenu() {
                 <div className='project-menu-add-project-button-text'>+ Добавить проект</div>
             </div>
 
-            {/* Modal for "Show more" projects */}
             {isProjectModalOpen && (
                 <div className="project-list-modal-overlay">
                     <div className="project-menu-list-modal">
@@ -290,14 +283,12 @@ function ProjectMenu() {
                 </div>
             )}
             
-            {/* Task Events Modal */}
-            <TaskHistoryModal 
+            <TaskHistoryModal
                 isOpen={isEventsModalOpen}
                 onClose={handleCloseEventsModal} 
                 historyData={tasksHistory || []}
             />
 
-            {/* Modal for participants */}
             {isParticipantsModalOpen && (
                 <div className="project-list-modal-overlay">
                     <div className="project-menu-list-modal">

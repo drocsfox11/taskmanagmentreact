@@ -17,13 +17,11 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     const { data: boardTags = [] } = useGetTagsQuery(boardId);
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    // Get board participants from store
-    const boardData = useSelector(state => 
+    const boardData = useSelector(state =>
         state.boards?.entities?.find(board => board.id === boardId) || 
         state.api?.queries?.[`getBoardWithData(${boardId})`]?.data
     );
     
-    // Создаем маппинг имен пользователей на их ID
     const participantIdsByName = React.useMemo(() => {
         const mapping = {};
         if (boardData && boardData.participants) {
@@ -36,7 +34,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         return mapping;
     }, [boardData]);
     
-    // Normalize board participants to ensure they are in a consistent format
     const normalizedBoardParticipants = React.useMemo(() => {
         const participants = boardData?.participants || [];
         return participants.map(participant => {
@@ -45,11 +42,10 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
             } else if (participant && participant.username) {
                 return participant.username;
             } else if (participant && participant.name) {
-                // Добавляем поддержку формата с полем name вместо username
                 return participant.name;
             }
             return null;
-        }).filter(Boolean); // Remove any null values
+        }).filter(Boolean);
     }, [boardData]);
     
     const [form, setForm] = useState({
@@ -73,7 +69,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
     const fileInputRef = useRef(null);
     const prevBoardTagsRef = useRef([]);
 
-    // Handle clicking outside modal to close
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -92,7 +87,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         };
     }, [isOpen, onClose]);
 
-    // Загружаем данные пользователей через Redux
     useEffect(() => {
         form.participants.forEach(username => {
             if (username && (!usersByUsername || !usersByUsername[username])) {
@@ -101,7 +95,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         });
     }, [form.participants, usersByUsername, dispatch]);
 
-    // Handle form field change
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         setForm({
@@ -110,7 +103,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         });
     };
 
-    // Add checklist item
     const handleAddChecklistItem = () => {
         if (checklistItem.trim()) {
             setForm({
@@ -130,11 +122,9 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         });
     };
 
-    // Add participant from dropdown
     const handleAddParticipant = () => {
         if (!selectedParticipant || !selectedParticipant.trim()) return;
         
-        // Получаем ID участника по его имени
         const participantId = participantIdsByName[selectedParticipant];
         
         if (!participantId) {
@@ -142,7 +132,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
             return;
         }
         
-        // Проверяем, не добавлен ли уже этот участник
         if (form.participants.some(p => p === participantId)) {
             console.log('Участник уже добавлен:', selectedParticipant);
             setSelectedParticipant('');
@@ -151,7 +140,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         
         console.log('Adding participant:', selectedParticipant, 'with ID:', participantId);
         
-        // Используем функциональную форму setState для гарантированного доступа к актуальному состоянию
         setForm(prevForm => {
             const updatedParticipants = [...prevForm.participants, participantId];
             
@@ -163,7 +151,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
             };
         });
         
-        // Сбрасываем выбранного участника
         setSelectedParticipant('');
     };
 
@@ -197,7 +184,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         });
     };
 
-    // Сбрасываем состояние формы при закрытии модального окна
     useEffect(() => {
         if (!isOpen) {
             setForm({
@@ -216,12 +202,10 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         }
     }, [isOpen]);
 
-    // Fetch board data when modal opens
     useEffect(() => {
         if (isOpen && boardId) {
             console.log('Fetching board data for boardId:', boardId);
             
-            // Force fetch board data to get updated participants list
             dispatch({
                 type: 'api/executeQuery',
                 payload: {
@@ -230,12 +214,10 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                 }
             });
             
-            // Если есть данные о доске, загрузим данные о пользователях
             if (boardData && boardData.participants) {
                 boardData.participants.forEach(participant => {
                     if (participant && participant.name) {
-                        // Сохраняем данные о пользователе в Redux store
-                        dispatch({ 
+                        dispatch({
                             type: 'users/addUserData', 
                             payload: { 
                                 username: participant.name, 
@@ -249,9 +231,7 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         }
     }, [isOpen, boardId, dispatch, boardData]);
 
-    // Update availableTags only when boardTags changes
     useEffect(() => {
-        // Don't update if boardTags is the same as what we already set
         const prevTagsJSON = JSON.stringify(prevBoardTagsRef.current);
         const currentTagsJSON = JSON.stringify(boardTags);
         
@@ -261,7 +241,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         }
     }, [boardTags]);
 
-    // Handle tag selection
     const handleTagSelect = (tagId) => {
         setForm({
             ...form,
@@ -271,7 +250,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Преобразуем временные метки в нужный формат для сервера
         let startDateObj = null;
         let endDateObj = null;
         if (startDate && startTime) {
@@ -281,23 +259,20 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
             endDateObj = new Date(`${endDate}T${endTime}`);
         }
         
-        // Подготовка данных для отправки
         const taskData = {
             title: form.title,
             description: form.description,
             startDate: startDateObj ? startDateObj.toISOString() : null,
             endDate: endDateObj ? endDateObj.toISOString() : null,
             checklist: form.checklist || [],
-            participants: form.participants || [], // Изменено с participantIds на participants
+            participants: form.participants || [],
             tagId: form.tagId
         };
         
         console.log('Отправка данных задачи:', taskData);
         
-        // Передаем только данные задачи и файлы отдельно
         onSubmit({ ...taskData, files: form.files });
         
-        // Сбрасываем форму после отправки
         setForm({
             title: '',
             description: '',
@@ -315,7 +290,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         onClose();
     };
 
-    // Handle keypress for checklist input
     const handleChecklistKeyPress = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -323,7 +297,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         }
     };
 
-    // Отладочный эффект для проверки загрузки данных о пользователях
     useEffect(() => {
         if (isOpen && boardData && boardData.participants) {
             console.log('Участники доски:', boardData.participants);
@@ -331,7 +304,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         }
     }, [isOpen, boardData, normalizedBoardParticipants]);
 
-    // Функция для получения имени пользователя по ID
     const getParticipantNameById = (participantId) => {
         if (!boardData || !boardData.participants) return '';
         
@@ -339,7 +311,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
         return participant ? participant.name : '';
     };
     
-    // Функция для получения URL аватарки пользователя по ID
     const getParticipantAvatarById = (participantId) => {
         if (!boardData || !boardData.participants) return Girl;
         
@@ -349,7 +320,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
 
     if (!isOpen) return null;
     
-    // Debug output
     console.log("CreateTaskModal rendering with state:", {
         selectedParticipant,
         formParticipants: form.participants,
@@ -369,7 +339,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     />
                 </div>
                 
-                {/* Title */}
                 <div className="create-task-modal-label">Название</div>
                 <input 
                     className="create-task-modal-input" 
@@ -380,7 +349,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     required
                 />
                 
-                {/* Description */}
                 <div className="create-task-modal-label">Описание</div>
                 <textarea 
                     className="create-task-modal-textarea" 
@@ -391,7 +359,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     rows={3}
                 />
                 
-                {/* Checklist */}
                 <div className="create-task-modal-label">Чеклист</div>
                 <div className="create-task-modal-checklist-container">
                     <div className="create-task-modal-input-row">
@@ -430,7 +397,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     </div>
                 </div>
                 
-                {/* Timeline */}
                 <div className="create-task-modal-label">Таймлайн</div>
                 <div className="create-task-modal-timeline">
                     <div className="create-task-modal-timeline-row">
@@ -472,10 +438,8 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     </div>
                 </div>
                 
-                {/* Participants */}
                 <div className="create-task-modal-label">Участники</div>
                 
-                {/* Список добавленных участников - всегда отображается */}
                 <div className="create-task-modal-participants-section">
                     <div className="create-task-modal-participants-header">
                         Выбранные участники ({form.participants ? form.participants.length : 0})
@@ -515,7 +479,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     </div>
                 </div>
                 
-                {/* Добавление участника */}
                 <div className="create-task-modal-input-row">
                     <select
                         className="create-task-modal-input"
@@ -524,7 +487,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     >
                         <option value="">Выберите участника</option>
                         {normalizedBoardParticipants
-                            // Фильтруем только участников, которые ещё не добавлены
                             .filter(username => {
                                 const participantId = participantIdsByName[username];
                                 return !form.participants.includes(participantId);
@@ -546,7 +508,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     </button>
                 </div>
                 
-                {/* Tags */}
                 <div className="create-task-modal-label">Тег</div>
                 <select 
                     className="create-task-modal-input" 
@@ -575,7 +536,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     )}
                 </div>
                 
-                {/* Files */}
                 <div className="create-task-modal-label">Вложения</div>
                 <div className="create-task-modal-files-section">
                     <button 
@@ -625,7 +585,6 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
                     )}
                 </div>
                 
-                {/* Submit Button */}
                 <button type="submit" className="create-task-modal-submit">
                     Создать задачу
                 </button>

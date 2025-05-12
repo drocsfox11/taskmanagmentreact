@@ -13,22 +13,17 @@ export const useProjectRights = (projectId, options = {}) => {
   const { data: currentUser } = useGetCurrentUserQuery();
   const userId = currentUser?.id;
   
-  // Определяем, нужно ли пропустить запрос
   const shouldSkip = options.skip || !userId;
   
-  // Отладочный вывод для проверки параметров
   console.log(`useProjectRights called with projectId: ${projectId}, userId: ${userId}, skip: ${shouldSkip}`);
   
-  // Получение всех прав пользователя на всех проектах
   const { data: allProjectRights = {}, isLoading, isFetching, error } = useGetAllUserRightsQuery(
     userId,
     { skip: shouldSkip }
   );
   
-  // Извлекаем права для конкретного проекта из объекта всех прав
   const userRights = projectId && allProjectRights[projectId] ? allProjectRights[projectId] : [];
   
-  // Добавляем отладочный вывод для результатов запроса
   useEffect(() => {
     if (!shouldSkip) {
       console.log(`Project rights loaded for projectId: ${projectId}`);
@@ -89,10 +84,8 @@ export const useBoardRights = (boardId, options = {}) => {
   const { data: currentUser } = useGetCurrentUserQuery();
   const userId = currentUser?.id;
   
-  // Определяем, нужно ли пропустить запрос
   const shouldSkip = options.skip || !boardId || !userId;
   
-  // Отладочный вывод для проверки параметров
   console.log(`useBoardRights called with boardId: ${boardId}, userId: ${userId}, skip: ${shouldSkip}`);
   
   const { data: userRights = [], isLoading, isFetching, error } = useGetBoardUserRightsQuery(
@@ -100,7 +93,6 @@ export const useBoardRights = (boardId, options = {}) => {
     { skip: shouldSkip }
   );
   
-  // Добавляем отладочный вывод для результатов запроса
   useEffect(() => {
     if (!shouldSkip) {
       console.log(`Board rights loaded for boardId: ${boardId}`);

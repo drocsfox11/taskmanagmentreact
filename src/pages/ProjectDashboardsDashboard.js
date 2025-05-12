@@ -18,7 +18,6 @@ function ProjectDashBoardsDashboard() {
     const { projectId } = useParams();
     const numericProjectId = Number(projectId);
     
-    // Use RTK Query hooks
     const { data: project, isLoading: isProjectLoading } = useGetProjectQuery(numericProjectId);
     const { data: boards = [], isLoading: isBoardsLoading } = useGetBoardsQuery(numericProjectId);
     const [createBoard] = useCreateBoardMutation();
@@ -81,10 +80,8 @@ function ProjectDashBoardsDashboard() {
         e.preventDefault();
         if (!project) return;
         
-        // Get participant IDs directly from the project
         const participantIds = [];
         
-        // Добавляем участников только если они имеют валидные username
         if (project.participants && Array.isArray(project.participants)) {
             project.participants.forEach(user => {
                 if (user && user.username) {
@@ -93,7 +90,6 @@ function ProjectDashBoardsDashboard() {
             });
         }
         
-        // Add owner if not already in the list and if owner has valid username
         if (project.owner && project.owner.username && !participantIds.includes(project.owner.username)) {
             participantIds.push(project.owner.username);
         }
@@ -109,7 +105,6 @@ function ProjectDashBoardsDashboard() {
         try {
             await createBoard(payload).unwrap();
             
-            // Добавляем задержку для обновления UI
             setTimeout(() => {
                 handleCloseBoardModal();
             }, 500);

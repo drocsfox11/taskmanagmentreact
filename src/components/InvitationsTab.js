@@ -29,7 +29,6 @@ function InvitationsTab() {
     if (isLoading) return <div className="invitations-loading">Загрузка приглашений...</div>;
     if (error) return <div className="invitations-error">Ошибка загрузки приглашений</div>;
 
-    // Фильтруем приглашения по статусу - только активные (PENDING)
     const activeInvitations = invitations?.filter(inv => inv.status === 'PENDING') || [];
 
     const renderInvitationsList = (invitationsList) => {

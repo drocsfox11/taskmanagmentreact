@@ -8,28 +8,22 @@ const customBaseQuery = async (args, api, extraOptions) => {
 
   const { url, method = 'GET', body, params, headers, formData } = args;
   let endpoint = url;
-  // Добавляем query-параметры, если есть
   if (params) {
     const queryParams = new URLSearchParams(params).toString();
     endpoint = `${url}?${queryParams}`;
   }
 
-  // Настраиваем опции для fetch
   const fetchOptions = {
     credentials: 'include',
     method,
     headers: { ...headers },
   };
 
-  // Добавляем тело запроса для мутаций
   if (body) {
-    // Check if this is a FormData request (for file uploads)
     if (formData) {
-      // For FormData, don't set Content-Type (browser will set it with boundary)
-      // and don't try to JSON.stringify the body
+
       fetchOptions.body = body;
     } else {
-      // For regular JSON requests
       fetchOptions.headers['Content-Type'] = 'application/json';
       fetchOptions.body = JSON.stringify(body);
     }
@@ -48,7 +42,6 @@ const customBaseQuery = async (args, api, extraOptions) => {
       return { error: { status: response.status, data: errorBody.message || response.statusText } };
     }
 
-    // Handle responses with no content (like 204 No Content)
     if (response.status === 204 || response.headers.get('content-length') === '0') {
       return { data: null };
     }

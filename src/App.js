@@ -48,12 +48,9 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-    // Установить флаг, что страница была загружена
     useEffect(() => {
-        // Устанавливаем флаг только при первоначальной загрузке
         markPageLoad();
         
-        // При размонтировании компонента очищаем флаг
         return () => {
             clearPageLoadFlag();
         };
