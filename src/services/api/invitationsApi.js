@@ -17,6 +17,7 @@ export const invitationsApi = baseApi.injectEndpoints({
           id: tempId,
           projectId,
           recipient: user,
+          recipientId: user.id,
           status: 'PENDING',
           createdAt: new Date().toISOString()
         };
@@ -34,13 +35,10 @@ export const invitationsApi = baseApi.injectEndpoints({
             baseApi.util.updateQueryData('getProject', projectId, (draft) => {
               const index = draft.invitations.findIndex(inv => inv.id === tempId);
               if (index !== -1) {
+                const recipient = draft.invitations[index].recipient;
                 draft.invitations[index] = {
-                  ...draft[index],
-                  id: data.id,
-                  status: data.status,
-                  createdAt: data.createdAt,
-                  senderId: data.senderId,
-                  ...data
+                  ...data,
+                  recipient: data.recipient || recipient,
                 };
               }
             })

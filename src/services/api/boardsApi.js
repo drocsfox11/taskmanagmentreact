@@ -852,7 +852,29 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: { userId, rightName },
       }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+      async onQueryStarted({ boardId, userId, rightName }, { dispatch, queryFulfilled }) {
+        // Получаем ключ для запроса прав конкретного пользователя на доске
+        const queryKey = { boardId, userId };
+        
+        // Оптимистично обновляем права пользователя локально
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getBoardUserRights', queryKey, (draft) => {
+            // Убедимся, что draft - это массив и что право еще не добавлено
+            if (Array.isArray(draft) && !draft.includes(rightName)) {
+              draft.push(rightName);
+            }
+          })
+        );
+        
+        try {
+          // Ждем завершения запроса
+          await queryFulfilled;
+        } catch (error) {
+          // В случае ошибки отменяем оптимистичное обновление
+          patchResult.undo();
+          console.error('Failed to grant board right:', error);
+        }
+      },
     }),
     revokeBoardRight: builder.mutation({
       query: ({ boardId, userId, rightName }) => ({
@@ -860,7 +882,35 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: { userId, rightName },
       }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+      // Используем optimistic updates вместо invalidatesTags
+      async onQueryStarted({ boardId, userId, rightName }, { dispatch, queryFulfilled }) {
+        // Получаем ключ для запроса прав конкретного пользователя на доске
+        const queryKey = { boardId, userId };
+        
+        // Оптимистично обновляем права пользователя локально
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getBoardUserRights', queryKey, (draft) => {
+            // Убедимся, что draft - это массив
+            if (Array.isArray(draft)) {
+              // Находим индекс права, которое нужно удалить
+              const index = draft.indexOf(rightName);
+              if (index !== -1) {
+                // Удаляем право из массива
+                draft.splice(index, 1);
+              }
+            }
+          })
+        );
+        
+        try {
+          // Ждем завершения запроса
+          await queryFulfilled;
+        } catch (error) {
+          // В случае ошибки отменяем оптимистичное обновление
+          patchResult.undo();
+          console.error('Failed to revoke board right:', error);
+        }
+      },
     }),
     removeUserFromBoard: builder.mutation({
       query: ({ boardId, userId }) => ({

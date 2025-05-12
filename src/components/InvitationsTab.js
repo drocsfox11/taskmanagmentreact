@@ -47,7 +47,7 @@ function InvitationsTab() {
                                     Проект: {invitation.projectTitle}
                                 </div>
                                 <div className="invitation-sender">
-                                    От: {invitation.senderUsername}
+                                    От: {invitation.senderName}
                                 </div>
                                 <div className="invitation-status">
                                     Статус: Ожидает ответа

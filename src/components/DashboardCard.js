@@ -36,24 +36,6 @@ function DashboardCard({ board, onClick }) {
         { skip: !userId }
     );
     
-    // Извлекаем права для текущего проекта, если он известен
-    const directUserRights = projectId && allProjectRights[projectId] ? allProjectRights[projectId] : [];
-    
-    // Получаем права пользователя через хук
-    const { hasRight, rights, isLoading: isRightsHookLoading } = useProjectRights(projectId);
-    
-    // Проверяем, есть ли у пользователя права на редактирование или удаление на уровне проекта
-    const canEditBoard = hasRight(PROJECT_RIGHTS.EDIT_BOARDS);
-    const canDeleteBoard = hasRight(PROJECT_RIGHTS.DELETE_BOARDS);
-    
-    // Прямая проверка для отладки (без использования хука)
-    const directCanEditBoard = directUserRights.includes(PROJECT_RIGHTS.EDIT_BOARDS);
-    const directCanDeleteBoard = directUserRights.includes(PROJECT_RIGHTS.DELETE_BOARDS);
-    
-    // Показывать троеточие только если есть хотя бы одно право
-    // Используем прямую проверку для большей надежности
-    const showOptionsIcon = directCanEditBoard || directCanDeleteBoard;
-    
     // Получаем boardWithData, чтобы получить дополнительную информацию о доске, включая projectId, если он отсутствует
     // Это важно для корректной работы прав
     const { data: boardWithData, isLoading: isBoardDataLoading } = useGetBoardWithDataQuery(boardId, {
@@ -63,26 +45,34 @@ function DashboardCard({ board, onClick }) {
     // Если projectId не был указан изначально, но получен через API, используем его
     const effectiveProjectId = projectId || boardWithData?.projectId;
     
-    // Извлекаем права для эффективного projectId, если он отличается от исходного
-    const updatedRights = effectiveProjectId && 
-                         effectiveProjectId !== projectId && 
-                         allProjectRights[effectiveProjectId] ? 
-                         allProjectRights[effectiveProjectId] : [];
+    // Проверяем доступность прав на основе projectId
+    const checkRights = (rightName) => {
+        // Если есть effectiveProjectId и права загружены в allProjectRights
+        if (effectiveProjectId && allProjectRights && !isRightsLoading) {
+            // Получаем права для этого проекта
+            const projectRights = allProjectRights[effectiveProjectId];
+            // Проверяем наличие права
+            return projectRights && Array.isArray(projectRights) && projectRights.includes(rightName);
+        }
+        return false;
+    };
+    
+    // Проверяем права редактирования и удаления доски
+    const canEditBoard = checkRights(PROJECT_RIGHTS.EDIT_BOARDS);
+    const canDeleteBoard = checkRights(PROJECT_RIGHTS.DELETE_BOARDS);
+    
+    // Показывать троеточие если есть хотя бы одно право
+    const showOptionsIcon = canEditBoard || canDeleteBoard;
     
     // Отладочный вывод для проверки прав
     useEffect(() => {
-        console.log(`DashboardCard for board ${boardId} (initial projectId: ${projectId}):`);
-        console.log(`Board with data:`, boardWithData);
-        console.log(`Effective projectId: ${effectiveProjectId}`);
-        console.log(`Current user:`, currentUser);
-        console.log(`Direct rights:`, directUserRights);
-        console.log(`Hook rights:`, rights);
-        console.log(`Updated rights:`, updatedRights);
+        console.log(`DashboardCard for board ${boardId}:`);
+        console.log(`effectiveProjectId: ${effectiveProjectId}`);
+        console.log(`allProjectRights:`, allProjectRights);
+        console.log(`isRightsLoading: ${isRightsLoading}`);
         console.log(`Final permissions: canEdit=${canEditBoard}, canDelete=${canDeleteBoard}`);
         console.log(`Show options icon: ${showOptionsIcon}`);
-    }, [boardId, projectId, effectiveProjectId, directUserRights, rights, 
-        updatedRights, boardWithData, canEditBoard, canDeleteBoard, 
-        showOptionsIcon, currentUser]);
+    }, [boardId, effectiveProjectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, showOptionsIcon]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -125,18 +115,7 @@ function DashboardCard({ board, onClick }) {
     const handleManage = (e) => {
         e.stopPropagation();
         setIsModalOpen(false);
-        // Убедимся, что boardWithData загружено перед открытием модалки
-        console.log("DashboardCard: Открываем модальное окно управления доской");
-        console.log("DashboardCard: board:", board);
-        console.log("DashboardCard: boardWithData:", boardWithData);
-        
-        if (boardWithData) {
-            console.log("DashboardCard: Используем boardWithData для управления доской");
-            setIsManagementModalOpen(true);
-        } else {
-            console.warn("DashboardCard: boardWithData не загружено, используем оригинальный board");
-            setIsManagementModalOpen(true);
-        }
+        setIsManagementModalOpen(true);
     };
 
     useEffect(() => {

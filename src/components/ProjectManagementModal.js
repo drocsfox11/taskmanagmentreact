@@ -690,10 +690,10 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                                                     <td className="user-cell">
                                                         <img 
                                                             src={invitation.recipient?.avatarURL || Girl} 
-                                                            alt={invitation.recipient?.name} 
+                                                            alt={invitation.recipient?.name || "User"} 
                                                             className="user-avatar"
                                                         />
-                                                        <span>{invitation.recipient?.name || invitation.recipientId}</span>
+                                                        <span>{invitation.recipient?.name || invitation.recipient?.username || invitation.recipientId}</span>
                                                     </td>
                                                     <td>
                                                         <span className={`status-badge ${getStatusClass(invitation.status)}`}>

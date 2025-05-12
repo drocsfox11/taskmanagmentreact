@@ -25,7 +25,7 @@ function BoardPermissionsTab({ board }) {
         skip: !board.projectId
     });
     
-    const { data: fetchedUserRights, isLoading, refetch } = useGetBoardUserRightsQuery(
+    const { data: fetchedUserRights, isLoading } = useGetBoardUserRightsQuery(
         { boardId: board?.id, userId: selectedUserId },
         { skip: !selectedUserId || !board }
     );
@@ -58,15 +58,22 @@ function BoardPermissionsTab({ board }) {
                     userId: selectedUserId,
                     rightName,
                 }).unwrap();
+                
+                // Локально обновляем права пользователя
+                setUserRights(prev => prev.filter(right => right !== rightName));
             } else {
                 await grantRight({
                     boardId: board.id,
                     userId: selectedUserId,
                     rightName,
                 }).unwrap();
+                
+                // Локально обновляем права пользователя
+                setUserRights(prev => [...prev, rightName]);
             }
             
-            refetch();
+            // Убираем рефетч, так как он не нужен
+            // Вместо этого мы обновляем локальное состояние выше
         } catch (error) {
             console.error("Failed to update right:", error);
         }
