@@ -55,16 +55,18 @@ export {
 export {
   useCreateChatMutation,
   useDeleteChatMutation,
-  useGetMyChatsQuery,
-  useGetChatByIdQuery,
+  useGetChatDetailsQuery,
   useAddParticipantMutation,
   useRemoveParticipantMutation,
   useChangeParticipantRoleMutation,
   useGetPagedChatsQuery,
+  useUpdateChatAvatarMutation,
+  useUpdateChatNameMutation,
 } from './ChatsApi';
 
 export {
   useSendMessageMutation,
+  useSendMessageWithAttachmentsMutation,
   useGetMessagesQuery,
   useEditMessageMutation,
   useDeleteMessageMutation,

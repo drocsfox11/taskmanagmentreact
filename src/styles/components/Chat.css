@@ -1,0 +1,483 @@
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+/* Заголовок чата */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ECECEC;
+    background-color: #FFFFFF;
+}
+
+.chat-header-user {
+    display: flex;
+    align-items: center;
+}
+
+.chat-header-avatar {
+    position: relative;
+    margin-right: 15px;
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.chat-header-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header-name {
+    font-family: 'Ruberoid Bold', sans-serif;
+    font-size: 16px;
+    color: #333333;
+    margin-bottom: 4px;
+}
+
+.chat-header-status {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    color: #666666;
+}
+
+.chat-header-actions {
+    display: flex;
+    align-items: center;
+}
+
+.chat-header-icon {
+    width: 24px;
+    height: 24px;
+    margin-left: 15px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.chat-header-icon:hover {
+    opacity: 1;
+}
+
+/* Список участников чата */
+.chat-participants {
+    position: absolute;
+    top: 65px;
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    overflow: hidden;
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-participants-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ECECEC;
+}
+
+.chat-participants-header h3 {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 16px;
+    margin: 0;
+    color: #333333;
+}
+
+.chat-participants-close {
+    background: none;
+    border: none;
+    color: #666666;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.chat-participants-list {
+    overflow-y: auto;
+    max-height: 350px;
+    padding: 10px 15px;
+}
+
+.chat-participant {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #F5F5F5;
+}
+
+.chat-participant:last-child {
+    border-bottom: none;
+}
+
+.chat-participant-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+}
+
+.chat-participant-info {
+    flex: 1;
+}
+
+.chat-participant-name {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333333;
+    margin-bottom: 2px;
+}
+
+.chat-participant-role {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #5558FF;
+    text-transform: uppercase;
+}
+
+/* Контейнер сообщений */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #F9F9F9;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-empty {
+    margin: auto;
+    color: #888888;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    text-align: center;
+    padding: 30px 0;
+}
+
+.chat-loading-more {
+    color: #888888;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    text-align: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+/* Стили сообщений */
+.chat-message {
+    display: flex;
+    margin-bottom: 16px;
+    max-width: 80%;
+}
+
+.chat-message.incoming {
+    align-self: flex-start;
+}
+
+.chat-message.outgoing {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-message.local {
+    opacity: 0.8;
+}
+
+.chat-message-avatar {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+}
+
+.chat-message.outgoing .chat-message-avatar {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+.chat-message-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.chat-message-content {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    padding: 12px 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.chat-message.incoming .chat-message-content {
+    border-top-left-radius: 0;
+}
+
+.chat-message.outgoing .chat-message-content {
+    border-top-right-radius: 0;
+    background-color: #E6F2FF;
+}
+
+.chat-message-sender {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 13px;
+    color: #5558FF;
+    margin-bottom: 5px;
+}
+
+.chat-message-text {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    color: #333333;
+    word-break: break-word;
+    white-space: pre-wrap;
+    margin-bottom: 5px;
+}
+
+.chat-message-meta {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 11px;
+    color: #999999;
+    margin-top: 5px;
+}
+
+.chat-message-time {
+    margin-right: 5px;
+}
+
+.chat-message-edited {
+    font-style: italic;
+}
+
+.chat-message-status {
+    margin-left: 5px;
+    color: #5558FF;
+}
+
+/* Вложения в сообщениях */
+.chat-message-attachments {
+    margin-top: 8px;
+    margin-bottom: 5px;
+}
+
+.chat-attachment {
+    display: flex;
+    align-items: center;
+    background-color: #F5F5F5;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s;
+}
+
+.chat-attachment:hover {
+    background-color: #ECECEC;
+}
+
+.chat-attachment:last-child {
+    margin-bottom: 0;
+}
+
+.chat-attachment-icon {
+    font-size: 20px;
+    margin-right: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.chat-attachment-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.chat-attachment-name {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    color: #333333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.chat-attachment-size {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 11px;
+    color: #999999;
+}
+
+/* Предпросмотр вложений перед отправкой */
+.chat-attachments-preview {
+    padding: 10px 15px;
+    background-color: #F5F5F5;
+    border-top: 1px solid #ECECEC;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.chat-attachment-preview {
+    display: flex;
+    align-items: center;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.chat-attachment-preview:last-child {
+    margin-bottom: 0;
+}
+
+.chat-attachment-preview-icon {
+    font-size: 20px;
+    margin-right: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.chat-attachment-preview-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.chat-attachment-preview-name {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    color: #333333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.chat-attachment-preview-size {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 11px;
+    color: #999999;
+}
+
+.chat-attachment-preview-remove {
+    background: none;
+    border: none;
+    color: #FF4D4D;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 5px;
+    margin-left: 10px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.chat-attachment-preview-remove:hover {
+    opacity: 1;
+}
+
+/* Поле ввода */
+.chat-input-container {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #FFFFFF;
+    border-top: 1px solid #ECECEC;
+}
+
+.chat-attachment-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 15px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.chat-attachment-button:hover {
+    opacity: 1;
+}
+
+.chat-attachment-button img {
+    width: 24px;
+    height: 24px;
+}
+
+.chat-input {
+    flex: 1;
+    border: 1px solid #ECECEC;
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 14px;
+    background-color: #F9F9F9;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+    border-color: #5558FF;
+    background-color: #FFFFFF;
+}
+
+.chat-send-button {
+    background: #5558FF;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 15px;
+    transition: background-color 0.2s;
+}
+
+.chat-send-button:hover {
+    background-color: #4245D9;
+}
+
+.chat-send-button:disabled {
+    background-color: #CCCCCC;
+    cursor: not-allowed;
+}
+
+.chat-send-button img {
+    width: 16px;
+    height: 16px;
+} 

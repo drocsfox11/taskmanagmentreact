@@ -19,6 +19,7 @@ function LeftMenuMessenger({ onCreateChat }) {
     const navigate = useNavigate();
     const { chatId } = useParams();
 
+
     return (
         <div className="left-menu-messenger-container">
             <div className="left-menu-messenger-search-and-title-container">
@@ -35,8 +36,10 @@ function LeftMenuMessenger({ onCreateChat }) {
                     <div
                         key={chat.id}
                         className={`left-menu-messenger-chat-card${String(chatId) === String(chat.id) ? ' selected' : ''}`}
-                        onClick={() => navigate(`/messenger/${chat.id}`)}
-                    >
+                        onClick={() => {
+                            console.log("Нажал, ", chat.id);
+                            navigate(`/system/messenger/${chat.id}`);
+                        }}>
                         <img src={chat.avatarURL || MessengerAva} className="left-menu-messenger-chat-card-image"/>
                         <div className="left-menu-messenger-chat-card-text-container">
                             <div className="left-menu-messenger-chat-card-chat-name">{chat.name}</div>

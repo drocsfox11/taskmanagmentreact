@@ -2,7 +2,6 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 const BASE_URL = process.env.REACT_APP_API_BASE_URL + "/";
 
-// Кастомный baseQuery с авторизацией и обработкой ошибок
 const customBaseQuery = async (args, api, extraOptions) => {
   console.log(args, api, extraOptions);
 
@@ -21,7 +20,7 @@ const customBaseQuery = async (args, api, extraOptions) => {
 
   if (body) {
     if (formData) {
-
+      
       fetchOptions.body = body;
     } else {
       fetchOptions.headers['Content-Type'] = 'application/json';
@@ -59,5 +58,18 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: customBaseQuery,
   endpoints: () => ({}),
-  tagTypes: ['Projects', 'Boards', 'Columns', 'Tasks', 'Users', 'Tags', 'CurrentUser', 'ProjectRights', 'Events'],
+  tagTypes: [
+    'Projects',
+    'Boards',
+    'Columns',
+    'Tasks',
+    'Users',
+    'Tags',
+    'CurrentUser',
+    'ProjectRights',
+    'Events',
+    'Chats',
+    'Messages',
+    'ChatParticipants'
+  ],
 }); 
