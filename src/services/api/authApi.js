@@ -1,4 +1,5 @@
 import { baseApi } from './baseApi';
+import { disconnectWebSocket } from './WebSocketService';
 
 const prefix = 'auth';
 export const authApi = baseApi.injectEndpoints({
@@ -24,6 +25,15 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       invalidatesTags: ['CurrentUser'],
+      async onQueryStarted(arg, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          disconnectWebSocket();
+          console.log('WebSocket disconnected on logout');
+        } catch (error) {
+          console.error('Error during logout:', error);
+        }
+      }
     })
   }),
 });

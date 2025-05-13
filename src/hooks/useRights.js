@@ -15,8 +15,6 @@ export const useProjectRights = (projectId, options = {}) => {
   
   const shouldSkip = options.skip || !userId;
   
-  console.log(`useProjectRights called with projectId: ${projectId}, userId: ${userId}, skip: ${shouldSkip}`);
-  
   const { data: allProjectRights = {}, isLoading, isFetching, error } = useGetAllUserRightsQuery(
     userId,
     { skip: shouldSkip }
@@ -25,13 +23,10 @@ export const useProjectRights = (projectId, options = {}) => {
   const userRights = projectId && allProjectRights[projectId] ? allProjectRights[projectId] : [];
   
   useEffect(() => {
-    if (!shouldSkip) {
-      console.log(`Project rights loaded for projectId: ${projectId}`);
-      console.log(`Loading: ${isLoading}, Fetching: ${isFetching}`);
-      console.log(`Rights for project ${projectId}:`, userRights);
-      if (error) console.error(`Error loading rights:`, error);
+    if (!shouldSkip && error) {
+      console.error(`Error loading project rights:`, error);
     }
-  }, [projectId, userRights, isLoading, isFetching, error, shouldSkip]);
+  }, [error, shouldSkip]);
   
   /**
    * Проверяет наличие указанного права у пользователя
@@ -39,9 +34,7 @@ export const useProjectRights = (projectId, options = {}) => {
    * @returns {boolean} true, если пользователь имеет указанное право
    */
   const hasRight = (rightName) => {
-    const result = userRights && userRights.includes && userRights.includes(rightName);
-    console.log(`Checking right: ${rightName}, result: ${result}`);
-    return result;
+    return userRights && userRights.includes && userRights.includes(rightName);
   };
   
   /**
@@ -86,21 +79,16 @@ export const useBoardRights = (boardId, options = {}) => {
   
   const shouldSkip = options.skip || !boardId || !userId;
   
-  console.log(`useBoardRights called with boardId: ${boardId}, userId: ${userId}, skip: ${shouldSkip}`);
-  
   const { data: userRights = [], isLoading, isFetching, error } = useGetBoardUserRightsQuery(
     { boardId, userId },
     { skip: shouldSkip }
   );
   
   useEffect(() => {
-    if (!shouldSkip) {
-      console.log(`Board rights loaded for boardId: ${boardId}`);
-      console.log(`Loading: ${isLoading}, Fetching: ${isFetching}`);
-      console.log(`Rights:`, userRights);
-      if (error) console.error(`Error loading rights:`, error);
+    if (!shouldSkip && error) {
+      console.error(`Error loading board rights:`, error);
     }
-  }, [boardId, userRights, isLoading, isFetching, error, shouldSkip]);
+  }, [error, shouldSkip]);
   
   /**
    * Проверяет наличие указанного права у пользователя
@@ -108,9 +96,7 @@ export const useBoardRights = (boardId, options = {}) => {
    * @returns {boolean} true, если пользователь имеет указанное право
    */
   const hasRight = (rightName) => {
-    const result = userRights && userRights.includes && userRights.includes(rightName);
-    console.log(`Checking board right: ${rightName}, result: ${result}`);
-    return result;
+    return userRights && userRights.includes && userRights.includes(rightName);
   };
   
   /**

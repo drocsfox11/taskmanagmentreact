@@ -20,7 +20,7 @@ function ProjectMenu() {
     const { data: currentProject } = useGetProjectQuery(currentProjectId, {
         skip: !currentProjectId 
     });
-    console.log(currentProject)
+    
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
     const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);

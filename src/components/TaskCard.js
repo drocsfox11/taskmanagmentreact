@@ -21,8 +21,7 @@ function TaskCard({ task, onClick }) {
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     const cardRef = useRef(null);
-    const dispatch = useDispatch();
-    
+
     const [deleteTask] = useDeleteTaskMutation();
     const [updateTask] = useUpdateTaskMutation();
     
@@ -33,32 +32,9 @@ function TaskCard({ task, onClick }) {
     
     const showOptionsIcon = canEditTask || canDeleteTask;
     
-    const usersByUsername = useSelector(state => state.users?.byUsername || {});
-    
-    const getUsernameFromParticipant = (participant) => {
-        if (typeof participant === 'string') {
-            return participant;
-        } else if (participant) {
-            return participant.username || participant.name || '';
-        }
-        return '';
-    };
-    
-    useEffect(() => {
-        if (task?.participants && task.participants.length > 0) {
-            task.participants.forEach(participant => {
-                const username = getUsernameFromParticipant(participant);
-                
-                if (username && usersByUsername && !usersByUsername[username]) {
-                    console.log('Запрашиваем данные пользователя:', username);
-                    dispatch({ type: 'users/fetchUser', payload: username });
-                }
-            });
-        }
-    }, [task?.participants, usersByUsername, dispatch]);
+
     
     console.log('Отрисовка карточки задачи:', task);
-    console.log('Доступные данные пользователей:', usersByUsername);
     console.log('Права пользователя - редактирование:', canEditTask, 'удаление:', canDeleteTask);
     
     const handleOptionsClick = (e) => {
@@ -218,22 +194,12 @@ function TaskCard({ task, onClick }) {
                 {task.participants && task.participants.length > 0 && (
                     <div className="task-card-people">
                         {task.participants.slice(0, 4).map((participant, index) => {
-                            const username = getUsernameFromParticipant(participant);
-                            
-                            let avatarURL;
-                            if (typeof participant === 'object' && participant && participant.avatarURL) {
-                                avatarURL = participant.avatarURL;
-                            } else if (usersByUsername[username]) {
-                                avatarURL = usersByUsername[username].avatarURL;
-                            } else {
-                                avatarURL = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
-                            }
-                            
+
                             return (
-                                <div className="task-card-people-item" key={index} title={username}>
+                                <div className="task-card-people-item" key={index} title={participant.name}>
                                     <img 
-                                        src={avatarURL || Girl} 
-                                        alt={username}
+                                        src={participant.avatarURL}
+                                        alt={participant.name}
                                         style={{ 
                                             width: '100%', 
                                             height: '100%', 

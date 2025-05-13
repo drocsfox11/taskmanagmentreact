@@ -70,11 +70,7 @@ export const tasksApi = baseApi.injectEndpoints({
         } catch (error) {
           console.error('Failed to create task:', error);
         }
-      },
-      invalidatesTags: (result, error, { boardId }) => [
-        { type: 'Board', id: boardId },
-        'Tasks'
-      ],
+      }
     }),
     updateTask: builder.mutation({
       query: ({ id, ...updates }) => ({
@@ -123,11 +119,8 @@ export const tasksApi = baseApi.injectEndpoints({
           console.error(`Error updating task ${id}:`, error);
           patchResult.undo();
         }
-      },
-      invalidatesTags: (result, error, { boardId }) => [
-        { type: 'Board', id: boardId },
-        'Tasks'
-      ],
+      }
+      
     }),
     deleteTask: builder.mutation({
       query: (params) => {
@@ -165,21 +158,10 @@ export const tasksApi = baseApi.injectEndpoints({
           await queryFulfilled;
           console.log(`Task ${id} deleted successfully`);
           
-          dispatch(baseApi.util.invalidateTags([
-            { type: 'Board', id: boardId },
-            { type: 'Tasks' }
-          ]));
         } catch (error) {
           console.error(`Error deleting task ${id}:`, error);
           patchResult.undo();
         }
-      },
-      invalidatesTags: (result, error, params) => {
-        const boardId = typeof params === 'object' ? params.boardId : undefined;
-        return [
-          { type: 'Tasks' },
-          boardId ? { type: 'Board', id: boardId } : { type: 'Board' }
-        ];
       }
     }),
     moveTask: builder.mutation({
@@ -250,11 +232,7 @@ export const tasksApi = baseApi.injectEndpoints({
           console.error('Failed to move task:', error);
           patchResult.undo();
         }
-      },
-      invalidatesTags: (result, error, { boardId }) => [
-        { type: 'Board', id: boardId },
-        'Tasks'
-      ],
+      }
     }),
   }),
 });

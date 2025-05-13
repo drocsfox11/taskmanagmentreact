@@ -1,4 +1,5 @@
 import { baseApi } from './baseApi';
+import { initializeWebSocketConnection, disconnectWebSocket } from './WebSocketService';
 
 const apiPrefix = 'api/users';
 
@@ -15,16 +16,38 @@ export const usersApi = baseApi.injectEndpoints({
     getCurrentUser: builder.query({
       query: () => ({url:`${apiPrefix}/me`}),
       providesTags: ['CurrentUser'],
+      async onCacheEntryAdded(
+        arg,
+        { cacheDataLoaded, cacheEntryRemoved }
+      ) {
+        try {
+          console.log("Кеш пользователя полетел!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+          // Wait for the user data to be loaded
+          const { data: userData } = await cacheDataLoaded;
+          
+          if (userData && userData.id) {
+            // Initialize global WebSocket connection
+            initializeWebSocketConnection(userData.id);
+            console.log('WebSocket connection initialized for user:', userData.id);
+          }
+          
+          // When the cache entry is removed (user logs out or session expires)
+          await cacheEntryRemoved;
+          
+          // Disconnect WebSocket when user data is removed from cache
+          disconnectWebSocket();
+          console.log('WebSocket connection closed on cache removal');
+        } catch (error) {
+          console.error('Error in WebSocket initialization:', error);
+        }
+      }
     }),
     updateUser: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `${apiPrefix}/${id}`,
         method: 'PUT',
         body: data,
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: 'Users', id }
-      ],
+      })
     }),
     searchUsers: builder.query({
       query: ({ name, page = 0, size = 10 }) => ({

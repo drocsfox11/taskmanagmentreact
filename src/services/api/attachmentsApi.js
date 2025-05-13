@@ -14,10 +14,7 @@ export const attachmentsApi = baseApi.injectEndpoints({
           formData: true,
         };
       },
-      invalidatesTags: (result, error, { taskId }) => [
-        { type: 'Tasks', id: taskId },
-        { type: 'Board', id: null }
-      ],
+
     }),
     
     uploadTaskAttachments: builder.mutation({
@@ -42,29 +39,21 @@ export const attachmentsApi = baseApi.injectEndpoints({
           formData: true,
         };
       },
-      invalidatesTags: (result, error, { taskId }) => [
-        { type: 'Tasks', id: taskId },
-        { type: 'Board', id: null }
-      ],
+
     }),
     
     deleteAttachment: builder.mutation({
       query: (attachmentId) => ({
         url: `api/attachments/${attachmentId}`,
         method: 'DELETE',
-      }),
-      invalidatesTags: ['Tasks'],
+      })
     }),
     
     deleteAllTaskAttachments: builder.mutation({
       query: (taskId) => ({
         url: `api/attachments/task/${taskId}`,
         method: 'DELETE',
-      }),
-      invalidatesTags: (result, error, taskId) => [
-        { type: 'Tasks', id: taskId },
-        { type: 'Board', id: null }
-      ],
+      })
     }),
     
     getTaskAttachments: builder.query({

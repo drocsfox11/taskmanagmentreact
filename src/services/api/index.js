@@ -1,4 +1,30 @@
 import { baseApi } from './baseApi';
+import { 
+  initializeWebSocketConnection, 
+  disconnectWebSocket,
+  subscribeToChatTopic,
+  subscribeToBoardTopic,
+  unsubscribeFromTopic,
+  unsubscribeFromAllChatsExcept,
+  unsubscribeFromAllBoardsExcept,
+  sendBoardAction,
+  ChatEventTypes,
+  BoardEventTypes
+} from './WebSocketService';
+
+// Export WebSocket service
+export {
+  initializeWebSocketConnection, 
+  disconnectWebSocket,
+  subscribeToChatTopic,
+  subscribeToBoardTopic,
+  unsubscribeFromTopic,
+  unsubscribeFromAllChatsExcept,
+  unsubscribeFromAllBoardsExcept,
+  sendBoardAction,
+  ChatEventTypes,
+  BoardEventTypes
+};
 
 export {
   useGetProjectsQuery,

@@ -1,114 +1,12 @@
 import { baseApi } from './baseApi';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { 
+  subscribeToBoardTopic, 
+  unsubscribeFromAllBoardsExcept,
+  sendBoardAction, 
+  BoardEventTypes 
+} from './WebSocketService';
 
 const apiPrefix = 'api/boards';
-const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost:8080';
-
-const stompConnections = {};
-
-const getStompConnection = (boardId) => {
-  if (!stompConnections[boardId]) {
-    const socket = new SockJS(`${WS_URL}/ws`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    
-    const client = new Client({
-      webSocketFactory: () => socket,
-      debug: function (str) {
-        console.log(`STOMP: ${str}`);
-      },
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-    });
-
-    const subscriptions = {};
-    
-    client.onConnect = (frame) => {
-      console.log(`STOMP connection established for board ${boardId}:`, frame);
-      
-
-      subscriptions.boardEvents = client.subscribe(
-        `/topic/boards/${boardId}`, 
-        (message) => {
-          try {
-            if (stompConnections[boardId] && stompConnections[boardId].messageHandler) {
-              const data = JSON.parse(message.body);
-              console.log(`Received message for board ${boardId}:`, data);
-              stompConnections[boardId].messageHandler(data);
-            }
-          } catch (error) {
-            console.error('STOMP message error:', error);
-          }
-        }
-      );
-    };
-    
-    client.onStompError = (frame) => {
-      console.error(`STOMP error for board ${boardId}:`, frame.headers['message'], frame.body);
-    };
-    
-    client.onWebSocketError = (event) => {
-      console.error(`WebSocket error for board ${boardId}:`, event);
-    };
-    
-    client.onDisconnect = () => {
-      console.log(`STOMP disconnected for board ${boardId}`);
-    };
-    
-    client.beforeConnect = () => {
-      console.log(`Attempting to connect to STOMP server for board ${boardId}...`);
-    };
-    
-    client.activate();
-    
-    const sendAction = (action, payload) => {
-      if (client.connected) {
-        client.publish({
-          destination: `/app/boards/${boardId}`,
-          body: JSON.stringify({
-            type: action,
-            payload: { ...payload, socketEvent: true }
-          })
-        });
-        console.log(`Sent ${action} to board ${boardId}:`, payload);
-        return true;
-      } else {
-        console.error(`STOMP not connected for board ${boardId}`);
-        return false;
-      }
-    };
-    
-    stompConnections[boardId] = {
-      client,
-      subscriptions,
-      sendAction,
-      messageHandler: null,
-      
-      setMessageHandler: (handler) => {
-        stompConnections[boardId].messageHandler = handler;
-      },
-      
-      disconnect: () => {
-        Object.values(subscriptions).forEach(subscription => {
-          if (subscription && subscription.unsubscribe) {
-            subscription.unsubscribe();
-          }
-        });
-        
-        if (client.connected) {
-          client.deactivate();
-        }
-        
-        delete stompConnections[boardId];
-      }
-    };
-  }
-  
-  return stompConnections[boardId];
-};
 
 export const boardsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -129,9 +27,9 @@ export const boardsApi = baseApi.injectEndpoints({
         await cacheDataLoaded;
         
         try {
-          const stompConn = getStompConnection(boardId);
+          unsubscribeFromAllBoardsExcept(boardId);
           
-          stompConn.setMessageHandler((data) => {
+          subscribeToBoardTopic(boardId, (data) => {
             const state = getState();
             const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
             const currentUserId = currentUser?.id;
@@ -149,7 +47,7 @@ export const boardsApi = baseApi.injectEndpoints({
             }
             
             switch (data.type) {
-              case 'BOARD_UPDATED':
+              case BoardEventTypes.BOARD_UPDATED:
                 updateCachedData((draft) => {
                   draft.id = data.payload.id || draft.id;
                   draft.title = data.payload.title || draft.title;
@@ -167,13 +65,13 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
               
-              case 'TAG_CREATED':
+              case BoardEventTypes.TAG_CREATED:
                 updateCachedData((draft) => {
                   draft.tags.push(data.payload);
                 });
                 break;
                 
-              case 'TAG_UPDATED':
+              case BoardEventTypes.TAG_UPDATED:
                 updateCachedData((draft) => {
                   const index = draft.tags.findIndex(tag => tag.id === data.payload.id);
                   if (index !== -1) {
@@ -182,7 +80,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
                 
-              case 'TAG_DELETED':
+              case BoardEventTypes.TAG_DELETED:
                 updateCachedData((draft) => {
                   const index = draft.tags.findIndex(tag => tag.id === data.payload.id);
                   if (index !== -1) {
@@ -191,7 +89,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
               
-              case 'COLUMN_CREATED':
+              case BoardEventTypes.COLUMN_CREATED:
                 console.log('Processing COLUMN_CREATED websocket event from another user');
                 updateCachedData((draft) => {
                   const existingColumnIndex = draft.columns.findIndex(col =>
@@ -218,7 +116,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
                 
-              case 'COLUMN_UPDATED':
+              case BoardEventTypes.COLUMN_UPDATED:
                 updateCachedData((draft) => {
                   const index = draft.columns.findIndex(col =>
                     col.id === data.payload.id || 
@@ -246,7 +144,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
                 
-              case 'COLUMN_DELETED':
+              case BoardEventTypes.COLUMN_DELETED:
                 console.log('WebSocket COLUMN_DELETED event received:', data.payload);
                 updateCachedData((draft) => {
                   const index = draft.columns.findIndex(col =>
@@ -262,7 +160,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
                 
-              case 'COLUMNS_REORDERED':
+              case BoardEventTypes.COLUMNS_REORDERED:
                 updateCachedData((draft) => {
                   const currentColumns = [...draft.columns];
                   
@@ -282,7 +180,7 @@ export const boardsApi = baseApi.injectEndpoints({
                 });
                 break;
               
-              case 'TASK_CREATED':
+              case BoardEventTypes.TASK_CREATED:
                 console.log('Processing TASK_CREATED websocket event:', data.payload);
                 updateCachedData((draft) => {
                   const taskData = {
@@ -304,12 +202,10 @@ export const boardsApi = baseApi.injectEndpoints({
                   }
                 });
                 
-                dispatch(baseApi.util.invalidateTags([
-                  { type: 'Tasks', id: `board-history-${boardId}` }
-                ]));
+
                 break;
                 
-              case 'TASK_UPDATED':
+              case BoardEventTypes.TASK_UPDATED:
                 console.log('Processing TASK_UPDATED websocket event:', data.payload);
                 updateCachedData((draft) => {
                   const taskData = {
@@ -334,12 +230,10 @@ export const boardsApi = baseApi.injectEndpoints({
                   }
                 });
                 
-                dispatch(baseApi.util.invalidateTags([
-                  { type: 'Tasks', id: `board-history-${boardId}` }
-                ]));
+
                 break;
                 
-              case 'TASK_DELETED':
+              case BoardEventTypes.TASK_DELETED:
                 console.log('Processing TASK_DELETED websocket event:', data.payload);
                 updateCachedData((draft) => {
                   draft.columns.forEach(column => {
@@ -359,12 +253,10 @@ export const boardsApi = baseApi.injectEndpoints({
                   });
                 });
                 
-                dispatch(baseApi.util.invalidateTags([
-                  { type: 'Tasks', id: `board-history-${boardId}` }
-                ]));
+
                 break;
                 
-              case 'TASK_MOVED':
+              case BoardEventTypes.TASK_MOVED:
                 console.log('Processing TASK_MOVED websocket event:', data.payload);
                 updateCachedData((draft) => {
                   const taskId = data.payload.taskId || data.payload.id;
@@ -424,10 +316,7 @@ export const boardsApi = baseApi.injectEndpoints({
                   
                   console.log(`Task ${taskId} successfully moved via WebSocket`);
                 });
-                
-                dispatch(baseApi.util.invalidateTags([
-                  { type: 'Tasks', id: `board-history-${boardId}` }
-                ]));
+
                 break;
                 
               default:
@@ -438,9 +327,6 @@ export const boardsApi = baseApi.injectEndpoints({
           
           await cacheEntryRemoved;
           
-          if (stompConnections[boardId]) {
-            stompConnections[boardId].disconnect();
-          }
         } catch (err) {
           console.error('STOMP connection error:', err);
         }
@@ -452,7 +338,7 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: board,
       }),
-      invalidatesTags: ['Boards'],
+
     }),
     updateBoard: builder.mutation({
       query: ({ id, ...data }) => ({
@@ -639,8 +525,7 @@ export const boardsApi = baseApi.injectEndpoints({
           console.error('Error creating column:', error);
           patchResult.undo();
         }
-      },
-      invalidatesTags: ['Columns']
+      }
     }),
     updateColumn: builder.mutation({
       query: ({ boardId, columnId, ...updates }) => ({
@@ -666,8 +551,7 @@ export const boardsApi = baseApi.injectEndpoints({
         } catch {
           patchResult.undo();
         }
-      },
-      invalidatesTags: ['Columns']
+      }
     }),
     deleteColumn: builder.mutation({
       query: ({ boardId, columnId }) => {
@@ -706,8 +590,7 @@ export const boardsApi = baseApi.injectEndpoints({
             console.log('Server likely returned success but with an empty/invalid JSON response, keeping optimistic update.');
           }
         }
-      },
-      invalidatesTags: ['Columns']
+      }
     }),
     reorderColumns: builder.mutation({
       query: ({ boardId, columns }) => ({
@@ -778,8 +661,8 @@ export const boardsApi = baseApi.injectEndpoints({
         } catch {
           patchResult.undo();
         }
-      },
-      invalidatesTags: ['Tags']
+      }
+      
     }),
     updateTag: builder.mutation({
       query: ({ id, ...data }) => ({
@@ -802,8 +685,8 @@ export const boardsApi = baseApi.injectEndpoints({
         } catch {
           patchResult.undo();
         }
-      },
-      invalidatesTags: ['Tags']
+      }
+      
     }),
     deleteTag: builder.mutation({
       query: (id) => ({
@@ -825,8 +708,8 @@ export const boardsApi = baseApi.injectEndpoints({
         } catch {
           patchResult.undo();
         }
-      },
-      invalidatesTags: ['Tags']
+      }
+      
     }),
     getBoardUserRights: builder.query({
       query: ({ boardId, userId }) => ({
@@ -838,8 +721,7 @@ export const boardsApi = baseApi.injectEndpoints({
       query: ({ boardId, userId }) => ({
         url: `${apiPrefix}/${boardId}/participants/${userId}`,
         method: 'POST',
-      }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+      })
     }),
     grantBoardRight: builder.mutation({
       query: ({ boardId, userId, rightName }) => ({
@@ -898,8 +780,7 @@ export const boardsApi = baseApi.injectEndpoints({
       query: ({ boardId, userId }) => ({
         url: `${apiPrefix}/${boardId}/rights/users/${userId}`,
         method: 'DELETE',
-      }),
-      invalidatesTags: (result, error, { boardId }) => [{ type: 'Board', id: boardId }],
+      })
     }),
     getVisibleBoards: builder.query({
       query: (projectId) => ({

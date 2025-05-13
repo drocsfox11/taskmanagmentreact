@@ -18,7 +18,7 @@ function LeftMenu() {
 
     const routeMap = {
         work:       '/system/project',
-        messenger:  '/system/messenger',
+        messenger:  '/system/messenger/',
         calendar:   '/system/calendar'
     };
 

@@ -60,7 +60,6 @@ function TaskDashboard() {
     } = useGetTasksHistoryByBoardQuery(boardIdNum, {
         skip: isNaN(boardIdNum)
     });
-
     const [createTask] = useCreateTaskMutation();
     const [createColumn] = useCreateColumnMutation();
     const [updateColumn] = useUpdateColumnMutation();
@@ -95,82 +94,21 @@ function TaskDashboard() {
             .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }, [boardWithData?.columns]);
     
-    console.log('Колонки в компоненте:', columns);
-    console.log('ID доски:', boardId);
-    
     const board = boardWithData;
     const isLoading = isLoadingBoardData;
     
     const boardParticipants = board?.participants || [];
     
-    const [usersByUsername, setUsersByUsername] = useState({});
-    const dispatch = useDispatch();
     
     const { hasRight } = useBoardRights(boardIdNum);
     
-    useEffect(() => {
-        if (boardParticipants && boardParticipants.length > 0) {
-            console.log('Загрузка данных о пользователях:', boardParticipants);
-            
-            boardParticipants.forEach(participant => {
-                const username = participant.username || participant.name || participant;
-                
-                if (username) {
-                    console.log('Запрос данных пользователя:', username);
-                    dispatch({ 
-                        type: 'users/fetchUser', 
-                        payload: username 
-                    });
-                    
-                    if (typeof participant === 'object' && participant !== null) {
-                        dispatch({ 
-                            type: 'users/addUserData', 
-                            payload: { 
-                                username: username,
-                                avatarURL: participant.avatarURL,
-                                userId: participant.id,
-                                displayName: participant.name || participant.username
-                            } 
-                        });
-                    }
-                }
-            });
-        }
-    }, [boardParticipants, dispatch]);
-    
-    const reduxUsersByUsername = useSelector(state => state.users?.byUsername || {});
+
     
     useEffect(() => {
-        setUsersByUsername(reduxUsersByUsername);
-    }, [reduxUsersByUsername]);
-    
-    useEffect(() => {
-        console.log('Board data received:', {
-            boardWithData,
-            isLoadingBoardData,
-            boardError,
-            boardIdNum
-        });
-        
-        if (boardWithData) {
-            console.log('Columns:', boardWithData.columns);
-            console.log('Participants:', boardWithData.participants);
-        }
-        
-        if (boardError) {
-            console.error('Error loading board data:', boardError);
-        }
-    }, [boardWithData, isLoadingBoardData, boardError, boardIdNum]);
-    
-    useEffect(() => {
-        if (tasksHistory) {
-            console.log('Tasks history loaded:', tasksHistory);
-        }
-        
         if (tasksHistoryError) {
             console.error('Error loading tasks history:', tasksHistoryError);
         }
-    }, [tasksHistory, tasksHistoryError]);
+    }, [tasksHistoryError]);
 
     const [loadAttempts, setLoadAttempts] = useState(0);
     const maxLoadAttempts = 3;
@@ -418,22 +356,13 @@ function TaskDashboard() {
                             style={{ cursor: 'pointer' }}
                         >
                             {boardParticipants.slice(0, 4).map((participant, index) => {
-                                const username = typeof participant === 'string'
-                                    ? participant 
-                                    : participant.username || participant.name || '';
-                                
-                                const userData = usersByUsername[username] || {};
-                                
-                                const displayName = userData.displayName || userData.name ||
-                                                  (typeof participant === 'object' && participant.name) || username;
-                                const avatarURL = userData.avatarURL || 
-                                                (typeof participant === 'object' && participant.avatarURL) || '';
+
                                 
                                 return (
-                                    <div className="task-dashboard-people-item" key={index} title={displayName}>
+                                    <div className="task-dashboard-people-item" key={index} title={participant.name || ''}>
                                         <img 
-                                            src={avatarURL || Girl} 
-                                            alt={displayName} 
+                                            src={participant.avatarURL || Girl} 
+                                            alt={participant.name || ''} 
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                             onError={(e) => { e.target.src = Girl; }}
                                         />
@@ -541,16 +470,7 @@ function TaskDashboard() {
                         <div style={{ marginTop: '20px' }}>
                             {boardParticipants.length > 0 ? (
                                 boardParticipants.map((participant, index) => {
-                                    const username = typeof participant === 'string'
-                                        ? participant 
-                                        : participant.username || participant.name || '';
-                                    
-                                    const userData = usersByUsername[username] || {};
-                                    
-                                    const displayName = userData.displayName || userData.name ||
-                                                       (typeof participant === 'object' && participant.name) || username;
-                                    const avatarURL = userData.avatarURL || 
-                                                     (typeof participant === 'object' && participant.avatarURL) || '';
+
                                     
                                     return (
                                         <div key={index} style={{ 
@@ -568,18 +488,18 @@ function TaskDashboard() {
                                                 background: '#FED9D9'
                                             }}>
                                                 <img 
-                                                    src={avatarURL || Girl} 
-                                                    alt={displayName} 
+                                                    src={participant.avatarURL || Girl} 
+                                                    alt={participant.name || ''} 
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     onError={(e) => { e.target.src = Girl; }}
                                                 />
                                             </div>
                                             <div>
                                                 <div style={{ fontFamily: 'Ruberoid Bold', fontSize: '14px' }}>
-                                                    {displayName}
+                                                    {participant.name}
                                                 </div>
                                                 <div style={{ fontFamily: 'Ruberoid Regular', fontSize: '12px', color: '#969595' }}>
-                                                    {username}
+                                                    {participant.username}
                                                 </div>
                                             </div>
                                         </div>

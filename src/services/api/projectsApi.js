@@ -24,7 +24,6 @@ export const projectsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: project,
       }),
-      invalidatesTags: ['ProjectRights'],
       async onQueryStarted(projectData, { dispatch, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
         
@@ -70,7 +69,6 @@ export const projectsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Projects', id }],
       async onQueryStarted({ id, ...updates }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
@@ -111,7 +109,6 @@ export const projectsApi = baseApi.injectEndpoints({
           await queryFulfilled;
           console.log(`Проект с ID ${id} успешно удален на сервере`);
           
-          dispatch(baseApi.util.invalidateTags(['ProjectRights']));
         } catch (error) {
           patchResult.undo();
           console.error(`Ошибка при удалении проекта с ID ${id}:`, error);
@@ -188,14 +185,12 @@ export const projectsApi = baseApi.injectEndpoints({
         url: `${apiPrefix}/${projectId}/boards/add-user/${userId}`,
         method: 'POST',
       }),
-      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
     removeUserFromAllBoards: builder.mutation({
       query: ({ projectId, userId }) => ({
         url: `${apiPrefix}/${projectId}/boards/remove-user/${userId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
   }),
 });

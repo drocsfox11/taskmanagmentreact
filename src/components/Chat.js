@@ -72,7 +72,6 @@ function Chat({ chatId }) {
 
     const [sendMessage, { isLoading: isSendingText }] = useSendMessageMutation();
     const [sendMessageWithAttachments, { isLoading: isSendingWithAttachments }] = useSendMessageWithAttachmentsMutation();
-    // const [markAsRead] = useMarkAsReadMutation();
     
     const isSending = isSendingText || isSendingWithAttachments;
     const { data: currentUser } = useGetCurrentUserQuery();
@@ -102,21 +101,10 @@ function Chat({ chatId }) {
         }
     }, [messagesData, offset]);
 
-    // Auto-scroll to bottom and mark messages as read when new messages arrive
+    // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (messages.length > 0 && messagesContainerRef.current) {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-            
-            // Mark unread messages as read
-            const unreadMessages = messages.filter(msg => 
-                msg.senderId !== currentUser?.id && !msg.isReaded
-            );
-            
-            // if (unreadMessages.length > 0) {
-            //     unreadMessages.forEach(msg => {
-            //         markAsRead({ chatId, messageId: msg.id }).catch(console.error);
-            //     });
-            // }
         }
     }, [messages, currentUser, chatId]);
 
