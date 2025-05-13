@@ -1,13 +1,54 @@
 import { baseApi } from './baseApi';
+import { getChatSocketConnection, disconnectAllChatSockets, ChatEventTypes } from './ChatSocketService';
 
 export const chatsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createChat: builder.mutation({
-      query: (chat) => ({
+      query: ({chat, selectedUser}) => ({
         url: 'api/chats',
         method: 'POST',
         body: chat,
       }),
+      async onQueryStarted({chat, selectedUser}, {dispatch, queryFulfilled}) {
+        const tempId = Date.now().toString();
+        console.log(chat, selectedUser);
+
+        const patchResult = dispatch(
+          chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+            if (!draft.chats) draft.chats = [];
+            draft.chats.unshift(chat.isGroupChat ? {
+              id: tempId,
+              name: chat.name,
+              avatarURL: chat.avatarURL,
+              isGroupChat: chat.isGroupChat,
+              participantIds: chat.participantIds,
+              lastMessage: null
+            } : {
+              id: tempId,
+              name: selectedUser.name,
+              avatarURL: selectedUser.avatarURL,
+              isGroupChat: chat.isGroupChat,
+              lastMessage: null
+            });
+          })
+        );
+        
+        try {
+          const { data } = await queryFulfilled;
+          
+          dispatch(
+            chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+              const chatIndex = draft.chats.findIndex(c => c.id === tempId);
+              if (chatIndex !== -1) {
+                draft.chats[chatIndex].id = data.id;
+              }
+            })
+          );
+        } catch (error) {
+          console.error('Failed to create chat:', error);
+          patchResult.undo();
+        }
+      }
     }),
     deleteChat: builder.mutation({
       query: (chatId) => ({
@@ -25,10 +66,158 @@ export const chatsApi = baseApi.injectEndpoints({
           isGroupChat: response.groupChat,
           avatarURL: response.avatarURL,
           participants: response.participants || [],
-          lastActivity: response.lastActivity || new Date().toISOString(),
-          unreadCount: response.unreadCount || 0,
-          lastMessage: response.lastMessage || null
         };
+      },
+      
+      async onCacheEntryAdded(
+        chatId,
+        { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch, getState }
+      ) {
+        try {
+          await cacheDataLoaded;
+          
+          const state = getState();
+          const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
+          
+          if (!currentUser || !chatId) return;
+          
+          const userId = currentUser.id;
+          
+          // Get chat socket connection and subscribe to this chat
+          const chatSocket = getChatSocketConnection(userId, chatId);
+          
+          if (chatSocket) {
+            // Unsubscribe from all other chats to save resources
+            chatSocket.unsubscribeFromAllExcept(chatId);
+            
+            // Subscribe to this chat if not already subscribed
+            chatSocket.subscribeToChat(chatId);
+            
+            // Set up message handler for this chat
+            chatSocket.setMessageHandler(chatId, (event) => {
+              if (!event || !event.type) return;
+              
+              // Check if the event was initiated by the current user
+              if (event.payload?.senderId === userId) {
+                console.log(`Ignoring own event: ${event.type}`);
+                return;
+              }
+              
+              switch (event.type) {
+                case ChatEventTypes.NEW_MESSAGE:
+                  if (event.payload.senderId !== userId) break;
+                  dispatch(
+                    baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
+                      if (!draft.messages) draft.messages = [];
+                      
+                      // Check if message already exists
+                      const exists = draft.messages.some(msg => msg.id === event.payload.id);
+                      
+                      if (!exists) {
+                        // Add new message to the beginning
+                        draft.messages.unshift({
+                          ...event.payload,
+                          isLocal: false
+                        });
+                      }
+                    })
+                  );
+                  
+                  // Update last message in chat list
+                  dispatch(
+                    chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                      const chatIndex = draft.chats.findIndex(c => c.id === chatId);
+                      if (chatIndex !== -1) {
+                        draft.chats[chatIndex].lastMessage = event.payload;
+                        draft.chats[chatIndex].unreadCount = (draft.chats[chatIndex].unreadCount || 0) + 1;
+                        
+                        // Move chat to top of list
+                        const chat = draft.chats[chatIndex];
+                        draft.chats.splice(chatIndex, 1);
+                        draft.chats.unshift(chat);
+                      }
+                    })
+                  );
+                  
+                  // Update chat details
+                  updateCachedData((draft) => {
+                    draft.lastMessage = event.payload;
+                    draft.lastActivity = new Date().toISOString();
+                    draft.unreadCount = (draft.unreadCount || 0) + 1;
+                  });
+                  break;
+                
+                case ChatEventTypes.MESSAGE_EDITED:
+                  if (event.payload.senderId !== userId) break;
+
+                  dispatch(
+                    baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
+                      const msgIndex = draft.messages.findIndex(msg => msg.id === event.payload.id);
+                      if (msgIndex !== -1) {
+                        draft.messages[msgIndex] = {
+                          ...draft.messages[msgIndex],
+                          ...event.payload,
+                          isEdited: true
+                        };
+                      }
+                    })
+                  );
+                  break;
+                
+                case ChatEventTypes.MESSAGE_DELETED:
+                  if (event.payload.senderId !== userId) break;
+
+                  dispatch(
+                    baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
+                      draft.messages = draft.messages.filter(msg => msg.id !== event.payload.id);
+                    })
+                  );
+                  break;
+                
+                case ChatEventTypes.USER_ADDED:
+                  updateCachedData((draft) => {
+                    if (!draft.participants.some(p => p.id === event.payload.userId)) {
+                      draft.participants.push({
+                        id: event.payload.userId,
+                        name: event.payload.userName || 'Пользователь',
+                        avatarURL: event.payload.avatarURL || '',
+                        role: 'MEMBER'
+                      });
+                    }
+                  });
+                  break;
+                
+                case ChatEventTypes.USER_REMOVED:
+                  updateCachedData((draft) => {
+                    draft.participants = draft.participants.filter(p => p.id !== event.payload.userId);
+                  });
+                  break;
+                
+                case ChatEventTypes.USER_ROLE_CHANGED:
+                  updateCachedData((draft) => {
+                    const participantIndex = draft.participants.findIndex(p => p.id === event.payload.userId);
+                    if (participantIndex !== -1) {
+                      draft.participants[participantIndex].role = event.payload.role;
+                    }
+                  });
+                  break;
+                
+                default:
+                  console.log('Unknown chat event type:', event.type);
+              }
+            });
+          }
+          
+          // Clean up on unmount or when chat changes
+          await cacheEntryRemoved;
+          
+          // Don't disconnect, just unsubscribe from this chat
+          if (chatSocket) {
+            chatSocket.unsubscribeFromChat(chatId);
+          }
+        } catch (error) {
+          console.error('Chat socket connection error:', error);
+        }
       }
     }),
     addParticipant: builder.mutation({
@@ -117,13 +306,38 @@ export const chatsApi = baseApi.injectEndpoints({
             ...chat,
             isGroupChat: chat.groupChat, // Преобразуем groupChat в isGroupChat
             lastMessage: chat.lastMessage || null,
-            unreadCount: chat.unreadCount || 0,
             participants: chat.participants || []
           })) || [],
           hasNext: response.hasNext
         };
       },
-      providesTags: (result) => 
+      async onCacheEntryAdded(
+        arg,
+        { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch, getState }
+      ) {
+        try {
+          await cacheDataLoaded;
+          
+          const state = getState();
+          const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
+          
+          if (!currentUser) return;
+          
+          const userId = currentUser.id;
+          
+          // Create global socket connection for the user
+          const chatSocket = getChatSocketConnection(userId);
+          
+          // Clean up on unmount
+          await cacheEntryRemoved;
+          
+          // Keep the connection active, just unsubscribe from all chats
+          // This allows persistent connection between navigations
+        } catch (error) {
+          console.error('Chat socket connection error:', error);
+        }
+      },
+      providesTags: (result) =>
         result?.chats
           ? [
               ...result.chats.map(({ id }) => ({ type: 'Chats', id })),

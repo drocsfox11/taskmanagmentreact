@@ -1,8 +1,9 @@
 import '../styles/components/LeftMenuMessenger.css';
 import MessengerAva from '../assets/icons/messenger_ava.svg';
 import Search from "../assets/icons/search.svg";
-import { useGetPagedChatsQuery } from '../services/api';
+import { useGetPagedChatsQuery, useGetCurrentUserQuery } from '../services/api';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
 
 function formatTime(dateString) {
     if (!dateString) return '';
@@ -15,9 +16,17 @@ function formatTime(dateString) {
 }
 
 function LeftMenuMessenger({ onCreateChat }) {
-    const { data, isLoading } = useGetPagedChatsQuery({ page: 0, size: 30 });
+    const { data: chatsData, isLoading } = useGetPagedChatsQuery({ offset: 0, size: 30 });
     const navigate = useNavigate();
     const { chatId } = useParams();
+
+    const handleNewMessage = useCallback((event) => {
+        
+        console.log('New message received in chat list:', event);
+    }, []);
+
+    console.log(chatsData);
+
 
 
     return (
@@ -31,18 +40,24 @@ function LeftMenuMessenger({ onCreateChat }) {
             </div>
             <div className="left-menu-messenger-chats-container">
                 {isLoading && <div className="messenger-chats-loading">Загрузка...</div>}
-                {!isLoading && data?.chats?.length === 0 && <div className="messenger-chats-empty">Нет чатов</div>}
-                {data?.chats?.map(chat => (
+                {!isLoading && chatsData?.chats?.length === 0 && <div className="messenger-chats-empty">Нет чатов</div>}
+                {chatsData?.chats?.map(chat => (
                     <div
                         key={chat.id}
-                        className={`left-menu-messenger-chat-card${String(chatId) === String(chat.id) ? ' selected' : ''}`}
+                        className={`left-menu-messenger-chat-card${String(chatId) === String(chat.id) ? ' selected' : ''}${chat.unreadCount > 0 ? ' unread' : ''}`}
                         onClick={() => {
-                            console.log("Нажал, ", chat.id);
                             navigate(`/system/messenger/${chat.id}`);
                         }}>
                         <img src={chat.avatarURL || MessengerAva} className="left-menu-messenger-chat-card-image"/>
                         <div className="left-menu-messenger-chat-card-text-container">
-                            <div className="left-menu-messenger-chat-card-chat-name">{chat.name}</div>
+                            <div className="left-menu-messenger-chat-card-top-row">
+                                <div className="left-menu-messenger-chat-card-chat-name">{chat.name}</div>
+                                {chat.unreadCount > 0 && (
+                                    <div className="left-menu-messenger-chat-card-unread-badge">
+                                        {chat.unreadCount}
+                                    </div>
+                                )}
+                            </div>
                             <div className="left-menu-messenger-chat-card-chat-message-container">
                                 <div className="left-menu-messenger-chat-card-chat-message">
                                     {chat.lastMessage?.content || 'Нет сообщений'}

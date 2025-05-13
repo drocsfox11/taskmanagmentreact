@@ -248,19 +248,19 @@ export const messagesApi = baseApi.injectEndpoints({
         };
       },
     }),
-    markAsRead: builder.mutation({
-      query: ({ chatId, messageId }) => ({
-        url: `api/chats/${chatId}/messages/${messageId}/read`,
-        method: 'POST',
-      }),
+    // markAsRead: builder.mutation({
+    //   query: ({ chatId, messageId }) => ({
+    //     url: `api/chats/${chatId}/messages/${messageId}/read`,
+    //     method: 'POST',
+    //   }),
 
-      async onQueryStarted({ chatId, messageId}, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-        } catch {
-        }
-      },
-    }),
+    //   async onQueryStarted({ chatId, messageId}, { dispatch, queryFulfilled }) {
+    //     try {
+    //       await queryFulfilled;
+    //     } catch {
+    //     }
+    //   },
+    // }),
 
   }),
   overrideExisting: false,

@@ -84,8 +84,21 @@
     border-color: #DBDBDB;
     border-width: 1px;
     border-style: solid;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
 
+.left-menu-messenger-chat-card:hover {
+    background-color: #F8F8F8;
+}
 
+.left-menu-messenger-chat-card.selected {
+    background-color: #EBF3FF;
+    border-color: #4F8CFF;
+}
+
+.left-menu-messenger-chat-card.unread {
+    background-color: #F0F7FF;
 }
 
 .left-menu-messenger-chat-card-image{
@@ -97,14 +110,34 @@
     flex-direction: column;
     width: 100%;
     gap: 5px;
+}
 
+.left-menu-messenger-chat-card-top-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .left-menu-messenger-chat-card-chat-name{
     font-size: 14px;
     color: black;
     font-family: "Ruberoid Semi Bold", sans-serif;
+}
 
+.left-menu-messenger-chat-card-unread-badge {
+    background-color: #4F8CFF;
+    color: white;
+    font-size: 10px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    font-family: "Ruberoid Semi Bold", sans-serif;
 }
 
 .left-menu-messenger-chat-card-chat-message-container{

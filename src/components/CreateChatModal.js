@@ -68,24 +68,24 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
     const handleCreate = async (e) => {
         e.preventDefault();
         if (type === 'private' && selectedUser) {
-            await createChat({
+            await createChat({chat: {
                 name: '',
                 isGroupChat: false,
                 avatarURL: '',
                 participantIds: [selectedUser.id]
-            });
+            }, selectedUser});
             onChatCreated();
         } else if (type === 'group' && groupName && groupUsers.length) {
             let avatarURL = '';
             if (groupAvatar) {
                 // TODO: upload avatar and get URL
             }
-            await createChat({
+            await createChat({chat: {
                 name: groupName,
                 isGroupChat: true,
                 avatarURL,
                 participantIds: groupUsers.map(u => u.id)
-            });
+            }, selectedUser: groupUsers});
             onChatCreated();
         }
     };
