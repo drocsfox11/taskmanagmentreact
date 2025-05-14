@@ -222,6 +222,14 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         e.preventDefault();
         
         try {
+            // Optimistically update the form immediately
+            const updatedForm = {
+                title: form.title,
+                description: form.description,
+                emoji: form.emoji
+            };
+            
+            // Send update to API
             await updateProject({
                 id: projectId,
                 title: form.title,
@@ -229,15 +237,17 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                 emoji: form.emoji
             }).unwrap();
             
+            // Form is already updated due to optimistic update, no need to set it again
+        } catch (error) {
+            console.error('Failed to update project:', error);
+            // If the update fails, revert to the original project data
             if (project) {
                 setForm({
-                    title: project.title,
-                    description: project.description,
+                    title: project.title || '',
+                    description: project.description || '',
                     emoji: project.emoji || 'teacher-light-skin-tone'
                 });
             }
-        } catch (error) {
-            console.error('Failed to update project:', error);
         }
     };
 
@@ -390,7 +400,10 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
     const handleEmojiSelect = (emojiName) => {
+        // Optimistically update the emoji in the form
         setForm({ ...form, emoji: emojiName });
+        // Close the emoji picker
+        setIsEmojiPickerOpen(false);
     };
 
     const handleOpenEmojiPicker = (e) => {
@@ -424,7 +437,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                             Права доступа
                         </button>
                     </ProjectRightGuard>
-                    <ProjectRightGuard projectId={projectId} requires={PROJECT_RIGHTS.MANAGE_RIGHTS}>
+                    <ProjectRightGuard projectId={projectId} requires={PROJECT_RIGHTS.MANAGE_MEMBERS}>
                         <button 
                             className={`tab-button ${activeTab === 'permissions' ? 'active' : ''}`}
                             onClick={() => setActiveTab('permissions')}
@@ -609,7 +622,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                         </div>
                     )}
 
-                    {activeTab === 'permissions' && hasRight(PROJECT_RIGHTS.MANAGE_RIGHTS) && (
+                    {activeTab === 'permissions' && hasRight(PROJECT_RIGHTS.MANAGE_MEMBERS) && (
                         <div className="permissions-section">
                             <h3>Настройки прав доступа</h3>
                             <p className="section-description">

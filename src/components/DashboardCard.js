@@ -6,9 +6,10 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDeleteBoardMutation } from "../services/api/boardsApi";
 import BoardManagementModal from "./BoardManagementModal";
-import { PROJECT_RIGHTS } from "../constants/rights";
+import { PROJECT_RIGHTS, BOARD_RIGHTS } from "../constants/rights";
 import { useGetAllUserRightsQuery } from "../services/api/projectsApi";
 import { useGetCurrentUserQuery } from "../services/api/usersApi";
+import { useBoardRights } from "../hooks/useRights";
 
 function DashboardCard({ board, onClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +32,8 @@ function DashboardCard({ board, onClick }) {
         { skip: !userId }
     );
     
-    const checkRights = (rightName) => {
+    // Project level rights
+    const checkProjectRights = (rightName) => {
         if (projectId && allProjectRights && !isRightsLoading) {
             const projectRights = allProjectRights[projectId];
             return projectRights && Array.isArray(projectRights) && projectRights.includes(rightName);
@@ -39,19 +41,27 @@ function DashboardCard({ board, onClick }) {
         return false;
     };
     
-    const canEditBoard = checkRights(PROJECT_RIGHTS.EDIT_BOARDS);
-    const canDeleteBoard = checkRights(PROJECT_RIGHTS.DELETE_BOARDS);
+    const canEditBoard = checkProjectRights(PROJECT_RIGHTS.EDIT_BOARDS);
+    const canDeleteBoard = checkProjectRights(PROJECT_RIGHTS.DELETE_BOARDS);
     
-    const showOptionsIcon = canEditBoard || canDeleteBoard;
+    // Board level rights
+    const { hasRight: hasBoardRight, isLoading: isBoardRightsLoading } = useBoardRights(boardId);
+    
+    const canManageMembers = hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_MEMBERS);
+    const canManageRights = hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS);
+    
+    // Show options if user has any of the required rights
+    const showOptionsIcon = canEditBoard || canDeleteBoard || canManageMembers || canManageRights;
     
     useEffect(() => {
         console.log(`DashboardCard for board ${boardId}:`);
         console.log(`projectId: ${projectId}`);
         console.log(`allProjectRights:`, allProjectRights);
         console.log(`isRightsLoading: ${isRightsLoading}`);
+        console.log(`Board rights: canManageMembers=${canManageMembers}, canManageRights=${canManageRights}`);
         console.log(`Final permissions: canEdit=${canEditBoard}, canDelete=${canDeleteBoard}`);
         console.log(`Show options icon: ${showOptionsIcon}`);
-    }, [boardId, projectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, showOptionsIcon]);
+    }, [boardId, projectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, canManageMembers, canManageRights, showOptionsIcon]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -136,7 +146,7 @@ function DashboardCard({ board, onClick }) {
             {isModalOpen && (
                 <div ref={modalRef} className="project-card-modal-container" onClick={(e) => e.stopPropagation()}>
                     <div className="project-card-modal-content">
-                        {canEditBoard && (
+                        {(canEditBoard || canManageMembers || canManageRights) && (
                             <div className="project-card-modal-option" onClick={handleManage}>Управление</div>
                         )}
                         {canDeleteBoard && (

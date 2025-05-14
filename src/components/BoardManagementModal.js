@@ -18,7 +18,6 @@ import { EmojiProvider, Emoji } from "react-apple-emojis";
 import emojiData from "react-apple-emojis/src/data.json";
 
 function BoardManagementModal({ board, onClose, isOpen = true }) {
-    const [activeTab, setActiveTab] = useState('info');
     const [updateBoard] = useUpdateBoardMutation();
     const [addUserToBoard] = useAddUserToBoardMutation();
     const [removeUserFromBoard] = useRemoveUserFromBoardMutation();
@@ -55,9 +54,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         { skip: !currentUser?.id }
     );
 
-    const { hasRight: hasBoardRight, rights: boardRights, isLoading: isBoardRightsLoading } = useBoardRights(board.id, {
-        skip: activeTab !== 'permissions' && activeTab !== 'participants'
-    });
+    const { hasRight: hasBoardRight, rights: boardRights, isLoading: isBoardRightsLoading } = useBoardRights(board.id);
     
     const isProjectOwner = currentUser && projectData && projectData.owner &&
                           currentUser.id === projectData.owner.id;
@@ -70,20 +67,35 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         return projectRights.includes(rightName);
     };
     
+    const canEditBoard = isProjectOwner || isBoardOwner || hasProjectRight(PROJECT_RIGHTS.EDIT_BOARDS);
 
     const canManageMembers = 
         isProjectOwner || 
         isBoardOwner || 
-        hasBoardRight?.(BOARD_RIGHTS.MANAGE_MEMBERS) || 
+        (hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_MEMBERS)) || 
         hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS);
     
 
     const canManageRights = 
         isProjectOwner || 
         isBoardOwner || 
-        hasBoardRight?.(BOARD_RIGHTS.MANAGE_RIGHTS) || 
+        hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS) || 
         hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS);
     
+    // Определение начальной активной вкладки в зависимости от прав пользователя
+    const getInitialActiveTab = () => {
+        if (canEditBoard) {
+            return 'info';
+        } else if (canManageMembers) {
+            return 'participants';
+        } else if (canManageRights) {
+            return 'permissions';
+        }
+        return 'info'; // Fallback, хотя в идеале модалка не должна открываться без прав
+    };
+    
+    const [activeTab, setActiveTab] = useState(() => getInitialActiveTab());
+
     const queryArg = {
         name: searchParams.query,
         page: searchParams.page,
@@ -130,6 +142,10 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         console.log("isProjectOwner:", isProjectOwner);
         console.log("isBoardOwner:", isBoardOwner);
         console.log("projectRights:", projectRights);
+        console.log("boardRights:", boardRights);
+        console.log("isBoardRightsLoading:", isBoardRightsLoading);
+        console.log("hasBoardRight(MANAGE_MEMBERS):", hasBoardRight?.(BOARD_RIGHTS.MANAGE_MEMBERS));
+        console.log("hasBoardRight(MANAGE_RIGHTS):", hasBoardRight?.(BOARD_RIGHTS.MANAGE_RIGHTS));
         console.log("hasProjectRight(MANAGE_BOARD_RIGHTS):", hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS));
         console.log("hasProjectRight(MANAGE_ACCESS):", hasProjectRight(PROJECT_RIGHTS.MANAGE_ACCESS));
         console.log("canManageMembers:", canManageMembers);
@@ -143,6 +159,9 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         isProjectOwner,
         isBoardOwner,
         projectRights,
+        boardRights,
+        isBoardRightsLoading,
+        hasBoardRight,
         canManageMembers,
         canManageRights
     ]);
@@ -268,10 +287,13 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     };
 
     const handleEmojiSelect = (emoji) => {
+        // Optimistically update the emoji in the form
         setForm({
             ...form,
             emoji
         });
+        // Close the emoji picker
+        setIsEmojiPickerOpen(false);
     };
 
     const handleOpenEmojiPicker = () => {
@@ -282,13 +304,33 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         e.preventDefault();
         
         try {
+            // Optimistically update the form immediately
+            const updatedForm = {
+                title: form.title,
+                description: form.description,
+                tags: form.tags,
+                emoji: form.emoji
+            };
+            
+            // Send update to API
             await updateBoard({
                 id: board.id,
                 ...form
             }).unwrap();
+            
+            // Only close modal after successful update
             onClose();
         } catch (error) {
             console.error('Error updating board:', error);
+            // If update fails, revert to original board data
+            if (board) {
+                setForm({
+                    title: board.title || '',
+                    description: board.description || '',
+                    tags: board.tags || [],
+                    emoji: board.emoji || 'clipboard'
+                });
+            }
         }
     };
 
@@ -370,6 +412,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                     <button 
                         className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
                         onClick={() => setActiveTab('info')}
+                        style={{ display: canEditBoard ? 'inline-block' : 'none' }}
                     >
                         Информация
                     </button>
@@ -389,7 +432,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                     </button>
                 </div>
                 <div className="project-management-modal-content">
-                    {activeTab === 'info' ? (
+                    {activeTab === 'info' && canEditBoard ? (
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label htmlFor="emoji">Иконка доски</label>
