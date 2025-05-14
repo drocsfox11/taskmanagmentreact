@@ -75,8 +75,9 @@ export const messagesApi = baseApi.injectEndpoints({
         };
       },
       
-      async onQueryStarted({ chatId, content, tempId, files = [] }, { dispatch, queryFulfilled }) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      async onQueryStarted({ chatId, content, tempId, files = [] }, { dispatch, queryFulfilled, getState }) {
+        const state = getState();
+        const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
         
         const tempAttachments = files.map((file, index) => ({
           id: `temp-${index}`,
@@ -119,11 +120,6 @@ export const messagesApi = baseApi.injectEndpoints({
               if (localMsgIndex !== -1) {
                 draft.messages[localMsgIndex] = {
                   ...data,
-                  sender: {
-                    id: data.senderId,
-                    name: data.senderId === currentUser.id ? currentUser.name : 'Пользователь',
-                    avatarURL: data.senderId === currentUser.id ? currentUser.avatarURL : null
-                  },
                   isLocal: false
                 };
               }
@@ -144,6 +140,7 @@ export const messagesApi = baseApi.injectEndpoints({
         const transformMessage = (msg) => {
           return {
             ...msg,
+            isEdited: msg.edited,
             isLocal: false,
           };
         };
@@ -208,6 +205,7 @@ export const messagesApi = baseApi.injectEndpoints({
           messagesApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
             const messageIndex = draft.messages.findIndex(msg => msg.id === messageId);
             if (messageIndex !== -1) {
+              console.log("Меняю сообщение", messageId, content);
               draft.messages[messageIndex].content = content;
               draft.messages[messageIndex].isEdited = true;
             }

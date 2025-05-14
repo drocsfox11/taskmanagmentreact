@@ -3,8 +3,12 @@ import CameraIcon from '../assets/icons/video(1) 1.svg';
 import PhoneIcon from '../assets/icons/phone(1) 1.svg';
 import ClipIcon from '../assets/icons/clip 1.svg';
 import SendIcon from '../assets/icons/send 1.svg';
+import EditIcon from '../assets/icons/edit.svg';
+import DeleteIcon from '../assets/icons/delete.svg';
 import LoadingSpinner from './LoadingSpinner';
 import {
+    useDeleteMessageMutation,
+    useEditMessageMutation,
     useGetMessagesQuery,
     useSendMessageMutation,
     useSendMessageWithAttachmentsMutation,
@@ -55,6 +59,8 @@ function Chat({ chatId }) {
     const fileInputRef = useRef(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [fileError, setFileError] = useState('');
+    const [editingMessage, setEditingMessage] = useState(null);
+    const [editText, setEditText] = useState('');
     
     const MAX_FILES = 6;
     const MAX_TOTAL_SIZE = 100 * 1024 * 1024; 
@@ -79,7 +85,9 @@ function Chat({ chatId }) {
 
     const [sendMessage, { isLoading: isSendingText }] = useSendMessageMutation();
     const [sendMessageWithAttachments, { isLoading: isSendingWithAttachments }] = useSendMessageWithAttachmentsMutation();
-    
+    const [deleteMessage, {isLoading: isDeleteMessage}] = useDeleteMessageMutation();
+    const [editMessage, {isLoading: isEditMessage}] = useEditMessageMutation();
+
     const isSending = isSendingText || isSendingWithAttachments;
     const { data: currentUser } = useGetCurrentUserQuery();
 
@@ -181,14 +189,47 @@ function Chat({ chatId }) {
         ? chatData.avatarURL
         : chatData?.participants.find(p => p.id !== currentUser.id)?.avatarURL;
 
-    // Handle image click to open in modal
     const handleImageClick = (image) => {
         setSelectedImage(image);
     };
 
-    // Close image modal
     const handleCloseModal = () => {
         setSelectedImage(null);
+    };
+
+    const handleEditStart = (message) => {
+        setEditingMessage(message);
+        setEditText(message.content || '');
+    };
+    
+    const handleEditCancel = () => {
+        setEditingMessage(null);
+        setEditText('');
+    };
+    
+    const handleEditSave = async (editingMessage) => {
+        if (!editingMessage || editText.trim() === '') return;
+        
+        try {
+            await editMessage({chatId, messageId: editingMessage.id, content: editText});
+            
+            setEditingMessage(null);
+            setEditText('');
+        } catch (err) {
+            console.error('Failed to update message:', err);
+        }
+    };
+    
+    const handleDeleteMessage = async (messageId) => {
+        if (!window.confirm('Вы уверены, что хотите удалить это сообщение?')) return;
+        
+        try {
+            console.log(messageId)
+            await deleteMessage({chatId, messageId});
+            
+        } catch (err) {
+            console.error('Failed to delete message:', err);
+        }
     };
 
     if (isChatLoading) return <LoadingSpinner />;
@@ -272,7 +313,6 @@ function Chat({ chatId }) {
                     const isCurrentUser = msg.senderId === currentUser.id;
                     const sender = getParticipantById(msg.senderId);
 
-
                     return (
                         <div
                             key={msg.id}
@@ -288,8 +328,36 @@ function Chat({ chatId }) {
                                     <div className="chat-message-sender">{sender?.name}</div>
                                 )}
                                 
-                                {msg.content && (
+                                {msg.content && editingMessage?.id !== msg.id && (
                                     <div className="chat-message-text">{msg.content}</div>
+                                )}
+                                
+                                {editingMessage?.id === msg.id && (
+                                    <div className="chat-message-edit">
+                                        <textarea 
+                                            className="chat-edit-input"
+                                            value={editText}
+                                            onChange={(e) => setEditText(e.target.value)}
+                                            autoFocus
+                                        />
+                                        <div className="chat-edit-actions">
+                                            <button 
+                                                type="button" 
+                                                className="chat-edit-cancel"
+                                                onClick={handleEditCancel}
+                                            >
+                                                Отмена
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                className="chat-edit-save"
+                                                onClick={() => handleEditSave(editingMessage)}
+                                                disabled={editText.trim() === ''}
+                                            >
+                                                Сохранить
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
 
                                 {msg.attachments && msg.attachments.length > 0 && (
@@ -371,6 +439,29 @@ function Chat({ chatId }) {
                                         </span>
                                     )}
                                 </div>
+                                
+                                {isCurrentUser && !msg.isLocal && (
+                                    <div className="chat-message-actions">
+                                        {msg.content && (
+                                            <button 
+                                                type="button" 
+                                                className="chat-action-button chat-edit-button"
+                                                onClick={() => handleEditStart(msg)}
+                                                title="Редактировать"
+                                            >
+                                                <img src={EditIcon} alt="Edit" />
+                                            </button>
+                                        )}
+                                        <button 
+                                            type="button" 
+                                            className="chat-action-button chat-delete-button"
+                                            onClick={() => handleDeleteMessage(msg.id)}
+                                            title="Удалить"
+                                        >
+                                            <img src={DeleteIcon} alt="Delete" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
