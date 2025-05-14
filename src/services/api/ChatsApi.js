@@ -96,6 +96,10 @@ export const chatsApi = baseApi.injectEndpoints({
             
             switch (event.type) {
               case ChatEventTypes.NEW_MESSAGE:
+                if (event.payload.senderId === userId) {
+                  console.log(`Ignoring own event: ${event.type}`);
+                  return;
+                }
                 dispatch(
                   baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
                     if (!draft.messages) draft.messages = [];
@@ -136,6 +140,10 @@ export const chatsApi = baseApi.injectEndpoints({
                 break;
               
               case ChatEventTypes.MESSAGE_EDITED:
+                if (event.payload.senderId === userId) {
+                  console.log(`Ignoring own event: ${event.type}`);
+                  return;
+                }
                 dispatch(
                   baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
                     const msgIndex = draft.messages.findIndex(msg => msg.id === event.payload.id);
@@ -151,6 +159,10 @@ export const chatsApi = baseApi.injectEndpoints({
                 break;
               
               case ChatEventTypes.MESSAGE_DELETED:
+                if (event.payload.senderId === userId) {
+                  console.log(`Ignoring own event: ${event.type}`);
+                  return;
+                }
                 dispatch(
                   baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
                     draft.messages = draft.messages.filter(msg => msg.id !== event.payload.id);

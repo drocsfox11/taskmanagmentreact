@@ -14,6 +14,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/components/Chat.css';
 import { v4 as uuidv4 } from 'uuid';
+import ImageModal from './ImageModal';
 
 function formatTime(dateString) {
     if (!dateString) return '';
@@ -52,6 +53,12 @@ function Chat({ chatId }) {
     const [files, setFiles] = useState([]);
     const [showParticipants, setShowParticipants] = useState(false);
     const fileInputRef = useRef(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [fileError, setFileError] = useState('');
+    
+    const MAX_FILES = 6;
+    const MAX_TOTAL_SIZE = 100 * 1024 * 1024; 
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; 
     
     const {
         data: chatData,
@@ -86,6 +93,29 @@ function Chat({ chatId }) {
 
     const handleFileSelect = async (e) => {
         const selectedFiles = Array.from(e.target.files);
+        
+        if (files.length + selectedFiles.length > MAX_FILES) {
+            setFileError(`Нельзя прикрепить больше ${MAX_FILES} файлов`);
+            setTimeout(() => setFileError(''), 3000);
+            return;
+        }
+        
+        const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
+        if (oversizedFiles.length > 0) {
+            setFileError(`Размер файла не должен превышать ${formatFileSize(MAX_FILE_SIZE)}`);
+            setTimeout(() => setFileError(''), 3000);
+            return;
+        }
+        
+        const currentTotalSize = files.reduce((total, file) => total + file.size, 0);
+        const newTotalSize = selectedFiles.reduce((total, file) => total + file.size, 0) + currentTotalSize;
+        
+        if (newTotalSize > MAX_TOTAL_SIZE) {
+            setFileError(`Общий размер файлов не должен превышать ${formatFileSize(MAX_TOTAL_SIZE)}`);
+            setTimeout(() => setFileError(''), 3000);
+            return;
+        }
+        
         setFiles(prev => [...prev, ...selectedFiles]);
         
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -101,7 +131,6 @@ function Chat({ chatId }) {
         }
     }, [messagesData, offset]);
 
-    // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (messages.length > 0 && messagesContainerRef.current) {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -151,6 +180,16 @@ function Chat({ chatId }) {
     const chatAvatar = chatData?.isGroupChat
         ? chatData.avatarURL
         : chatData?.participants.find(p => p.id !== currentUser.id)?.avatarURL;
+
+    // Handle image click to open in modal
+    const handleImageClick = (image) => {
+        setSelectedImage(image);
+    };
+
+    // Close image modal
+    const handleCloseModal = () => {
+        setSelectedImage(null);
+    };
 
     if (isChatLoading) return <LoadingSpinner />;
     if (chatError) return <div className="chat-error">Ошибка загрузки чата</div>;
@@ -210,6 +249,11 @@ function Chat({ chatId }) {
                 </div>
             )}
             
+            {/* Image Modal */}
+            {selectedImage && (
+                <ImageModal image={selectedImage} onClose={handleCloseModal} />
+            )}
+            
             <div
                 className="chat-messages"
                 ref={messagesContainerRef}
@@ -247,32 +291,71 @@ function Chat({ chatId }) {
                                 {msg.content && (
                                     <div className="chat-message-text">{msg.content}</div>
                                 )}
-                                
+
                                 {msg.attachments && msg.attachments.length > 0 && (
-                                    <div className="chat-message-attachments">
-                                        {msg.attachments.map(attachment => (
-                                            <a 
-                                                key={attachment.id} 
-                                                href={attachment.isLocal ? '#' : `${process.env.REACT_APP_API_BASE_URL}${attachment.downloadUrl}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="chat-attachment"
-                                                download={attachment.originalFileName}
-                                            >
-                                                <div className="chat-attachment-icon">
-                                                    {getFileIcon(attachment.fileType)}
-                                                </div>
-                                                <div className="chat-attachment-info">
-                                                    <div className="chat-attachment-name">
-                                                        {attachment.originalFileName}
-                                                    </div>
-                                                    <div className="chat-attachment-size">
-                                                        {formatFileSize(attachment.fileSize)}
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        ))}
-                                    </div>
+                                    <>
+                                        {msg.attachments.some(att => att.fileType?.startsWith("image/")) && (
+                                            <div className={`chat-message-attachments images-count-${
+                                                msg.attachments.filter(a => a.fileType?.startsWith("image/")).length
+                                            }`}>
+                                                {msg.attachments
+                                                    .filter(attachment => attachment.fileType?.startsWith("image/"))
+                                                    .map(attachment => {
+                                                        const fileUrl = attachment.isLocal
+                                                            ? "#"
+                                                            : `${process.env.REACT_APP_API_BASE_URL}${attachment.downloadURL}`;
+
+                                                        return (
+                                                            <div key={attachment.id} className="chat-attachment">
+                                                                <img
+                                                                    src={fileUrl}
+                                                                    alt={attachment.originalFileName}
+                                                                    className="chat-attachment-image"
+                                                                    onClick={() => handleImageClick({
+                                                                        src: fileUrl,
+                                                                        alt: attachment.originalFileName
+                                                                    })}
+                                                                />
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        )}
+                                        
+                                        {msg.attachments.some(att => !att.fileType?.startsWith("image/")) && (
+                                            <div className="chat-message-files">
+                                                {msg.attachments
+                                                    .filter(attachment => !attachment.fileType?.startsWith("image/"))
+                                                    .map(attachment => {
+                                                        const fileUrl = attachment.isLocal
+                                                            ? "#"
+                                                            : `${process.env.REACT_APP_API_BASE_URL}${attachment.downloadURL}`;
+
+                                                        return (
+                                                            <div key={attachment.id} className="chat-attachment">
+                                                                <a
+                                                                    href={fileUrl}
+                                                                    download
+                                                                    className="chat-attachment-link"
+                                                                >
+                                                                    <div className="chat-attachment-icon">
+                                                                        {getFileIcon(attachment.fileType)}
+                                                                    </div>
+                                                                    <div className="chat-attachment-info">
+                                                                        <div className="chat-attachment-name">
+                                                                            {attachment.fileName}
+                                                                        </div>
+                                                                        <div className="chat-attachment-size">
+                                                                            {formatFileSize(attachment.fileSize)}
+                                                                        </div>
+                                                                    </div>
+                                                                </a>
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                                 
                                 <div className="chat-message-meta">
@@ -314,6 +397,16 @@ function Chat({ chatId }) {
                             </button>
                         </div>
                     ))}
+                    
+                    <div className="chat-attachments-info">
+                        {files.length} / {MAX_FILES} файлов · Общий размер: {formatFileSize(files.reduce((total, file) => total + file.size, 0))}
+                    </div>
+                </div>
+            )}
+            
+            {fileError && (
+                <div className="chat-file-error">
+                    {fileError}
                 </div>
             )}
             
@@ -329,7 +422,7 @@ function Chat({ chatId }) {
                     type="button" 
                     className="chat-attachment-button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isSending}
+                    disabled={isSending || files.length >= MAX_FILES}
                 >
                     <img src={ClipIcon} alt="attach" />
                 </button>

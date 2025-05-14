@@ -23,6 +23,11 @@ export const messagesApi = baseApi.injectEndpoints({
               content,
               createdAt: new Date().toISOString(),
               senderId: currentUser.id,
+              sender: {
+                id: currentUser.id,
+                name: currentUser.name,
+                avatarURL: currentUser.avatarURL
+              },
               edited: false,
               readed: false,
               readByIds: [],

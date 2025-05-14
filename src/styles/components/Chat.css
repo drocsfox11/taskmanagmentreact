@@ -198,7 +198,7 @@
 .chat-message {
     display: flex;
     margin-bottom: 16px;
-    max-width: 80%;
+    max-width: 70%;
 }
 
 .chat-message.incoming {
@@ -238,6 +238,7 @@
     padding: 12px 15px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     position: relative;
+    max-width: 100%;
 }
 
 .chat-message.incoming .chat-message-content {
@@ -292,6 +293,106 @@
 .chat-message-attachments {
     margin-top: 8px;
     margin-bottom: 5px;
+    display: grid;
+    grid-gap: 4px;
+    width: 100%;
+    max-width: 360px;
+}
+
+/* Стили сетки в зависимости от количества изображений */
+.chat-message-attachments.images-count-1 {
+    grid-template-columns: 1fr;
+    max-width: 240px;
+}
+
+.chat-message-attachments.images-count-2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 240px;
+}
+
+.chat-message-attachments.images-count-3 {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 300px;
+}
+
+.chat-message-attachments.images-count-4 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 1fr;
+    max-width: 240px;
+}
+
+.chat-message-attachments.images-count-5,
+.chat-message-attachments.images-count-6 {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 300px;
+}
+
+/* Style for image attachments */
+.chat-attachment:has(.chat-attachment-image) {
+    padding: 0;
+    margin: 0;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chat-attachment-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
+}
+
+/* Оптимизация размеров для изображений в разных сетках */
+.images-count-1 .chat-attachment-image {
+    max-height: 240px;
+}
+
+.images-count-2 .chat-attachment {
+    max-width: 120px;
+    max-height: 120px;
+}
+
+.images-count-3 .chat-attachment {
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.images-count-4 .chat-attachment {
+    max-width: 120px;
+    max-height: 120px;
+}
+
+.images-count-5 .chat-attachment,
+.images-count-6 .chat-attachment {
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.chat-attachment-image:hover {
+    transform: scale(1.02);
+}
+
+/* Regular file attachments list */
+.chat-message-files {
+    margin-top: 12px;
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 360px;
+}
+
+.chat-message-files .chat-attachment {
+    margin-bottom: 4px;
+}
+
+.chat-message-files .chat-attachment:last-child {
+    margin-bottom: 0;
 }
 
 .chat-attachment {
@@ -334,6 +435,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 2px;
+    max-width: 250px;
 }
 
 .chat-attachment-size {
@@ -347,8 +449,29 @@
     padding: 10px 15px;
     background-color: #F5F5F5;
     border-top: 1px solid #ECECEC;
-    max-height: 150px;
+    max-height: 200px;
     overflow-y: auto;
+}
+
+/* Информация о количестве и размере файлов */
+.chat-attachments-info {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #666666;
+    margin-top: 8px;
+    text-align: right;
+    padding-right: 5px;
+}
+
+/* Стиль для сообщения об ошибке файла */
+.chat-file-error {
+    background-color: #FFEDED;
+    color: #D03333;
+    padding: 8px 15px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 13px;
+    text-align: center;
+    border-top: 1px solid #FFCACA;
 }
 
 .chat-attachment-preview {
