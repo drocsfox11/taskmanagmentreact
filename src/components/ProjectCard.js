@@ -18,6 +18,9 @@ function ProjectCard({ project, onClick }) {
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
     
+    // Get completion percentage from project data with fallback to 0
+    const completionPercentage = project?.completionPercentage ?? 0;
+    
     const { data: currentUser } = useGetCurrentUserQuery();
     
     const { hasRight } = useProjectRights(project.id);
@@ -83,6 +86,9 @@ function ProjectCard({ project, onClick }) {
 
     if (isDeleted || !project) return null;
     
+    // Format percentage number to integer
+    const formattedPercentage = Math.round(completionPercentage);
+    
     return (
         <div className='project-card-container' onClick={(e) => {
             if (e.target.closest('.project-management-modal') || e.target.closest('.project-card-modal-container')) {
@@ -107,8 +113,10 @@ function ProjectCard({ project, onClick }) {
                 <div className='project-card-text-descr'>{project.description}</div>
             </div>
             <div className='project-card-progress-container'>
-                <div className='project-card-progress-bar'></div>
-                <div className='project-card-progress-text'>13% завершено</div>
+                <div className='project-card-progress-bar' style={{ 
+                    background: `linear-gradient(270deg, #ECECEC ${100 - formattedPercentage}%, #5558FF ${100 - formattedPercentage}%)` 
+                }}></div>
+                <div className='project-card-progress-text'>{formattedPercentage}% завершено</div>
             </div>
             {isModalOpen && (
                 <div ref={modalRef} className="project-card-modal-container">

@@ -24,6 +24,8 @@ function DashboardCard({ board, onClick }) {
     const projectId = board?.projectId;
     const title = board?.title;
     const description = board?.description;
+    // Get completion percentage from board data with fallback to 0
+    const completionPercentage = board?.completionPercentage ?? 0;
     // Check if this is a temporary board (optimistic update)
     const isTemporary = board?.tempId !== undefined;
     
@@ -127,6 +129,9 @@ function DashboardCard({ board, onClick }) {
 
     if (isDeleted || !board) return null;
 
+    // Format percentage number to integer
+    const formattedPercentage = Math.round(completionPercentage);
+
     return (
         <div className='project-card-container' onClick={handleCardClick} style={{ position: 'relative' }}>
             <div className='project-card-icon-row-container'>
@@ -155,10 +160,12 @@ function DashboardCard({ board, onClick }) {
                 </div>
             </div>
             <div className='project-card-progress-container'>
-                <div className='project-card-progress-bar'>
+                <div className='project-card-progress-bar' style={{ 
+                    background: `linear-gradient(270deg, #ECECEC ${100 - formattedPercentage}%, #5558FF ${100 - formattedPercentage}%)` 
+                }}>
                 </div>
                 <div className='project-card-progress-text'>
-                    13% завершено
+                    {formattedPercentage}% завершено
                 </div>
             </div>
             {isModalOpen && !isTemporary && (

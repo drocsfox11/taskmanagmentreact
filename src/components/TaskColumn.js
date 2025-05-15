@@ -11,6 +11,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editColumnName, setEditColumnName] = useState('');
+    const [isCompletionColumn, setIsCompletionColumn] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     
@@ -29,7 +30,8 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
     
     useEffect(() => {
         setEditColumnName(columnTitle);
-    }, [columnTitle]);
+        setIsCompletionColumn(column.completionColumn || false);
+    }, [columnTitle, column.completionColumn]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -84,13 +86,15 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                 columnId,
                 boardId: column.boardId,
                 title: editColumnName.trim(),
-                name: editColumnName.trim()
+                name: editColumnName.trim(),
+                completionColumn: isCompletionColumn
             };
             
             console.log('Updating column:', {
                 oldTitle: columnTitle, 
                 newTitle: editColumnName,
-                columnId
+                columnId,
+                completionColumn: isCompletionColumn
             });
             
             updateColumn(updatePayload)
@@ -215,6 +219,18 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                             onChange={(e) => setEditColumnName(e.target.value)} 
                             placeholder="Введите название раздела"
                         />
+                        
+                        <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center' }}>
+                            <input 
+                                type="checkbox" 
+                                id="completionColumnCheckbox"
+                                checked={isCompletionColumn} 
+                                onChange={(e) => setIsCompletionColumn(e.target.checked)}
+                                style={{ marginRight: '8px' }}
+                            />
+                            <label htmlFor="completionColumnCheckbox">Колонка завершения (задачи в этой колонке считаются выполненными)</label>
+                        </div>
+                        
                         <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                             <button 
                                 className="create-project-modal-add-participant" 

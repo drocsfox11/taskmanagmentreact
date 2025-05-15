@@ -94,6 +94,26 @@ function TaskDashboard() {
             .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }, [boardWithData?.columns]);
     
+    // Calculate completion percentage
+    const calculateCompletionPercentage = useMemo(() => {
+        if (!columns || columns.length === 0) return 0;
+        
+        let totalTasks = 0;
+        let completedTasks = 0;
+        
+        columns.forEach(column => {
+            const tasksInColumn = column.tasks ? column.tasks.length : 0;
+            totalTasks += tasksInColumn;
+            
+            if (column.completionColumn) {
+                completedTasks += tasksInColumn;
+            }
+        });
+        
+        if (totalTasks === 0) return 0;
+        return Math.round((completedTasks / totalTasks) * 100);
+    }, [columns]);
+    
     const board = boardWithData;
     const isLoading = isLoadingBoardData;
     
@@ -158,7 +178,8 @@ function TaskDashboard() {
             const newColumn = {
                 title: sectionName,
                 boardId: Number(boardId),
-                position: columns.length
+                position: columns.length,
+                completionColumn: false
             };
             createColumn(newColumn)
                 .unwrap()
@@ -314,9 +335,14 @@ function TaskDashboard() {
                                 {board?.title || 'Загрузка...'}
                             </div>
                             <div className='task-dashboard-progress-container'>
-                                <div className='task-dashboard-progress-bar'></div>
+                                <div 
+                                    className='task-dashboard-progress-bar'
+                                    style={{
+                                        background: `linear-gradient(270deg, #ECECEC ${100 - calculateCompletionPercentage}%, #5558FF ${100 - calculateCompletionPercentage}%)`
+                                    }}
+                                ></div>
                                 <div className='task-dashboard-progress-text'>
-                                    13% завершено
+                                    {calculateCompletionPercentage}% завершено
                                 </div>
                             </div>
                         </div>
