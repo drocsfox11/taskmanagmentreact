@@ -338,7 +338,63 @@ export const boardsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: board,
       }),
+      async onQueryStarted(board, { dispatch, queryFulfilled }) {
+        const tempId = `temp-${Date.now()}`;
+        
+        // Optimistically add the board to the project's boards list
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData('getBoards', board.projectId, (draft) => {
+            if (Array.isArray(draft)) {
+              // Only add if not already present (prevent duplicates)
+              const alreadyExists = draft.some(existingBoard => 
+                existingBoard.title === board.title && 
+                existingBoard.tempId === tempId
+              );
+              
+              if (!alreadyExists) {
+                draft.push({
+                  ...board,
+                  id: tempId,
+                  tempId: tempId,
+                  columns: []
+                });
+              }
+            }
+          })
+        );
 
+        try {
+          const { data: createdBoard } = await queryFulfilled;
+          
+          // Update the optimistic entry with the real data
+          dispatch(
+            baseApi.util.updateQueryData('getBoards', board.projectId, (draft) => {
+              if (Array.isArray(draft)) {
+                // Remove the temporary entry
+                const tempIndex = draft.findIndex(b => b.tempId === tempId);
+                if (tempIndex !== -1) {
+                  draft.splice(tempIndex, 1);
+                }
+                
+                // Add the real board with server data
+                const existingIndex = draft.findIndex(b => b.id === createdBoard.id);
+                if (existingIndex === -1) {
+                  draft.push(createdBoard);
+                } else {
+                  // Update existing entry if somehow it exists
+                  draft[existingIndex] = {
+                    ...draft[existingIndex],
+                    ...createdBoard
+                  };
+                }
+              }
+            })
+          );
+        } catch (error) {
+          console.error('Error creating board:', error);
+          patchResult.undo();
+        }
+      }
     }),
     updateBoard: builder.mutation({
       query: ({ id, ...data }) => ({
@@ -431,7 +487,30 @@ export const boardsApi = baseApi.injectEndpoints({
         try {
           const state = getState();
           const boardData = state.api.queries[`getBoardWithData(${id})`]?.data;
-          const projectId = boardData?.projectId;
+          
+          // Get projectId from boardData or try to find it in boardsData
+          let projectId = boardData?.projectId;
+          
+          // If projectId is not available from getBoardWithData, try to find it in getBoards queries
+          if (!projectId) {
+            console.log(`No boardData found for board ${id}, searching in existing board lists...`);
+            
+            // Look through all queries to find the board in a project's boards list
+            const queryKeys = Object.keys(state.api.queries);
+            const boardsQueries = queryKeys.filter(key => key.startsWith('getBoards('));
+            
+            for (const queryKey of boardsQueries) {
+              const boardsData = state.api.queries[queryKey].data;
+              if (Array.isArray(boardsData)) {
+                const board = boardsData.find(b => b.id === id);
+                if (board) {
+                  projectId = board.projectId;
+                  console.log(`Found board ${id} in project ${projectId}`);
+                  break;
+                }
+              }
+            }
+          }
           
           console.log(`Optimistically deleting board ${id} from project ${projectId}`);
           
@@ -443,6 +522,8 @@ export const boardsApi = baseApi.injectEndpoints({
                   if (boardIndex !== -1) {
                     draft.splice(boardIndex, 1);
                     console.log(`Removed board ${id} from project ${projectId} boards list`);
+                  } else {
+                    console.log(`Board ${id} not found in project ${projectId} boards list`);
                   }
                 }
               })
@@ -456,6 +537,7 @@ export const boardsApi = baseApi.injectEndpoints({
               console.error(`Error deleting board ${id}:`, error);
             }
           } else {
+            console.log(`Could not find projectId for board ${id}, attempting to delete without optimistic update`);
             await queryFulfilled;
             console.log(`Delete board ${id} request successful without projectId`);
           }

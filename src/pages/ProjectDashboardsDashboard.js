@@ -55,6 +55,11 @@ function ProjectDashBoardsDashboard() {
     };
     
     const handleBoardClick = (boardId) => {
+        // Prevent navigation for temporary boards (optimistic updates)
+        if (boardId.toString().includes('temp-')) {
+            console.log("Cannot navigate to a temporary board that's still being created");
+            return;
+        }
         navigate(`/system/project/${numericProjectId}/board/${boardId}/tasks`);
     };
     

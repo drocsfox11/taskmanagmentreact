@@ -14,6 +14,7 @@ import { useBoardRights } from "../hooks/useRights";
 function DashboardCard({ board, onClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
+    const [isDeleted, setIsDeleted] = useState(false);
     const modalRef = useRef(null);
     const optionsRef = useRef(null);
     const navigate = useNavigate();
@@ -23,6 +24,8 @@ function DashboardCard({ board, onClick }) {
     const projectId = board?.projectId;
     const title = board?.title;
     const description = board?.description;
+    // Check if this is a temporary board (optimistic update)
+    const isTemporary = board?.tempId !== undefined;
     
     const { data: currentUser } = useGetCurrentUserQuery();
     const userId = currentUser?.id;
@@ -61,7 +64,8 @@ function DashboardCard({ board, onClick }) {
         console.log(`Board rights: canManageMembers=${canManageMembers}, canManageRights=${canManageRights}`);
         console.log(`Final permissions: canEdit=${canEditBoard}, canDelete=${canDeleteBoard}`);
         console.log(`Show options icon: ${showOptionsIcon}`);
-    }, [boardId, projectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, canManageMembers, canManageRights, showOptionsIcon]);
+        console.log(`Is temporary board: ${isTemporary}`);
+    }, [boardId, projectId, allProjectRights, isRightsLoading, canEditBoard, canDeleteBoard, canManageMembers, canManageRights, showOptionsIcon, isTemporary]);
     
     const handleOptionsClick = (e) => {
         e.stopPropagation();
@@ -78,7 +82,8 @@ function DashboardCard({ board, onClick }) {
     const handleCardClick = (e) => {
         if (isManagementModalOpen ||
             e.target.closest('.project-management-modal-overlay') || 
-            e.target.closest('.project-card-modal-container')) {
+            e.target.closest('.project-card-modal-container') || 
+            isTemporary) {
             return;
         }
         
@@ -91,11 +96,19 @@ function DashboardCard({ board, onClick }) {
     
     const handleDelete = async (e) => {
         e.stopPropagation();
+        
+        // Optimistically update UI
+        setIsDeleted(true);
+        setIsModalOpen(false);
+        
         try {
             await deleteBoard(boardId);
-            setIsModalOpen(false);
+            console.log(`Board ${boardId} successfully deleted`);
         } catch (error) {
+            // If deletion fails, revert the optimistic update
+            setIsDeleted(false);
             console.error('Error deleting board:', error);
+            alert('Не удалось удалить доску. Пожалуйста, попробуйте снова.');
         }
     };
     
@@ -112,7 +125,7 @@ function DashboardCard({ board, onClick }) {
         };
     }, []);
 
-    if (!board) return null;
+    if (isDeleted || !board) return null;
 
     return (
         <div className='project-card-container' onClick={handleCardClick} style={{ position: 'relative' }}>
@@ -122,9 +135,14 @@ function DashboardCard({ board, onClick }) {
                         <Emoji name={board.emoji || "clipboard"} width={22}/>
                     </EmojiProvider>
                 </div>
-                {showOptionsIcon && (
+                {showOptionsIcon && !isTemporary && (
                     <div ref={optionsRef} onClick={handleOptionsClick} className='project-card-icon-row-container-options'>
                         <img src={OptionsPassive} alt="Options"/>
+                    </div>
+                )}
+                {isTemporary && (
+                    <div className='project-card-icon-row-container-temp'>
+                        Создается...
                     </div>
                 )}
             </div>
@@ -143,7 +161,7 @@ function DashboardCard({ board, onClick }) {
                     13% завершено
                 </div>
             </div>
-            {isModalOpen && (
+            {isModalOpen && !isTemporary && (
                 <div ref={modalRef} className="project-card-modal-container" onClick={(e) => e.stopPropagation()}>
                     <div className="project-card-modal-content">
                         {(canEditBoard || canManageMembers || canManageRights) && (
@@ -156,7 +174,7 @@ function DashboardCard({ board, onClick }) {
                 </div>
             )}
             
-            {isManagementModalOpen && board && (
+            {isManagementModalOpen && board && !isTemporary && (
                 <BoardManagementModal 
                     board={board} 
                     onClose={() => setIsManagementModalOpen(false)}

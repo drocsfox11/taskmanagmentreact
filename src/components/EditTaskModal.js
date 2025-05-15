@@ -282,6 +282,36 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
 
     const handleFileUpload = (e) => {
         const newFiles = Array.from(e.target.files);
+        
+        // Проверка размера каждого файла (максимум 50 МБ)
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 МБ в байтах
+        const oversizedFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
+        
+        if (oversizedFiles.length > 0) {
+            alert(`Следующие файлы превышают лимит в 50 МБ:\n${oversizedFiles.map(f => f.name).join('\n')}`);
+            return;
+        }
+        
+        // Расчет текущего размера файлов
+        const currentFilesSize = form.files
+            .filter(file => file instanceof File) // Только новые файлы
+            .reduce((total, file) => total + file.size, 0);
+            
+        // Размер локальных прикрепленных файлов
+        const localAttachmentsSize = localAttachments
+            .reduce((total, attachment) => total + (attachment.fileSize || 0), 0);
+            
+        // Новый размер файлов для загрузки
+        const newFilesSize = newFiles.reduce((total, file) => total + file.size, 0);
+        
+        // Проверка общего размера всех файлов (максимум 100 МБ)
+        const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100 МБ в байтах
+        
+        if (currentFilesSize + localAttachmentsSize + newFilesSize > MAX_TOTAL_SIZE) {
+            alert(`Общий размер файлов превышает лимит в 100 МБ. Пожалуйста, выберите меньше файлов.`);
+            return;
+        }
+        
         setFilesToUpload(prev => [...prev, ...newFiles]);
         
         setForm(prev => ({
@@ -352,41 +382,28 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                 taskData.endDate = null;
             }
             
-            const updatedTaskData = {
+            // Объединяем существующие файлы и новые загружаемые файлы
+            const combinedFiles = [...filesToUpload];
+            
+            // Подготавливаем полные данные задачи для API
+            const updatedPayload = {
                 ...taskData, 
                 id: task.id,
                 boardId: task.boardId,
                 columnId: task.columnId,
-                attachments: oldAttachmentIds
+                attachments: oldAttachmentIds, // ID сохраняемых вложений
+                attachmentsToDelete: attachmentsToDelete, // ID вложений для удаления или ["DELETE_ALL"]
             };
             
             onClose();
             
-            onSubmit(updatedTaskData);
-            
-
-            if (attachmentsToDelete.includes("DELETE_ALL")) {
-                console.log(`Deleting all attachments for task: ${task.id}`);
-                await deleteAllAttachments(task.id).unwrap();
-            } else if (attachmentsToDelete.length > 0) {
-                for (const attachmentId of attachmentsToDelete) {
-                    console.log(`Deleting attachment: ${attachmentId}`);
-                    await deleteAttachment(attachmentId).unwrap();
-                }
-            }
-            
-            if (filesToUpload.length > 0) {
-                for (const file of filesToUpload) {
-                    console.log(`Uploading file: ${file.name}`);
-                    await uploadAttachment({
-                        taskId: task.id,
-                        file: file
-                    }).unwrap();
-                }
-            }
-            
+            // Отправляем данные задачи вместе с файлами
+            onSubmit({
+                ...updatedPayload,
+                files: combinedFiles, // Новые файлы для загрузки
+            });
         } catch (error) {
-            console.error('Error handling files:', error);
+            console.error('Error submitting task:', error);
         }
     };
 

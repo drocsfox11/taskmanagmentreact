@@ -103,12 +103,10 @@ function TaskCard({ task, onClick }) {
         
         setIsEditModalOpen(false);
         
-
-        
         updateTask(updatedTask)
             .unwrap()
             .then(result => {
-                console.log('Task updated successfully:', result);
+                console.log('Task updated successfully with attachments:', result);
             })
             .catch(error => {
                 console.error('Failed to update task:', error);

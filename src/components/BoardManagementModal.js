@@ -95,7 +95,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     };
     
     const [activeTab, setActiveTab] = useState(() => getInitialActiveTab());
-
+    
     const queryArg = {
         name: searchParams.query,
         page: searchParams.page,

@@ -141,3 +141,22 @@
 .project-card-modal-delete:hover {
     background-color: #fff1f0;
 }
+
+.project-card-icon-row-container-temp {
+    font-size: 10px;
+    color: #808080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 2px 6px;
+    background-color: #f1f1f1;
+    border-radius: 4px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}

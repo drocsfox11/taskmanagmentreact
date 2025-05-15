@@ -169,6 +169,26 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, boardId }) {
 
     const handleFileUpload = (e) => {
         const files = Array.from(e.target.files);
+        
+        // Проверка размера каждого файла (максимум 50 МБ)
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 МБ в байтах
+        const oversizedFiles = files.filter(file => file.size > MAX_FILE_SIZE);
+        
+        if (oversizedFiles.length > 0) {
+            alert(`Следующие файлы превышают лимит в 50 МБ:\n${oversizedFiles.map(f => f.name).join('\n')}`);
+            return;
+        }
+        
+        // Проверка общего размера всех файлов (максимум 100 МБ)
+        const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100 МБ в байтах
+        const currentTotalSize = form.files.reduce((total, file) => total + file.size, 0);
+        const newFilesSize = files.reduce((total, file) => total + file.size, 0);
+        
+        if (currentTotalSize + newFilesSize > MAX_TOTAL_SIZE) {
+            alert(`Общий размер файлов превышает лимит в 100 МБ. Пожалуйста, выберите меньше файлов.`);
+            return;
+        }
+        
         setForm({
             ...form,
             files: [...form.files, ...files]

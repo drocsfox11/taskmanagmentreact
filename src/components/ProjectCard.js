@@ -24,9 +24,21 @@ function ProjectCard({ project, onClick }) {
     
     const canEditProject = hasRight(PROJECT_RIGHTS.EDIT_PROJECT);
     
-    const isProjectOwner = currentUser && project.owner && currentUser.id === project.owner.id;
+    const isProjectOwner = 
+        (currentUser && project.owner && currentUser.id === project.owner.id) || 
+        (currentUser && (!project.owner || project.owner.username === 'me'));
     
     const showOptionsIcon = canEditProject || isProjectOwner;
+
+    // Отладочная информация
+    useEffect(() => {
+        console.log(`ProjectCard ${project.id} (${project.title}):`);
+        console.log('project.owner:', project.owner);
+        console.log('currentUser:', currentUser);
+        console.log('isProjectOwner:', isProjectOwner);
+        console.log('canEditProject:', canEditProject);
+        console.log('showOptionsIcon:', showOptionsIcon);
+    }, [project, currentUser, isProjectOwner, canEditProject, showOptionsIcon]);
 
     const handleOptionsClick = (e) => {
         e.stopPropagation();

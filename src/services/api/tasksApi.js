@@ -42,11 +42,38 @@ export const tasksApi = baseApi.injectEndpoints({
       ]
     }),
     createTask: builder.mutation({
-      query: (task) => ({
-        url: 'api/tasks',
-        method: 'POST',
-        body: task,
-      }),
+      query: (task) => {
+        const { files, ...taskData } = task;
+        
+        // Если нет файлов, используем обычный JSON
+        if (!files || files.length === 0) {
+          return {
+            url: 'api/tasks',
+            method: 'POST',
+            body: taskData,
+          };
+        }
+        
+        // Если есть файлы, используем FormData
+        const formData = new FormData();
+        
+        // Добавляем данные задачи как JSON-строку в поле payload
+        formData.append('payload', JSON.stringify(taskData));
+        
+        // Добавляем файлы
+        if (Array.isArray(files)) {
+          files.forEach((file, index) => {
+            formData.append(`files`, file);
+          });
+        }
+        
+        return {
+          url: 'api/tasks',
+          method: 'POST',
+          body: formData,
+          formData: true,
+        };
+      },
       async onQueryStarted(task, { dispatch, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
 
@@ -73,11 +100,51 @@ export const tasksApi = baseApi.injectEndpoints({
       }
     }),
     updateTask: builder.mutation({
-      query: ({ id, ...updates }) => ({
-        url: `api/tasks/${id}`,
-        method: 'PUT',
-        body: updates,
-      }),
+      query: ({ id, ...updates }) => {
+        const { files, attachmentsToDelete, ...taskData } = updates;
+        
+        // Если нет файлов и нет attachmentsToDelete, используем обычный JSON
+        if ((!files || files.length === 0) && !attachmentsToDelete) {
+          return {
+            url: `api/tasks/${id}`,
+            method: 'PUT',
+            body: taskData,
+          };
+        }
+        
+        // Если есть файлы или attachmentsToDelete, используем FormData
+        const formData = new FormData();
+        
+        // Добавляем данные задачи как JSON-строку в поле payload
+        formData.append('payload', JSON.stringify(taskData));
+        
+        // Добавляем файлы
+        if (Array.isArray(files)) {
+          files.forEach((file, index) => {
+            // Добавляем только новые файлы (File объекты)
+            if (file instanceof File) {
+              formData.append(`files`, file);
+            }
+          });
+        }
+        
+        // Добавляем ID существующих вложений, которые нужно сохранить
+        if (taskData.attachments && Array.isArray(taskData.attachments)) {
+          formData.append('attachments', JSON.stringify(taskData.attachments));
+        }
+        
+        // Добавляем информацию о вложениях, которые нужно удалить
+        if (attachmentsToDelete) {
+          formData.append('attachmentsToDelete', JSON.stringify(attachmentsToDelete));
+        }
+        
+        return {
+          url: `api/tasks/${id}`,
+          method: 'PUT',
+          body: formData,
+          formData: true,
+        };
+      },
       async onQueryStarted({ id, boardId, columnId, ...updates }, { dispatch, queryFulfilled }) {
         console.log(`Optimistically updating task ${id} in column ${columnId}, board ${boardId}`);
         
@@ -120,7 +187,6 @@ export const tasksApi = baseApi.injectEndpoints({
           patchResult.undo();
         }
       }
-      
     }),
     deleteTask: builder.mutation({
       query: (params) => {
@@ -161,6 +227,18 @@ export const tasksApi = baseApi.injectEndpoints({
         } catch (error) {
           console.error(`Error deleting task ${id}:`, error);
           patchResult.undo();
+          
+          // Показать более понятное сообщение об ошибке для ограничения внешнего ключа
+          if (error.error && error.error.status === 500) {
+            const errorMessage = error.error?.data?.message || '';
+            if (errorMessage.includes('foreign key constraint') || 
+                errorMessage.includes('ConstraintViolationException')) {
+              alert('Невозможно удалить задачу, так как она используется в истории задач. ' +
+                    'Пожалуйста, обратитесь к администратору системы.');
+            } else {
+              alert('Ошибка при удалении задачи. Пожалуйста, попробуйте снова позже.');
+            }
+          }
         }
       }
     }),

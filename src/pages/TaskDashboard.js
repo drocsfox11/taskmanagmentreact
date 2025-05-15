@@ -132,47 +132,20 @@ function TaskDashboard() {
 
     const handleCreateTask = (taskData) => {
         if (currentColumnId && boardId) {
-            const { files, ...taskDataWithoutFiles } = taskData;
-            
-            console.log('Creating task with data:', taskDataWithoutFiles);
-            console.log('Files to upload:', files?.length || 0, 'files');
-            
             const newTask = {
-                ...taskDataWithoutFiles,
+                ...taskData,
                 columnId: currentColumnId,
                 boardId: Number(boardId),
                 projectId: Number(projectId)
             };
             
+            console.log('Creating task with data:', newTask);
+            console.log('Files to upload:', newTask.files?.length || 0, 'files');
+            
             createTask(newTask)
                 .unwrap()
                 .then(createdTask => {
-                    console.log('Task created successfully:', createdTask);
-                    
-                    if (files && files.length > 0) {
-                        console.log('Uploading files for taskId:', createdTask.id);
-                        console.log('Files to upload:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
-                        
-                        const uploadFiles = async () => {
-                            for (const file of files) {
-                                try {
-                                    console.log(`Uploading file: ${file.name}`);
-                                    await uploadTaskAttachment({
-                                        taskId: createdTask.id,
-                                        file: file
-                                    }).unwrap();
-                                    console.log(`File uploaded successfully: ${file.name}`);
-                                } catch (error) {
-                                    console.error(`Failed to upload file ${file.name}:`, error);
-                                }
-                            }
-                            console.log('All files uploaded');
-                        };
-                        
-                        uploadFiles().catch(error => {
-                            console.error('Error in file upload sequence:', error);
-                        });
-                    }
+                    console.log('Task created successfully with files:', createdTask);
                 })
                 .catch(error => {
                     console.error('Failed to create task:', error);
