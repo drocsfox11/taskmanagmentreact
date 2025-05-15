@@ -110,6 +110,7 @@ export const chatsApi = baseApi.injectEndpoints({
                     if (!exists) {
                       draft.messages.unshift({
                         ...event.payload,
+                        readByIds: [],
                         isLocal: false
                       });
                     }
@@ -120,7 +121,11 @@ export const chatsApi = baseApi.injectEndpoints({
                   chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
                     const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
                     if (chatIndex !== -1) {
-                      draft.chats[chatIndex].lastMessage = event.payload;
+                      draft.chats[chatIndex].lastMessage = {
+                        ...event.payload,
+                        readByIds: []
+
+                      };
                     }
                   })
                 );
@@ -199,18 +204,16 @@ export const chatsApi = baseApi.injectEndpoints({
                   baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
                     if (!draft.messages) return;
 
-                    const messageIdsToUpdate = event.payload.messageIds;
+                    const messageIdsToUpdate = event.payload.messagesIds;
                     const userId = event.payload.readerId;
-                    
+                    console.log("message readed", messageIdsToUpdate, userId);
                     if (messageIdsToUpdate && userId) {
                       messageIdsToUpdate.forEach(messageId => {
                         const messageIndex = draft.messages.findIndex(msg => msg.id === messageId);
+                        console.log("Индекс", messageIndex);
                         if (messageIndex !== -1) {
-                          if (!draft.messages[messageIndex].readByIds) {
-                            draft.messages[messageIndex].readByIds = [];
-                          }
-                          
                           if (!draft.messages[messageIndex].readByIds.includes(userId)) {
+                            console.log("Обновил драфт");
                             draft.messages[messageIndex].readByIds.push(userId);
                           }
                         }
@@ -312,6 +315,7 @@ export const chatsApi = baseApi.injectEndpoints({
         url: 'api/chats/paged',
         params: { offset, size },
       }),
+      keepUnusedDataFor: 0,
       transformResponse: (response) => {
         return {
           chats: response.chats?.map(chat => ({
@@ -349,7 +353,6 @@ export const chatsApi = baseApi.injectEndpoints({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg?.offset !== previousArg?.offset;
       },
-      keepUnusedDataFor: 5 * 60,
     }),
     updateChatAvatar: builder.mutation({
       query: ({ chatId, file }) => {

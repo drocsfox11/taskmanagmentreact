@@ -50,12 +50,30 @@ export const usersApi = baseApi.injectEndpoints({
                       usersApi.util.updateQueryData('getPagedChats', undefined, (draft) => {
                         const chatIndex = draft.chats.findIndex(c => c.id === event.payload.chatId);
                         if (chatIndex !== -1) {
-                          draft.chats[chatIndex].lastMessage = event.payload;
+                          draft.chats[chatIndex].lastMessage = {
+                            ...event.payload,
+                            readByIds: []
+                          };
                         }
                       })
                     );
                     if (!window.location.pathname.includes('messenger')) showNewMessageNotification(event.payload);
-                  }
+                    break
+                  case "MESSAGE_READED":
+
+                    dispatch(
+                        usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                          const chatIndex = draft.chats.findIndex(c => c.id === Number(event.payload.chatId));
+                          if (chatIndex !== -1) {
+                            const lastMessage = draft.chats[chatIndex].lastMessage;
+                            if (lastMessage?.id === event.payload.messageId) {
+                              lastMessage.readByIds = [event.payload.readerId];
+                            }
+                          }
+                        })
+                    );
+
+                }
               });
             });
           }

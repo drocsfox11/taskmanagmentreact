@@ -62,6 +62,7 @@ function Chat({ chatId }) {
     const [fileError, setFileError] = useState('');
     const [editingMessage, setEditingMessage] = useState(null);
     const [editText, setEditText] = useState('');
+    const [selectedMessageId, setSelectedMessageId] = useState(null);
     
     const MAX_FILES = 6;
     const MAX_TOTAL_SIZE = 100 * 1024 * 1024; 
@@ -150,7 +151,8 @@ function Chat({ chatId }) {
     useEffect(() => {
         if (messages.length > 0 && currentUser?.id) {
             console.log("Думаю читать")
-            const unreadMessages = messages.filter(msg => 
+            console.log(messages)
+            const unreadMessages = messages.filter(msg =>
                 !msg.readByIds.includes(currentUser.id) &&
                 msg.senderId !== currentUser.id
             );
@@ -250,9 +252,44 @@ function Chat({ chatId }) {
         }
     };
 
-    if (isChatLoading) return <LoadingSpinner />;
-    if (chatError) return <div className="chat-error">Ошибка загрузки чата</div>;
+    const handleMessageClick = (e) => {
+        if (!chatData?.isGroupChat) return;
+        
+        // Check if clicked on the container itself
+        if (e.target.classList.contains('chat-messages')) {
+            console.log("chat-messages")
+            setSelectedMessageId(null);
+            return;
+        }
+        
+        // Skip if clicked on interactive elements
+        const interactiveElements = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'IMG'];
+        if (interactiveElements.includes(e.target.tagName) || 
+            e.target.closest('.chat-action-button') || 
+            e.target.closest('.chat-attachment-link') ||
+            e.target.closest('.chat-attachment-image')) {
+            console.log("hmm", e.target.tagName)
+            return;
+        }
+        console.log("Попал")
+        let target = e.target;
+        while (target && !target.dataset.messageId) {
+            console.log("Ищу родителя")
+            if (target.classList.contains('chat-messages')) break;
+            target = target.parentElement;
+        }
+        
+        if (target && target.dataset.messageId) {
+            const messageId = target.dataset.messageId;
+            console.log("messageId", messageId)
+            setSelectedMessageId(prevId => prevId === messageId ? null : messageId);
+        }
+    };
 
+    if (isChatLoading || isMessagesLoading) return <LoadingSpinner />;
+    if (chatError) return <div className="chat-error">Ошибка загрузки чата</div>;
+    console.log(chatData);
+    console.log(messages);
     return (
         <div className="chat-container">
             <div className="chat-header">
@@ -317,6 +354,7 @@ function Chat({ chatId }) {
                 className="chat-messages"
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
+                onClick={handleMessageClick}
             >
                 {isMessagesLoading && messages.length === 0 && <LoadingSpinner />}
                 {messages.length === 0 && !isMessagesLoading && (
@@ -335,6 +373,7 @@ function Chat({ chatId }) {
                         <div
                             key={msg.id}
                             className={`chat-message ${isCurrentUser ? 'outgoing' : 'incoming'} ${msg.isLocal ? 'local' : ''}`}
+                            data-message-id={msg.id}
                         >
                             {!isCurrentUser && (
                                 <div className="chat-message-avatar">
@@ -457,6 +496,26 @@ function Chat({ chatId }) {
                                         </span>
                                     )}
                                 </div>
+                                
+                                {/* Read by users indicator */}
+                                {chatData?.isGroupChat && Number(selectedMessageId) === Number(msg.id) && msg.readByIds && msg.readByIds.length > 0 && (
+                                    <div className="chat-message-read-status">
+                                        <div className="chat-message-read-status-title">Прочитано:</div>
+                                        <div className="chat-message-read-status-avatars">
+                                            {msg.readByIds.map(readerId => {
+                                                const reader = getParticipantById(readerId);
+                                                return reader ? (
+                                                    <div key={readerId} className="chat-message-read-avatar" title={reader.name}>
+                                                        <img 
+                                                            src={reader.avatarURL || ProfileIcon} 
+                                                            alt={reader.name} 
+                                                        />
+                                                    </div>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                                 
                                 {isCurrentUser && !msg.isLocal && (
                                     <div className="chat-message-actions">

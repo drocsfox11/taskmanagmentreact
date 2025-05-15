@@ -3,7 +3,7 @@ import MessengerAva from '../assets/icons/messenger_ava.svg';
 import Search from "../assets/icons/search.svg";
 import { useGetPagedChatsQuery, useGetCurrentUserQuery } from '../services/api';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useCallback } from 'react';
+
 
 function formatTime(dateString) {
     if (!dateString) return '';
@@ -19,10 +19,15 @@ function LeftMenuMessenger({ onCreateChat }) {
     const { data: chatsData, isLoading } = useGetPagedChatsQuery({ offset: 0, size: 30 });
     const navigate = useNavigate();
     const { chatId } = useParams();
-
+    const {data: currentUser} = useGetCurrentUserQuery();
     console.log(chatsData);
-
-
+    const chats = chatsData
+        ? [...chatsData.chats].sort((a, b) => {
+            const aId = a.lastMessage?.id || 0;
+            const bId = b.lastMessage?.id || 0;
+            return bId - aId;
+        })
+        : [];
 
     return (
         <div className="left-menu-messenger-container">
@@ -35,11 +40,11 @@ function LeftMenuMessenger({ onCreateChat }) {
             </div>
             <div className="left-menu-messenger-chats-container">
                 {isLoading && <div className="messenger-chats-loading">Загрузка...</div>}
-                {!isLoading && chatsData?.chats?.length === 0 && <div className="messenger-chats-empty">Нет чатов</div>}
-                {chatsData?.chats?.map(chat => (
+                {!isLoading && chats?.length === 0 && <div className="messenger-chats-empty">Нет чатов</div>}
+                {chats?.map(chat => (
                     <div
                         key={chat.id}
-                        className={`left-menu-messenger-chat-card${String(chatId) === String(chat.id) ? ' selected' : ''}${chat.unreadCount > 0 ? ' unread' : ''}`}
+                        className={`left-menu-messenger-chat-card${String(chatId) === String(chat.id) ? ' selected' : ''}${(!chat.lastMessage || chat.lastMessage?.senderId === currentUser.id || chat.lastMessage?.readByIds.includes(currentUser.id))? '' : ' unread'}`}
                         onClick={() => {
                             navigate(`/system/messenger/${chat.id}`);
                         }}>

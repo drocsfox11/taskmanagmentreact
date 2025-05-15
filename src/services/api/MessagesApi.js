@@ -45,6 +45,7 @@ export const messagesApi = baseApi.injectEndpoints({
                 draft.messages[localMsgIndex] = {
                   ...data,
                   senderId: data.sender.id,
+                  readByIds: [],
                   isLocal: false,
                 };
               }
@@ -126,7 +127,8 @@ export const messagesApi = baseApi.injectEndpoints({
               if (localMsgIndex !== -1) {
                 draft.messages[localMsgIndex] = {
                   ...data,
-                  isLocal: false
+                  isLocal: false,
+                  readByIds: [],
                 };
               }
             })
