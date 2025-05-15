@@ -97,7 +97,7 @@ export {
   useEditMessageMutation,
   useDeleteMessageMutation,
   useUploadAttachmentMutation,
-  useMarkAsReadMutation,
+  useMarkMultipleMessagesAsReadMutation
 } from './MessagesApi';
 
 

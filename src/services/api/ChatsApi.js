@@ -59,6 +59,7 @@ export const chatsApi = baseApi.injectEndpoints({
     }),
     getChatDetails: builder.query({
       query: (chatId) => ({url: `api/chats/${chatId}`}),
+      keepUnusedDataFor: 0,
       transformResponse: (response) => {
         return {
           id: response.id,
@@ -68,7 +69,7 @@ export const chatsApi = baseApi.injectEndpoints({
           participants: response.participants || [],
         };
       },
-      
+
       async onCacheEntryAdded(
         chatId,
         { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch, getState }
@@ -85,7 +86,6 @@ export const chatsApi = baseApi.injectEndpoints({
           
           unsubscribeFromAllChatsExcept(chatId);
           
-          setTimeout( () =>
           subscribeToChatTopic(chatId, (event) => {
             if (!event || !event.type) return;
 
@@ -100,6 +100,7 @@ export const chatsApi = baseApi.injectEndpoints({
                   console.log(`Ignoring own event: ${event.type}`);
                   return;
                 }
+                
                 dispatch(
                   baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
                     if (!draft.messages) draft.messages = [];
@@ -115,27 +116,18 @@ export const chatsApi = baseApi.injectEndpoints({
                   })
                 );
                 
-                // Update last message in chat list
                 dispatch(
                   chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
-                    const chatIndex = draft.chats.findIndex(c => c.id === chatId);
+                    const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
                     if (chatIndex !== -1) {
                       draft.chats[chatIndex].lastMessage = event.payload;
-                      draft.chats[chatIndex].unreadCount = (draft.chats[chatIndex].unreadCount || 0) + 1;
-                      
-                      // Move chat to top of list
-                      const chat = draft.chats[chatIndex];
-                      draft.chats.splice(chatIndex, 1);
-                      draft.chats.unshift(chat);
                     }
                   })
                 );
                 
-                // Update chat details
+                
                 updateCachedData((draft) => {
                   draft.lastMessage = event.payload;
-                  draft.lastActivity = new Date().toISOString();
-                  draft.unreadCount = (draft.unreadCount || 0) + 1;
                 });
                 break;
               
@@ -198,10 +190,40 @@ export const chatsApi = baseApi.injectEndpoints({
                 });
                 break;
               
+              case ChatEventTypes.MESSAGE_READED:
+                if (event.payload.readerId === userId) {
+                  console.log("игнорирую свой ивент")
+                  return
+                }
+                dispatch(
+                  baseApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
+                    if (!draft.messages) return;
+
+                    const messageIdsToUpdate = event.payload.messageIds;
+                    const userId = event.payload.readerId;
+                    
+                    if (messageIdsToUpdate && userId) {
+                      messageIdsToUpdate.forEach(messageId => {
+                        const messageIndex = draft.messages.findIndex(msg => msg.id === messageId);
+                        if (messageIndex !== -1) {
+                          if (!draft.messages[messageIndex].readByIds) {
+                            draft.messages[messageIndex].readByIds = [];
+                          }
+                          
+                          if (!draft.messages[messageIndex].readByIds.includes(userId)) {
+                            draft.messages[messageIndex].readByIds.push(userId);
+                          }
+                        }
+                      });
+                    }
+                  })
+                );
+                break;
+              
               default:
                 console.log('Unknown chat event type:', event.type);
             }
-          }), 1000)
+          });
           
           await cacheEntryRemoved;
           

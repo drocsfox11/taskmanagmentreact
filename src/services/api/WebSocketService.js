@@ -4,12 +4,12 @@ import {wait} from "@testing-library/user-event/dist/utils";
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost:8080';
 
-// Global WebSocket connection
 let globalStompClient = null;
 const subscriptions = {};
 const messageHandlers = {};
 
-// Event types
+const connectionCallbacks = [];
+
 export const ChatEventTypes = {
   NEW_MESSAGE: 'NEW_MESSAGE',
   USER_ROLE_CHANGED: 'USER_ROLE_CHANGED',
@@ -17,6 +17,7 @@ export const ChatEventTypes = {
   USER_ADDED: 'USER_ADDED',
   MESSAGE_DELETED: 'MESSAGE_DELETED',
   MESSAGE_EDITED: 'MESSAGE_EDITED',
+  MESSAGE_READED: 'MESSAGE_READED',
 };
 
 export const BoardEventTypes = {
@@ -66,6 +67,9 @@ export const initializeWebSocketConnection = (userId) => {
     
     client.onConnect = (frame) => {
       console.log(`WebSocket connection established for user ${userId}:`, frame);
+      
+      // Call any registered connection callbacks
+      connectionCallbacks.forEach(callback => callback(globalStompClient));
     };
     
     client.onStompError = (frame) => {
@@ -107,6 +111,7 @@ export const getStompClient = () => {
  * @returns {boolean} - Whether the subscription was successful
  */
 export const subscribeToChatTopic = (chatId, handler) => {
+  console.log(`Оформляем подписку на чат ${chatId}`);
   if (!globalStompClient || !globalStompClient.connected) {
     console.log(globalStompClient);
     console.warn(`Cannot subscribe to chat ${chatId}, client not connected`);
@@ -134,7 +139,8 @@ export const subscribeToChatTopic = (chatId, handler) => {
     
     messageHandlers[subscriptionKey] = handler;
   } else if (handler) {
-    // Update handler if subscription already exists
+    console.log(`Подписка на чат ${chatId} уже оформлена`);
+
     messageHandlers[subscriptionKey] = handler;
   }
 
@@ -168,6 +174,44 @@ export const subscribeToBoardTopic = (boardId, handler) => {
           }
         } catch (error) {
           console.error('STOMP message error:', error);
+        }
+      }
+    );
+    
+    messageHandlers[subscriptionKey] = handler;
+  } else if (handler) {
+    messageHandlers[subscriptionKey] = handler;
+  }
+
+  return true;
+};
+
+/**
+ * Subscribe to user's private message queue
+ * @param {function} handler - The message handler function
+ * @returns {boolean} - Whether the subscription was successful
+ */
+export const subscribeToUserPrivateQueue = (handler) => {
+  if (!globalStompClient || !globalStompClient.connected) {
+    console.warn('Cannot subscribe to private queue, client not connected');
+    return false;
+  }
+
+  const subscriptionKey = 'user-private';
+  if (!subscriptions[subscriptionKey]) {
+    console.log('Subscribing to user private queue');
+    subscriptions[subscriptionKey] = globalStompClient.subscribe(
+      '/user/queue/private',
+      (message) => {
+        try {
+          const event = JSON.parse(message.body);
+          console.log('Received private user event:', event);
+          
+          if (messageHandlers[subscriptionKey]) {
+            messageHandlers[subscriptionKey](event);
+          }
+        } catch (error) {
+          console.error('STOMP private message error:', error);
         }
       }
     );
@@ -247,7 +291,21 @@ export const sendBoardAction = (boardId, action, payload) => {
 };
 
 /**
- * Disconnect the WebSocket connection
+ * Register a callback to be executed when connection is established
+ * @param {function} callback - Function to call when connection is ready
+ */
+export const onConnect = (callback) => {
+  if (globalStompClient && globalStompClient.connected) {
+    // If already connected, execute immediately
+    callback(globalStompClient);
+  } else {
+    // Otherwise, store for later execution
+    connectionCallbacks.push(callback);
+  }
+};
+
+/**
+ * Clear connection callbacks when disconnecting
  */
 export const disconnectWebSocket = () => {
   if (globalStompClient && globalStompClient.connected) {
@@ -264,6 +322,9 @@ export const disconnectWebSocket = () => {
     // Clear subscriptions and handlers
     Object.keys(subscriptions).forEach(key => delete subscriptions[key]);
     Object.keys(messageHandlers).forEach(key => delete messageHandlers[key]);
+    
+    // Clear connection callbacks
+    connectionCallbacks.length = 0;
     
     console.log('WebSocket disconnected');
   }

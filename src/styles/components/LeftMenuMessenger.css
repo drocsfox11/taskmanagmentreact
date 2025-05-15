@@ -108,7 +108,7 @@
 .left-menu-messenger-chat-card-text-container{
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: calc(100% - 40px - 14px);
     gap: 5px;
 }
 
@@ -152,6 +152,10 @@
     font-size: 10px;
     color: #969595;
     font-family: "Ruberoid Regular", sans-serif;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .left-menu-messenger-chat-card-chat-message-date{

@@ -13,7 +13,8 @@ import {
     useSendMessageMutation,
     useSendMessageWithAttachmentsMutation,
     useGetChatDetailsQuery,
-    useGetCurrentUserQuery
+    useGetCurrentUserQuery,
+    useMarkMultipleMessagesAsReadMutation,
 } from '../services/api';
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/components/Chat.css';
@@ -87,6 +88,7 @@ function Chat({ chatId }) {
     const [sendMessageWithAttachments, { isLoading: isSendingWithAttachments }] = useSendMessageWithAttachmentsMutation();
     const [deleteMessage, {isLoading: isDeleteMessage}] = useDeleteMessageMutation();
     const [editMessage, {isLoading: isEditMessage}] = useEditMessageMutation();
+    const [markMultipleMessagesAsRead] = useMarkMultipleMessagesAsReadMutation();
 
     const isSending = isSendingText || isSendingWithAttachments;
     const { data: currentUser } = useGetCurrentUserQuery();
@@ -144,6 +146,22 @@ function Chat({ chatId }) {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
     }, [messages, currentUser, chatId]);
+
+    useEffect(() => {
+        if (messages.length > 0 && currentUser?.id) {
+            console.log("Думаю читать")
+            const unreadMessages = messages.filter(msg => 
+                !msg.readByIds.includes(currentUser.id) &&
+                msg.senderId !== currentUser.id
+            );
+            
+            if (unreadMessages.length > 0) {
+                console.log("Читаю")
+                const unreadMessageIds = unreadMessages.map(msg => msg.id);
+                markMultipleMessagesAsRead({ chatId, messageIds: unreadMessageIds });
+            }
+        }
+    }, [messages, markMultipleMessagesAsRead, chatId, currentUser]);
 
     const handleScroll = (e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -435,7 +453,7 @@ function Chat({ chatId }) {
                                     )}
                                     {isCurrentUser && (
                                         <span className="chat-message-status">
-                                            {msg.isReaded ? '✓✓' : '✓'}
+                                            {msg.readByIds && msg.readByIds.length > 0 ? '✓✓' : '✓'}
                                         </span>
                                     )}
                                 </div>

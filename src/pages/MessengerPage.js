@@ -12,7 +12,11 @@ function MessengerPage() {
     return (
         <div id="messenger-page-container">
             <LeftMenuMessenger onCreateChat={() => setCreateModalOpen(true)} />
-            {chatId ? <Chat chatId={chatId} /> : <div className="messenger-placeholder">Выберите чат</div>}
+            {chatId ? <Chat chatId={chatId} /> : (
+                <div className="messenger-placeholder">
+                    <div>Выберите чат</div>
+                </div>
+            )}
             {isCreateModalOpen && (
                 <CreateChatModal
                     isOpen={isCreateModalOpen}

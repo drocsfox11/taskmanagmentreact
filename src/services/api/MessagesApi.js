@@ -29,7 +29,6 @@ export const messagesApi = baseApi.injectEndpoints({
                 avatarURL: currentUser.avatarURL
               },
               edited: false,
-              readed: false,
               readByIds: [],
               attachments: [],
               isLocal: true,
@@ -50,6 +49,14 @@ export const messagesApi = baseApi.injectEndpoints({
                 };
               }
             })
+          );
+          dispatch(
+              messagesApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
+                if (chatIndex !== -1) {
+                  draft.chats[chatIndex].lastMessage = data;
+                }
+              })
           );
         } catch (error) {
           patchResult.undo();
@@ -103,8 +110,7 @@ export const messagesApi = baseApi.injectEndpoints({
                 avatarURL: currentUser.avatarURL
               },
               isEdited: false,
-              isReaded: false,
-              readBy: [],
+              readByIds: [],
               attachments: tempAttachments,
               isLocal: true
             });
@@ -124,6 +130,14 @@ export const messagesApi = baseApi.injectEndpoints({
                 };
               }
             })
+          );
+          dispatch(
+              messagesApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
+                if (chatIndex !== -1) {
+                  draft.chats[chatIndex].lastMessage = data;
+                }
+              })
           );
         } catch (error) {
           patchResult.undo();
@@ -251,20 +265,41 @@ export const messagesApi = baseApi.injectEndpoints({
         };
       },
     }),
-    // markAsRead: builder.mutation({
-    //   query: ({ chatId, messageId }) => ({
-    //     url: `api/chats/${chatId}/messages/${messageId}/read`,
-    //     method: 'POST',
-    //   }),
+    markMultipleMessagesAsRead: builder.mutation({
+      query: ({ chatId, messageIds }) => ({
+        url: `api/chats/${chatId}/read`,
+        method: 'POST',
+        body: messageIds,
+      }),
 
-    //   async onQueryStarted({ chatId, messageId}, { dispatch, queryFulfilled }) {
-    //     try {
-    //       await queryFulfilled;
-    //     } catch {
-    //     }
-    //   },
-    // }),
+      async onQueryStarted({ chatId, messageIds }, { dispatch, queryFulfilled, getState }) {
+        const state = getState();
+        const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
 
+
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData('getMessages', { chatId }, (draft) => {
+            messageIds.forEach(messageId => {
+              const messageIndex = draft.messages.findIndex(msg => msg.id === messageId);
+              if (messageIndex !== -1) {
+                if (!draft.messages[messageIndex].readByIds) {
+                  draft.messages[messageIndex].readByIds = [];
+                }
+                if (!draft.messages[messageIndex].readByIds.includes(currentUser.id)) {
+                  draft.messages[messageIndex].readByIds.push(currentUser.id);
+                }
+              }
+            });
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+    }),
   }),
   overrideExisting: false,
 });
@@ -276,5 +311,5 @@ export const {
   useEditMessageMutation,
   useDeleteMessageMutation,
   useUploadAttachmentMutation,
-  useMarkAsReadMutation,
+  useMarkMultipleMessagesAsReadMutation,
 } = messagesApi; 

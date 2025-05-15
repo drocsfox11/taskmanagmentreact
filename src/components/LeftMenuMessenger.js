@@ -20,11 +20,6 @@ function LeftMenuMessenger({ onCreateChat }) {
     const navigate = useNavigate();
     const { chatId } = useParams();
 
-    const handleNewMessage = useCallback((event) => {
-        
-        console.log('New message received in chat list:', event);
-    }, []);
-
     console.log(chatsData);
 
 

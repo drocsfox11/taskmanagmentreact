@@ -1,5 +1,11 @@
 import { baseApi } from './baseApi';
-import { initializeWebSocketConnection, disconnectWebSocket } from './WebSocketService';
+import { 
+  initializeWebSocketConnection, 
+  disconnectWebSocket, 
+  subscribeToUserPrivateQueue,
+  onConnect 
+} from './WebSocketService';
+import { showNewMessageNotification } from '../NotificationService';
 
 const apiPrefix = 'api/users';
 
@@ -18,23 +24,43 @@ export const usersApi = baseApi.injectEndpoints({
       providesTags: ['CurrentUser'],
       async onCacheEntryAdded(
         arg,
-        { cacheDataLoaded, cacheEntryRemoved }
+        { cacheDataLoaded, cacheEntryRemoved, dispatch }
       ) {
         try {
           console.log("Кеш пользователя полетел!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-          // Wait for the user data to be loaded
           const { data: userData } = await cacheDataLoaded;
           
           if (userData && userData.id) {
-            // Initialize global WebSocket connection
             initializeWebSocketConnection(userData.id);
             console.log('WebSocket connection initialized for user:', userData.id);
+            
+            onConnect(() => {
+              console.log('Connection ready, subscribing to private queue');
+              subscribeToUserPrivateQueue((event) => {
+                if (!event || !event.type) return;
+
+                switch (event.type) {
+                  case 'NEW_MESSAGE':
+                    if (event.payload.sender.id === userData.id) {
+                      console.log(`Ignoring own event: ${event.type}`);
+                      return;
+                    }
+                    
+                    dispatch(
+                      usersApi.util.updateQueryData('getPagedChats', undefined, (draft) => {
+                        const chatIndex = draft.chats.findIndex(c => c.id === event.payload.chatId);
+                        if (chatIndex !== -1) {
+                          draft.chats[chatIndex].lastMessage = event.payload;
+                        }
+                      })
+                    );
+                    if (!window.location.pathname.includes('messenger')) showNewMessageNotification(event.payload);
+                  }
+              });
+            });
           }
           
-          // When the cache entry is removed (user logs out or session expires)
           await cacheEntryRemoved;
-          
-          // Disconnect WebSocket when user data is removed from cache
           disconnectWebSocket();
           console.log('WebSocket connection closed on cache removal');
         } catch (error) {
