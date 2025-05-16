@@ -51,6 +51,9 @@ function App() {
     useEffect(() => {
         markPageLoad();
         
+        // Log audio debugging help message for developers
+        console.log('🎧 Audio Debugger loaded. Run window.audioDebugger.help() for assistance with audio issues.');
+        
         return () => {
             clearPageLoadFlag();
         };

@@ -260,50 +260,7 @@ export const chatsApi = baseApi.injectEndpoints({
 
                 break;
               
-              case ChatEventTypes.CALL_NOTIFICATION:
-              case ChatEventTypes.CALL_STARTED:
-              case ChatEventTypes.CALL_ENDED:
-              case ChatEventTypes.CALL_REJECTED:
-                // Пропускаем эти события, они будут обработаны в CallManager
-                console.log(`Call event received in ChatsApi: ${event.type}`);
-                console.log('Call event full structure:', JSON.stringify(event, null, 2));
-                console.log('Checking for SDP in call event:');
-                
-                // Ищем SDP в различных местах
-                if (event.sdp) {
-                  console.log('- SDP found in event.sdp');
-                } else if (event.payload && event.payload.sdp) {
-                  console.log('- SDP found in event.payload.sdp');
-                } else if (event.payload && event.payload.offer) {
-                  console.log('- SDP found in event.payload.offer');
-                } else if (event.offer) {
-                  console.log('- SDP found in event.offer'); 
-                } else if (typeof event.payload === 'string' && event.payload.startsWith('v=')) {
-                  console.log('- SDP is the payload string itself');
-                } else {
-                  console.log('- No SDP found, searching deeper:');
-                  // Глубокий поиск SDP в объекте события
-                  for (const key in event) {
-                    if (typeof event[key] === 'string' && event[key].startsWith('v=')) {
-                      console.log(`  - Found SDP in event.${key}`);
-                    } else if (typeof event[key] === 'object' && event[key]) {
-                      for (const subKey in event[key]) {
-                        if (typeof event[key][subKey] === 'string' && event[key][subKey].startsWith('v=')) {
-                          console.log(`  - Found SDP in event.${key}.${subKey}`);
-                        }
-                      }
-                    }
-                  }
-                }
-                
-                // Явно публикуем эти события в шину событий, чтобы они были доступны другим компонентам
-                // создаем событие, которое может поймать CallManager
-                const callEvent = new CustomEvent('call-event', { 
-                  detail: { ...event, source: 'chat-topic' } 
-                });
-                window.dispatchEvent(callEvent);
-                break;
-              
+
               default:
                 console.log('Unknown chat event type:', event.type);
             }

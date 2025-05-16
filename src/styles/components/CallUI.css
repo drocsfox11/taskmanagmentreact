@@ -217,6 +217,21 @@
   transition: all 0.2s ease;
 }
 
+.control-button.diagnose-audio {
+  width: auto;
+  height: 40px;
+  border-radius: 20px;
+  padding: 0 15px;
+  background-color: #3a86ff;
+  color: white;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.control-button.diagnose-audio:hover {
+  background-color: #2c6fd1;
+}
+
 .control-button img {
   width: 24px;
   height: 24px;
@@ -245,6 +260,117 @@
 
 .control-button.end-call:hover {
   background-color: #c0392b;
+}
+
+/* Audio Diagnostics */
+.audio-diagnostic-results {
+  margin: 15px;
+  padding: 15px;
+  background-color: rgba(18, 20, 26, 0.9);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 800px;
+  margin: 0 auto 15px;
+}
+
+.audio-diagnostic-results h3 {
+  margin-top: 0;
+  color: #3a86ff;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.audio-diagnostic-results button {
+  background-color: #2c2f38;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.audio-diagnostic-results button:hover {
+  background-color: #3a3e4a;
+}
+
+.diagnostic-issues {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-left: 4px solid #e74c3c;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.diagnostic-warning {
+  color: #e74c3c;
+  font-weight: 500;
+  margin-top: 0;
+}
+
+.diagnostic-issues ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.diagnostic-issues li {
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+}
+
+.diagnostic-ok {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-left: 4px solid #2ecc71;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  color: #2ecc71;
+  font-weight: 500;
+}
+
+.audio-fixes {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.audio-fixes button {
+  background-color: #3a86ff;
+  margin-bottom: 0;
+}
+
+.audio-fixes button:hover {
+  background-color: #2c6fd1;
+}
+
+.diagnostic-details {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 15px;
+}
+
+.diagnostic-details h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #a0a0a0;
+  font-size: 1rem;
+}
+
+.diagnostic-details pre {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 4px;
+  max-height: 300px;
+  overflow: auto;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Responsive adjustments */
