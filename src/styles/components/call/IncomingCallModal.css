@@ -1,0 +1,124 @@
+.incoming-call-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.incoming-call-modal {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 320px;
+  padding: 24px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.incoming-call-header {
+  text-align: center;
+}
+
+.incoming-call-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.incoming-call-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.incoming-call-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.incoming-call-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.incoming-call-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: #4468e7;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.incoming-call-caller-info {
+  text-align: center;
+}
+
+.incoming-call-caller-info h4 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  color: #333;
+}
+
+.incoming-call-caller-info p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+.incoming-call-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+}
+
+.incoming-call-accept-btn,
+.incoming-call-reject-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.incoming-call-accept-btn {
+  background-color: #4caf50;
+}
+
+.incoming-call-reject-btn {
+  background-color: #f44336;
+}
+
+.incoming-call-accept-btn:hover,
+.incoming-call-reject-btn:hover {
+  transform: scale(1.05);
+}
+
+.incoming-call-accept-btn:active,
+.incoming-call-reject-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+} 

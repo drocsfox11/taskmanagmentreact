@@ -7,8 +7,28 @@ import {
   ChatEventTypes 
 } from './WebSocketService';
 import { showNewMessageNotification } from '../NotificationService';
+import CallService, { CALL_MESSAGE_TYPE } from '../../services/CallService';
 
 const apiPrefix = 'api/users';
+
+// Helper function to access current user data globally
+export const getCurrentUserFromCache = () => {
+  if (window.store && window.store.getState) {
+    const state = window.store.getState();
+    // Find current user query in the API cache
+    if (state.api && state.api.queries) {
+      const currentUserQuery = Object.entries(state.api.queries)
+        .find(([key, value]) => 
+          key.includes('getCurrentUser') && value?.data && value.status === 'fulfilled'
+        );
+      
+      if (currentUserQuery && currentUserQuery[1]?.data) {
+        return currentUserQuery[1].data;
+      }
+    }
+  }
+  return null;
+};
 
 export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -42,8 +62,79 @@ export const usersApi = baseApi.injectEndpoints({
               subscribeToUserPrivateQueue((event) => {
                 if (!event || !event.type) return;
 
+                console.log('Received private user event:', event);
 
+                // Обработка событий звонков
+                if (Object.values(CALL_MESSAGE_TYPE).includes(event.type)) {
+                  // Получаем ID текущего пользователя
+                  const currentUserId = userData.id.toString();
+                  
+                  // Проверяем, является ли текущий пользователь отправителем события
+                  const isOwnEvent = event.senderId && 
+                    (event.senderId.toString() === currentUserId || 
+                     event.senderId === parseInt(currentUserId));
+                  
+                  // Игнорируем CALL_NOTIFICATION от самого себя
+                  if (event.type === CALL_MESSAGE_TYPE.CALL_NOTIFICATION && isOwnEvent) {
+                    console.log('Ignoring own CALL_NOTIFICATION event');
+                    return;
+                  }
+                  
+                  // Обработка различных типов звонков
+                  switch (event.type) {
+                    case CALL_MESSAGE_TYPE.CALL_NOTIFICATION:
+                      console.log('Received CALL_NOTIFICATION in usersApi:', event);
+                      if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+                        window.callManagerRef._handleCallMessage(event);
+                      } else if (typeof window.handleCallNotification === 'function') {
+                        window.handleCallNotification(event);
+                      }
+                      break;
+                      
+                    case CALL_MESSAGE_TYPE.ANSWER:
+                      console.log('Received ANSWER in usersApi:', event);
+                      if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+                        // Создаем правильный объект ответа для WebRTC
+                        const answerData = event.payload || event;
+                        const answerObj = {
+                          type: 'answer',  // это должно быть строчными буквами для WebRTC
+                          sdp: answerData.sdp || (answerData.payload && answerData.payload.sdp)
+                        };
+                        
+                        // Проверяем наличие SDP
+                        if (!answerObj.sdp) {
+                          console.error('No SDP found in ANSWER message:', event);
+                          break;
+                        }
+                        
+                        // Вместо прямой передачи события создаем модифицированное событие
+                        const modifiedEvent = {
+                          ...event,
+                          formattedAnswer: answerObj
+                        };
+                        
+                        window.callManagerRef._handleCallMessage(modifiedEvent);
+                      }
+                      break;
+                      
+                    case CALL_MESSAGE_TYPE.ICE_CANDIDATE:
+                    case CALL_MESSAGE_TYPE.CALL_ENDED:
+                    case CALL_MESSAGE_TYPE.MEDIA_STATUS:
+                    case CALL_MESSAGE_TYPE.OFFER:
+                      console.log(`Received ${event.type} in usersApi:`, event);
+                      if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+                        window.callManagerRef._handleCallMessage(event);
+                      }
+                      break;
+                      
+                    default:
+                      console.log('Unknown call event type:', event.type);
+                  }
+                  
+                  return; // Прекращаем обработку после событий звонков
+                }
 
+                // Обработка остальных типов событий
                 switch (event.type) {
                   case 'NEW_MESSAGE':
                     if (event.payload.sender.id === userData.id) {

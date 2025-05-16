@@ -10,6 +10,7 @@ import ProjectDashboardsDashboard from "./pages/ProjectDashboardsDashboard";
 import ContentContainer from "./pages/ContentContainer";
 import { useEffect } from 'react';
 import { markPageLoad, clearPageLoadFlag } from './utils/refreshManager';
+import CallManager from './components/call/CallManager';
 
 const router = createBrowserRouter([
     {
@@ -54,13 +55,22 @@ function App() {
         // Log audio debugging help message for developers
         console.log('🎧 Audio Debugger loaded. Run window.audioDebugger.help() for assistance with audio issues.');
         
+        // Debug message for call system
+        console.log('📞 Call system initialized. Call notifications now handled by usersApi.');
+        
         return () => {
             clearPageLoadFlag();
         };
     }, []);
 
     return (
-        <RouterProvider router={router} />
+        <>
+            <RouterProvider router={router} />
+            <CallManager ref={(ref) => {
+                // Create a global reference to CallManager for direct access
+                window.callManagerRef = ref;
+            }} />
+        </>
     );
 }
 

@@ -1,0 +1,130 @@
+.outgoing-call-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.outgoing-call-modal {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 320px;
+  padding: 24px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.outgoing-call-header {
+  text-align: center;
+}
+
+.outgoing-call-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.outgoing-call-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.outgoing-call-info {
+  text-align: center;
+}
+
+.outgoing-call-info h4 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  color: #333;
+}
+
+.outgoing-call-info p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+.outgoing-call-animation {
+  margin: 20px 0;
+}
+
+/* Ripple animation */
+.outgoing-call-ripple {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.outgoing-call-ripple div {
+  position: absolute;
+  border: 4px solid #4468e7;
+  border-radius: 50%;
+  opacity: 1;
+  animation: outgoing-call-ripple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.outgoing-call-ripple div:nth-child(2) {
+  animation-delay: -0.5s;
+}
+
+.outgoing-call-ripple div:nth-child(3) {
+  animation-delay: -1s;
+}
+
+@keyframes outgoing-call-ripple {
+  0% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 0px;
+    left: 0px;
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
+
+.outgoing-call-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.outgoing-call-cancel-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background-color: #f44336;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.outgoing-call-cancel-btn:hover {
+  transform: scale(1.05);
+}
+
+.outgoing-call-cancel-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+} 

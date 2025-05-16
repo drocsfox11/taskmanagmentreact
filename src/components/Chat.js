@@ -20,6 +20,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import '../styles/components/Chat.css';
 import { v4 as uuidv4 } from 'uuid';
 import ImageModal from './ImageModal';
+import CallManager from './call/CallManager';
+import CallService, { CALL_TYPE } from '../services/CallService';
 
 
 function formatTime(dateString) {
@@ -290,6 +292,41 @@ function Chat({ chatId }) {
         }
     };
 
+    const handleStartCall = (callType) => {
+        if (!chatData) {
+            console.error('No chat data available, cannot start call');
+            return;
+        }
+        
+        try {
+            const recipientName = chatData.isGroupChat
+                ? chatData.name
+                : chatData.participants.find(p => p.id !== currentUser?.id)?.name || 'Неизвестный пользователь';
+            
+            console.log('Call initialization details:', { 
+                chatId, 
+                recipientName, 
+                callType,
+                callManagerRef: !!window.callManagerRef,
+                callManagerHasStartCall: !!(window.callManagerRef && typeof window.callManagerRef.startCall === 'function')
+            });
+                
+            // Use the global CallManager reference to start the call with UI
+            if (window.callManagerRef && typeof window.callManagerRef.startCall === 'function') {
+                console.log('Starting call using CallManager reference');
+                window.callManagerRef.startCall(chatId, recipientName, callType);
+            } else {
+                // Fallback to direct CallService usage if the CallManager reference isn't available
+                console.warn('CallManager reference not available, falling back to direct service call');
+                CallService.startCall(chatId, callType);
+            }
+            
+            console.log(`Started ${callType} call with ${recipientName}`);
+        } catch (error) {
+            console.error('Failed to start call:', error);
+        }
+    };
+
     if (isChatLoading || isMessagesLoading || chatIsFetching) return (<div className="chat-container"> <LoadingSpinner /> </div>);
     
 
@@ -323,12 +360,14 @@ function Chat({ chatId }) {
                         alt="video" 
                         className="chat-header-icon"
                         title="Видеозвонок"
+                        onClick={() => handleStartCall(CALL_TYPE.VIDEO)}
                     />
                     <img 
                         src={PhoneIcon} 
                         alt="call" 
                         className="chat-header-icon"
                         title="Аудиозвонок"
+                        onClick={() => handleStartCall(CALL_TYPE.AUDIO)}
                     />
                 </div>
             </div>

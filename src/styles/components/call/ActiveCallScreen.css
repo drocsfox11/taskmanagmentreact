@@ -1,0 +1,230 @@
+.active-call-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.active-call-header {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.active-call-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.call-debug-info {
+  margin-top: 5px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.manual-audio-start-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: pulse 1.5s infinite;
+}
+
+.manual-audio-start-btn:hover {
+  background-color: #c0392b;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.active-call-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Video call styles */
+.active-call-videos {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.remote-video-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #222;
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remote-user-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.8;
+}
+
+.remote-user-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #4468e7;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.remote-user-name {
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.local-video-container {
+  position: absolute;
+  width: 150px;
+  height: 200px;
+  bottom: 80px;
+  right: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+
+.local-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the local video */
+}
+
+/* Audio call styles */
+.audio-call-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #222;
+}
+
+.audio-call-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #4468e7;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.audio-call-name {
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Controls */
+.active-call-controls {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 10;
+}
+
+.call-control-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.call-control-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.call-control-btn:active {
+  transform: scale(0.95);
+}
+
+.call-control-btn.muted,
+.call-control-btn.disabled {
+  background-color: #f44336;
+}
+
+.call-control-btn.end-call {
+  background-color: #f44336;
+}
+
+.call-control-btn.end-call:hover {
+  background-color: #d32f2f;
+} 

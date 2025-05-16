@@ -259,7 +259,26 @@ export const chatsApi = baseApi.injectEndpoints({
                 );
 
                 break;
-              
+                
+              case ChatEventTypes.CALL_NOTIFICATION:
+                console.log('Received CALL_NOTIFICATION event:', event);
+                
+                // Use the global call notification handler
+                if (typeof window.handleCallNotification === 'function') {
+                  console.log('Using global call notification handler with payload:', event);
+                  
+                  // Pass the entire event, not just payload which might be missing
+                  window.handleCallNotification(event);
+                } else {
+                  console.error('Global call notification handler not available');
+                  
+                  // Fallback: Try to forward to CallManager if available
+                  if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+                    console.log('Forwarding to CallManager via ref');
+                    window.callManagerRef._handleCallMessage(event);
+                  }
+                }
+                break;
 
               default:
                 console.log('Unknown chat event type:', event.type);

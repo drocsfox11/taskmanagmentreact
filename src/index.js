@@ -5,6 +5,9 @@ import App from './App';
 import store from './store';
 import { Provider } from 'react-redux';
 
+// Make the store globally accessible for call notifications
+window.store = store;
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
