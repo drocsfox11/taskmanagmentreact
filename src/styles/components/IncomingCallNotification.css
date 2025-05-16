@@ -1,0 +1,127 @@
+/* Incoming Call Notification Styles */
+.incoming-call-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  background-color: #1e2028;
+  color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  overflow: hidden;
+  animation: callNotificationIn 0.3s ease-out;
+}
+
+@keyframes callNotificationIn {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.incoming-call-header {
+  background-color: #3a86ff;
+  padding: 12px 15px;
+}
+
+.incoming-call-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.incoming-call-content {
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.incoming-call-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #2c2f38;
+}
+
+.incoming-call-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.incoming-call-info {
+  flex: 1;
+}
+
+.incoming-call-name {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.incoming-call-type {
+  font-size: 14px;
+  color: #a0a0a0;
+}
+
+.incoming-call-actions {
+  display: flex;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.call-action-button {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: none;
+  background-color: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.call-action-button img {
+  width: 24px;
+  height: 24px;
+}
+
+.call-action-button span {
+  font-size: 14px;
+}
+
+.call-action-button.reject-call:hover {
+  background-color: rgba(231, 76, 60, 0.2);
+}
+
+.call-action-button.accept-call:hover {
+  background-color: rgba(46, 204, 113, 0.2);
+}
+
+.call-action-button.reject-call img {
+  filter: invert(37%) sepia(93%) saturate(1352%) hue-rotate(335deg) brightness(100%) contrast(92%);
+}
+
+.call-action-button.accept-call img {
+  filter: invert(72%) sepia(40%) saturate(2878%) hue-rotate(101deg) brightness(92%) contrast(87%);
+}
+
+/* Mobile Styles */
+@media (max-width: 480px) {
+  .incoming-call-notification {
+    width: calc(100% - 40px);
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+} 

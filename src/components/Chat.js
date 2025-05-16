@@ -20,6 +20,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import '../styles/components/Chat.css';
 import { v4 as uuidv4 } from 'uuid';
 import ImageModal from './ImageModal';
+import webRTCService from '../services/WebRTCService';
+import { CallType } from '../services/api/CallService';
 
 function formatTime(dateString) {
     if (!dateString) return '';
@@ -148,6 +150,17 @@ function Chat({ chatId }) {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
     }, [messages, currentUser, chatId]);
+
+    useEffect(() => {
+        // Отправляем уведомление о том, что нужно подписаться на этот чат для получения событий звонков
+        if (chatId) {
+            console.log(`Chat component: Dispatching subscribe-to-chat event for chat ${chatId}`);
+            const subscribeEvent = new CustomEvent('subscribe-to-chat', { 
+                detail: { chatId } 
+            });
+            window.dispatchEvent(subscribeEvent);
+        }
+    }, [chatId]);
 
     useEffect(() => {
         if (messages.length > 0 && currentUser?.id) {
@@ -288,6 +301,57 @@ function Chat({ chatId }) {
     };
 
     if (isChatLoading || isMessagesLoading || chatIsFetching) return (<div className="chat-container"> <LoadingSpinner /> </div>);
+    const handleAudioCall = async () => {
+        console.log('Initiating audio call in chat:', chatId);
+        try {
+            const success = await webRTCService.initializeCall(chatId, CallType.AUDIO);
+            if (success) {
+                console.log('Audio call initialization successful');
+                // Отправляем пользовательское событие, которое CallManager поймает и отобразит интерфейс
+                const callInitEvent = new CustomEvent('call-event', { 
+                    detail: { 
+                        type: 'CALL_INITIATED', 
+                        chatId: chatId,
+                        callType: CallType.AUDIO,
+                        isInitiator: true,
+                        source: 'chat-component'
+                    } 
+                });
+                window.dispatchEvent(callInitEvent);
+            } else {
+                console.error('Audio call initialization failed');
+            }
+        } catch (error) {
+            console.error('Error initiating audio call:', error);
+        }
+    };
+    
+    const handleVideoCall = async () => {
+        console.log('Initiating video call in chat:', chatId);
+        try {
+            const success = await webRTCService.initializeCall(chatId, CallType.VIDEO);
+            if (success) {
+                console.log('Video call initialization successful');
+                // Отправляем пользовательское событие, которое CallManager поймает и отобразит интерфейс
+                const callInitEvent = new CustomEvent('call-event', { 
+                    detail: { 
+                        type: 'CALL_INITIATED', 
+                        chatId: chatId,
+                        callType: CallType.VIDEO,
+                        isInitiator: true,
+                        source: 'chat-component'
+                    } 
+                });
+                window.dispatchEvent(callInitEvent);
+            } else {
+                console.error('Video call initialization failed');
+            }
+        } catch (error) {
+            console.error('Error initiating video call:', error);
+        }
+    };
+
+    if (isChatLoading || isMessagesLoading) return <LoadingSpinner />;
     if (chatError) return <div className="chat-error">Ошибка загрузки чата</div>;
     console.log(chatData);
     console.log(messages);
@@ -312,8 +376,20 @@ function Chat({ chatId }) {
                     </div>
                 </div>
                 <div className="chat-header-actions">
-                    <img src={CameraIcon} alt="video" className="chat-header-icon"/>
-                    <img src={PhoneIcon} alt="call" className="chat-header-icon"/>
+                    <img 
+                        src={CameraIcon} 
+                        alt="video" 
+                        className="chat-header-icon"
+                        onClick={handleVideoCall}
+                        title="Видеозвонок"
+                    />
+                    <img 
+                        src={PhoneIcon} 
+                        alt="call" 
+                        className="chat-header-icon"
+                        onClick={handleAudioCall}
+                        title="Аудиозвонок"
+                    />
                 </div>
             </div>
             

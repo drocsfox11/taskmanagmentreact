@@ -41,6 +41,7 @@ export {
   useUpdateTaskMutation,
   useDeleteTaskMutation,
   useMoveTaskMutation,
+  useGetTasksByProjectQuery
 } from './tasksApi';
 
 export {
@@ -100,7 +101,9 @@ export {
   useMarkMultipleMessagesAsReadMutation
 } from './MessagesApi';
 
-
+export {
+  useSearchTasksMutation
+} from './searchApi';
 
 export const apiReducer = { [baseApi.reducerPath]: baseApi.reducer };
 export const apiMiddleware = baseApi.middleware;

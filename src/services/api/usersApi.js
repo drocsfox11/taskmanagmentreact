@@ -3,7 +3,8 @@ import {
   initializeWebSocketConnection, 
   disconnectWebSocket, 
   subscribeToUserPrivateQueue,
-  onConnect 
+  onConnect,
+  ChatEventTypes 
 } from './WebSocketService';
 import { showNewMessageNotification } from '../NotificationService';
 
@@ -34,10 +35,31 @@ export const usersApi = baseApi.injectEndpoints({
             initializeWebSocketConnection(userData.id);
             console.log('WebSocket connection initialized for user:', userData.id);
             
+            // Флаг для определения, что сообщение о звонке уже обработано
+            let callEventsHandled = false;
+            
             onConnect(() => {
               console.log('Connection ready, subscribing to private queue');
               subscribeToUserPrivateQueue((event) => {
                 if (!event || !event.type) return;
+
+                // Обработка событий звонков 
+                if (event.type === 'CALL_NOTIFICATION' || 
+                    event.type === ChatEventTypes.CALL_NOTIFICATION ||
+                    event.type === 'OFFER' ||
+                    event.type === 'ICE_CANDIDATE' ||
+                    event.type === 'CALL_STARTED' ||
+                    event.type === ChatEventTypes.CALL_STARTED ||
+                    event.type === 'CALL_ENDED' ||
+                    event.type === ChatEventTypes.CALL_ENDED ||
+                    event.type === 'CALL_REJECTED' ||
+                    event.type === ChatEventTypes.CALL_REJECTED ||
+                    event.type === 'CALL_INVITE') {
+                  
+                  console.log('Call event received in usersApi, passing through');
+                  // Не блокируем событие, чтобы оно доходило до CallManager
+                  return;
+                }
 
                 switch (event.type) {
                   case 'NEW_MESSAGE':
@@ -73,7 +95,7 @@ export const usersApi = baseApi.injectEndpoints({
                           }
                         })
                     );
-
+                    break;
                 }
               });
             });
