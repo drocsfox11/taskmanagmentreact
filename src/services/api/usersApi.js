@@ -1,12 +1,12 @@
-import { baseApi } from './baseApi';
-import { 
-  initializeWebSocketConnection, 
-  disconnectWebSocket, 
-  subscribeToUserPrivateQueue,
-  onConnect,
-  ChatEventTypes 
+import {baseApi} from './baseApi';
+import {
+    initializeWebSocketConnection,
+    disconnectWebSocket,
+    subscribeToUserPrivateQueue,
+    onConnect,
+    ChatEventTypes
 } from './WebSocketService';
-import { showNewMessageNotification } from '../NotificationService';
+import {showNewChatNotification, showNewMessageNotification} from '../NotificationService';
 import CallService, { CALL_MESSAGE_TYPE } from '../../services/CallService';
 
 const apiPrefix = 'api/users';
@@ -135,97 +135,117 @@ export const usersApi = baseApi.injectEndpoints({
                 }
 
                 // Обработка остальных типов событий
-                switch (event.type) {
-                  case 'NEW_MESSAGE':
-                    if (event.payload.sender.id === userData.id) {
-                      console.log(`Ignoring own event: ${event.type}`);
-                      return;
+                                switch (event.type) {
+                                    case 'NEW_MESSAGE':
+                                        if (event.payload.sender.id === userData.id) {
+                                            console.log(`Ignoring own event: ${event.type}`);
+                                            return;
+                                        }
+                                        if (!window.location.pathname.includes('messenger')) {
+                                            showNewMessageNotification(event.payload)
+                                            return;
+                                        }
+
+                                        dispatch(
+                                            usersApi.util.updateQueryData('getPagedChats', undefined, (draft) => {
+                                                const chatIndex = draft.chats.findIndex(c => c.id === event.payload.chatId);
+                                                if (chatIndex !== -1) {
+                                                    draft.chats[chatIndex].lastMessage = {
+                                                        ...event.payload,
+                                                        readByIds: []
+                                                    };
+                                                }
+                                            })
+                                        );
+                                        break
+                                    case "MESSAGE_READED":
+                                        if (!window.location.pathname.includes('messenger')) {
+                                            return;
+                                        }
+
+                                        dispatch(
+                                            usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                                                const chatIndex = draft.chats.findIndex(c => c.id === Number(event.payload.chatId));
+                                                if (chatIndex !== -1) {
+                                                    const lastMessage = draft.chats[chatIndex].lastMessage;
+                                                    if (lastMessage?.id === event.payload.messageId) {
+                                                        console.log("Обновил чаты слева")
+                                                        lastMessage.readByIds = [event.payload.readerId];
+                                                    }
+                                                }
+                                            })
+                                        );
+                                        break;
+
+                                    case "CHAT_CREATED":
+                                        if (!window.location.pathname.includes('messenger')) {
+                                            showNewChatNotification(event.payload)
+                                            return;
+                                        }
+                                        console.log("Новый чат!!");
+                                        dispatch(
+                                            usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                                                    draft.chats = [...draft.chats, event.payload];
+                                                }
+                                            )
+                                        );
+                                        break
+                                }
+                            });
+                        });
                     }
-                    
-                    dispatch(
-                      usersApi.util.updateQueryData('getPagedChats', undefined, (draft) => {
-                        const chatIndex = draft.chats.findIndex(c => c.id === event.payload.chatId);
-                        if (chatIndex !== -1) {
-                          draft.chats[chatIndex].lastMessage = {
-                            ...event.payload,
-                            readByIds: []
-                          };
-                        }
-                      })
-                    );
-                    if (!window.location.pathname.includes('messenger')) showNewMessageNotification(event.payload);
-                    break
-                  case "MESSAGE_READED":
 
-                    dispatch(
-                        usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
-                          const chatIndex = draft.chats.findIndex(c => c.id === Number(event.payload.chatId));
-                          if (chatIndex !== -1) {
-                            const lastMessage = draft.chats[chatIndex].lastMessage;
-                            if (lastMessage?.id === event.payload.messageId) {
-                              console.log("Обновил чаты слева")
-                              lastMessage.readByIds = [event.payload.readerId];
-                            }
-                          }
-                        })
-                    );
-                    break;
+                    await cacheEntryRemoved;
+                    disconnectWebSocket();
+                    console.log('WebSocket connection closed on cache removal');
+                } catch (error) {
+                    console.error('Error in WebSocket initialization:', error);
                 }
-              });
-            });
-          }
-          
-          await cacheEntryRemoved;
-          disconnectWebSocket();
-          console.log('WebSocket connection closed on cache removal');
-        } catch (error) {
-          console.error('Error in WebSocket initialization:', error);
-        }
-      }
-    }),
-    updateUser: builder.mutation({
-      query: ({ id, ...data }) => ({
-        url: `${apiPrefix}/${id}`,
-        method: 'PUT',
-        body: data,
-      })
-    }),
-    searchUsers: builder.query({
-      query: ({ name, page = 0, size = 10 }) => ({
-        url: `${apiPrefix}/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}`,
-      }),
-      transformResponse: (response) => {
-        return {
-          users: response.users || [],
-          hasNext: response.hasNext
-        };
-      },
-      serializeQueryArgs: ({ queryArgs }) => {
-        return { name: queryArgs.name };
-      },
-      merge: (currentCache, newItems, { arg }) => {
-        if (arg.page === 0) {
-          return newItems;
-        }
-        return {
-          users: [...currentCache.users, ...newItems.users],
-          hasNext: newItems.hasNext
-        };
-      },
-      forceRefetch({ currentArg, previousArg }) {
-        return currentArg?.name !== previousArg?.name || 
-               currentArg?.page !== previousArg?.page;
-      },
-      keepUnusedDataFor: 2,
+            }
+        }),
+        updateUser: builder.mutation({
+            query: ({id, ...data}) => ({
+                url: `${apiPrefix}/${id}`,
+                method: 'PUT',
+                body: data,
+            })
+        }),
+        searchUsers: builder.query({
+            query: ({name, page = 0, size = 10}) => ({
+                url: `${apiPrefix}/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}`,
+            }),
+            transformResponse: (response) => {
+                return {
+                    users: response.users || [],
+                    hasNext: response.hasNext
+                };
+            },
+            serializeQueryArgs: ({queryArgs}) => {
+                return {name: queryArgs.name};
+            },
+            merge: (currentCache, newItems, {arg}) => {
+                if (arg.page === 0) {
+                    return newItems;
+                }
+                return {
+                    users: [...currentCache.users, ...newItems.users],
+                    hasNext: newItems.hasNext
+                };
+            },
+            forceRefetch({currentArg, previousArg}) {
+                return currentArg?.name !== previousArg?.name ||
+                    currentArg?.page !== previousArg?.page;
+            },
+            keepUnusedDataFor: 2,
 
+        }),
     }),
-  }),
 });
 
 export const {
-  useGetUsersQuery,
-  useGetUserQuery,
-  useGetCurrentUserQuery,
-  useUpdateUserMutation,
-  useSearchUsersQuery,
+    useGetUsersQuery,
+    useGetUserQuery,
+    useGetCurrentUserQuery,
+    useUpdateUserMutation,
+    useSearchUsersQuery,
 } = usersApi; 

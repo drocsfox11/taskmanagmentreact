@@ -3,7 +3,7 @@ import ProjectCard from "../components/ProjectCard";
 import '../styles/pages/ProjectDashboard.css'
 import {useNavigate} from "react-router-dom";
 import {useState, useRef, useEffect} from "react";
-import { useGetProjectsQuery, useCreateProjectMutation, useGetAllUserRightsQuery } from '../services/api/projectsApi';
+import {useGetProjectsQuery, useCreateProjectMutation, useGetCurrentUserRightsQuery} from '../services/api/projectsApi';
 import { useGetCurrentUserQuery } from "../services/api/usersApi";
 import CloseCross from '../assets/icons/close_cross.svg';
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -22,8 +22,7 @@ function ProjectDashboard() {
     
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    const { refetch: refetchRights } = useGetAllUserRightsQuery(
-        currentUser?.id,
+    const { refetch: refetchRights } = useGetCurrentUserRightsQuery(
         { skip: !currentUser?.id }
     );
 

@@ -22,9 +22,10 @@ function TaskCalendar() {
         projectId: null,
         boardId: null,
         tagId: null,
-        participantIds: [],
         isCompleted: null,
-        sortDirection: "asc"
+        sortDirection: "asc",
+        isTitleSearch: true,
+        isDescriptionSearch: true
     });
     const [searchIn, setSearchIn] = useState("both"); // "title", "description", or "both"
     const [filtersVisible, setFiltersVisible] = useState(false);
@@ -39,7 +40,7 @@ function TaskCalendar() {
         { skip: !searchParams.projectId }
     );
     const [searchTasks, { 
-        data: searchResults = [], 
+        data: searchResults,
         isLoading: isSearchLoading,
         error: searchApiError
     }] = useSearchTasksMutation();
@@ -150,9 +151,8 @@ function TaskCalendar() {
         performSearch();
     }, [debouncedSearchText, searchParams.projectId, searchParams.boardId, 
         searchParams.tagId, searchParams.isCompleted, searchParams.sortDirection,
-        searchParams.participantIds]);
+        searchParams.isTitleSearch, searchParams.isDescriptionSearch]);
     
-    // Effect to update calendar tasks when search results change
     useEffect(() => {
         if (searchResults) {
             setCalendarTasks(searchResults);
@@ -188,11 +188,6 @@ function TaskCalendar() {
             }
             return acc;
         }, {});
-        
-        // Add searchIn parameter to adjust the API behavior based on where to search
-        if (searchIn !== "both" && filteredParams.searchText) {
-            filteredParams.searchIn = searchIn;
-        }
         
         // Call search API
         try {
@@ -257,6 +252,14 @@ function TaskCalendar() {
     
     const handleSearchInChange = (searchInValue) => {
         setSearchIn(searchInValue);
+        
+        // Update search parameters based on searchInValue
+        setSearchParams(prev => ({
+            ...prev,
+            isTitleSearch: searchInValue === 'title' || searchInValue === 'both',
+            isDescriptionSearch: searchInValue === 'description' || searchInValue === 'both'
+        }));
+        
         // Trigger a new search when the search target changes
         performSearch();
     };
@@ -271,9 +274,10 @@ function TaskCalendar() {
             projectId: parseInt(projectId) || null,
             boardId: null,
             tagId: null,
-            participantIds: [],
             isCompleted: null,
-            sortDirection: "asc"
+            sortDirection: "asc",
+            isTitleSearch: true,
+            isDescriptionSearch: true
         });
         setSearchIn("both");
     };

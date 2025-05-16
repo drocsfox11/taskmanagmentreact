@@ -32,7 +32,7 @@ export {
   useCreateProjectMutation,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
-  useGetAllUserRightsQuery
+  useGetCurrentUserRightsQuery
 } from './projectsApi';
 
 

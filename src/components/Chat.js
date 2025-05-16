@@ -70,7 +70,7 @@ function Chat({ chatId }) {
     const MAX_FILES = 6;
     const MAX_TOTAL_SIZE = 100 * 1024 * 1024; 
     const MAX_FILE_SIZE = 50 * 1024 * 1024; 
-    
+
     const {
         data: chatData,
         isLoading: isChatLoading,

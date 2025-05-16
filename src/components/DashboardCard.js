@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useDeleteBoardMutation } from "../services/api/boardsApi";
 import BoardManagementModal from "./BoardManagementModal";
 import { PROJECT_RIGHTS, BOARD_RIGHTS } from "../constants/rights";
-import { useGetAllUserRightsQuery } from "../services/api/projectsApi";
+import { useGetCurrentUserRightsQuery } from "../services/api/projectsApi";
 import { useGetCurrentUserQuery } from "../services/api/usersApi";
 import { useBoardRights } from "../hooks/useRights";
 
@@ -32,8 +32,7 @@ function DashboardCard({ board, onClick }) {
     const { data: currentUser } = useGetCurrentUserQuery();
     const userId = currentUser?.id;
     
-    const { data: allProjectRights = {}, isLoading: isRightsLoading } = useGetAllUserRightsQuery(
-        userId,
+    const { data: allProjectRights = {}, isLoading: isRightsLoading } = useGetCurrentUserRightsQuery(
         { skip: !userId }
     );
     

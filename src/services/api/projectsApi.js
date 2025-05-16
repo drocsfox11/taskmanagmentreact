@@ -11,7 +11,7 @@ export const projectsApi = baseApi.injectEndpoints({
       transformResponse: (response) => {
         return response;
       },
-      keepUnusedDataFor: 2,
+      keepUnusedDataFor: 0,
     }),
     getProject: builder.query({
       query: (id) => ({url:`${apiPrefix}/${id}`}),
@@ -171,9 +171,9 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       providesTags: (result, error, { projectId }) => [{ type: 'Projects', id: projectId }],
     }),
-    getAllUserRights: builder.query({
-      query: (userId) => ({
-        url: `api/user-project-rights/${userId}`,
+    getCurrentUserRights: builder.query({
+      query: () => ({
+        url: `api/user-project-rights/`,
       }),
       providesTags: ['ProjectRights'],
       transformResponse: (response) => {
@@ -204,12 +204,11 @@ export const {
   useGrantProjectRightMutation,
   useRevokeProjectRightMutation,
   useGetUserRightsQuery,
-  useGetAllUserRightsQuery,
+  useGetCurrentUserRightsQuery,
   useAddUserToAllBoardsMutation,
   useRemoveUserFromAllBoardsMutation,
 } = projectsApi;
 
-// Re-export project participants mutations
 export const {
   useAddProjectParticipantMutation,
   useRemoveProjectParticipantMutation,

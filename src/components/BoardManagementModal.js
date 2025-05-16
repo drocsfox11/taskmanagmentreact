@@ -11,7 +11,7 @@ import Girl from '../assets/icons/girl.svg';
 import { useBoardRights } from './permissions';
 import { BOARD_RIGHTS, PROJECT_RIGHTS } from '../constants/rights';
 import { BoardRightGuard } from './permissions';
-import { useGetAllUserRightsQuery, useGetProjectQuery } from '../services/api/projectsApi';
+import { useGetCurrentUserRightsQuery, useGetProjectQuery } from '../services/api/projectsApi';
 import { useSearchUsersQuery, useGetCurrentUserQuery } from '../services/api/usersApi';
 import EmojiPicker from './EmojiPicker';
 import { EmojiProvider, Emoji } from "react-apple-emojis";
@@ -49,8 +49,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         skip: !board.projectId
     });
     
-    const { data: allProjectRights = {} } = useGetAllUserRightsQuery(
-        currentUser?.id,
+    const { data: allProjectRights = {} } = useGetCurrentUserRightsQuery(
         { skip: !currentUser?.id }
     );
 

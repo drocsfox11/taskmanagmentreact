@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { 
     useGrantProjectRightMutation, 
-    useRevokeProjectRightMutation, 
-    useGetAllUserRightsQuery
+    useRevokeProjectRightMutation,
+    useGetCurrentUserRightsQuery
 } from '../services/api/projectsApi';
 import { PROJECT_RIGHTS, PROJECT_RIGHT_DESCRIPTIONS } from '../constants/rights';
 import '../styles/components/ProjectPermissionsTab.css';
@@ -19,8 +19,7 @@ function ProjectPermissionsTab({ project }) {
     
     const { data: currentUser } = useGetCurrentUserQuery();
     
-    const { data: allProjectRights = {}, isLoading, refetch } = useGetAllUserRightsQuery(
-        selectedUserId,
+    const { data: allProjectRights = {}, isLoading, refetch } = useGetCurrentUserRightsQuery(
         { skip: !selectedUserId }
     );
     

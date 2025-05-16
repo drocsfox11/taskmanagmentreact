@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGetCurrentUserQuery } from '../services/api/usersApi';
-import { useGetUserRightsQuery, useGetAllUserRightsQuery } from '../services/api/projectsApi';
+import { useGetCurrentUserRightsQuery, useGetAllUserRightsQuery } from '../services/api/projectsApi';
 import { useGetBoardUserRightsQuery } from '../services/api/boardsApi';
 
 /**
@@ -15,8 +15,7 @@ export const useProjectRights = (projectId, options = {}) => {
   
   const shouldSkip = options.skip || !userId;
   
-  const { data: allProjectRights = {}, isLoading, isFetching, error } = useGetAllUserRightsQuery(
-    userId,
+  const { data: allProjectRights = {}, isLoading, isFetching, error } = useGetCurrentUserRightsQuery(
     { skip: shouldSkip }
   );
   

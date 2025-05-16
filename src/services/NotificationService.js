@@ -20,3 +20,17 @@ export const showNewMessageNotification = (message) => {
   });
 };
 
+export const showNewChatNotification = (chat) => {
+  console.log("Показать уведомление о новом чате", chat);
+  showNotification({
+    type: 'chat', // Указываем тип уведомления
+    title: 'Новый чат',
+    text: `Нету сообщений`,
+    imageUrl: chat.avatarURL,
+    link: `/system/messenger/${chat.id}`,
+    autoCloseTimeout: 70000, // Закрывать через 7 секунд
+    sound: undefined
+    // sound: '/notification-sound.mp3' // Опциональный звук
+  });
+};
+
