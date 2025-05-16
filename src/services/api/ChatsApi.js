@@ -69,7 +69,6 @@ export const chatsApi = baseApi.injectEndpoints({
           participants: response.participants || [],
         };
       },
-
       async onCacheEntryAdded(
         chatId,
         { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch, getState }
@@ -221,6 +220,7 @@ export const chatsApi = baseApi.injectEndpoints({
                     }
                   })
                 );
+
                 break;
               
               default:

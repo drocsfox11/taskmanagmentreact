@@ -55,7 +55,11 @@ export const messagesApi = baseApi.injectEndpoints({
               messagesApi.util.updateQueryData('getPagedChats', {}, (draft) => {
                 const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
                 if (chatIndex !== -1) {
-                  draft.chats[chatIndex].lastMessage = data;
+                  draft.chats[chatIndex].lastMessage = {
+                    ...data,
+                    senderId: data.sender.id,
+                    readByIds: []
+                  };
                 }
               })
           );
@@ -137,7 +141,11 @@ export const messagesApi = baseApi.injectEndpoints({
               messagesApi.util.updateQueryData('getPagedChats', {}, (draft) => {
                 const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
                 if (chatIndex !== -1) {
-                  draft.chats[chatIndex].lastMessage = data;
+                  draft.chats[chatIndex].lastMessage = {
+                    ...data,
+                    senderId: data.sender.id,
+                    readByIds: []
+                  };
                 }
               })
           );
@@ -151,6 +159,7 @@ export const messagesApi = baseApi.injectEndpoints({
         url: `api/chats/${chatId}/messages`,
         params: { offset, size },
       }),
+      keepUnusedDataFor: 0,
       transformResponse: (response, meta, { chatId }) => {
 
         const transformMessage = (msg) => {
@@ -180,13 +189,7 @@ export const messagesApi = baseApi.injectEndpoints({
           hasNext: false
         };
       },
-      providesTags: (result, error, { chatId }) => 
-        result?.messages
-          ? [
-              ...result.messages.map(({ id }) => ({ type: 'Messages', id: `${chatId}-${id}` })),
-              { type: 'Messages', id: chatId }
-            ]
-          : [{ type: 'Messages', id: chatId }],
+      providesTags: ["Messages"],
       serializeQueryArgs: ({ queryArgs }) => {
         return { chatId: queryArgs.chatId };
       },
@@ -204,10 +207,9 @@ export const messagesApi = baseApi.injectEndpoints({
         };
       },
       forceRefetch({ currentArg, previousArg }) {
-        return currentArg?.chatId !== previousArg?.chatId || 
+        return currentArg?.chatId !== previousArg?.chatId ||
                currentArg?.offset !== previousArg?.offset;
       },
-      keepUnusedDataFor: 5 * 60,
     }),
     editMessage: builder.mutation({
       query: ({ chatId, messageId, content }) => ({
@@ -294,6 +296,20 @@ export const messagesApi = baseApi.injectEndpoints({
             });
           })
         );
+
+        dispatch(
+            messagesApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+              const chatIndex = draft.chats.findIndex(c => c.id === Number(chatId));
+              console.log("НЕ НАШЕЛ ЧАТ ВИДИМО", chatIndex);
+              if (chatIndex !== -1) {
+                if (messageIds.includes(draft.chats[chatIndex].lastMessage?.id)) {
+                  console.log("Обновил чаты слева")
+                  draft.chats[chatIndex].lastMessage.readByIds = [...draft.chats[chatIndex].lastMessage.readByIds, currentUser.id];
+                }
+              }
+            })
+        );
+
 
         try {
           await queryFulfilled;

@@ -67,6 +67,7 @@ export const usersApi = baseApi.injectEndpoints({
                           if (chatIndex !== -1) {
                             const lastMessage = draft.chats[chatIndex].lastMessage;
                             if (lastMessage?.id === event.payload.messageId) {
+                              console.log("Обновил чаты слева")
                               lastMessage.readByIds = [event.payload.readerId];
                             }
                           }

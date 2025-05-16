@@ -71,14 +71,15 @@ function Chat({ chatId }) {
     const {
         data: chatData,
         isLoading: isChatLoading,
-        error: chatError
+        error: chatError,
+        isFetching: chatIsFetching,
     } = useGetChatDetailsQuery(chatId);
     
     const {
         data: messagesData,
         isLoading: isMessagesLoading,
         error: messagesError,
-        isFetching
+        isFetching: messagesIsFetching,
     } = useGetMessagesQuery({ 
         chatId, 
         offset, 
@@ -166,9 +167,9 @@ function Chat({ chatId }) {
     }, [messages, markMultipleMessagesAsRead, chatId, currentUser]);
 
     const handleScroll = (e) => {
-        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        const { scrollTop } = e.target;
         
-        if (scrollTop < 100 && hasNext && !isFetching) {
+        if (scrollTop < 100 && hasNext && !messagesIsFetching) {
             setOffset(offset + messages.length);
         }
     };
@@ -286,7 +287,7 @@ function Chat({ chatId }) {
         }
     };
 
-    if (isChatLoading || isMessagesLoading) return <LoadingSpinner />;
+    if (isChatLoading || isMessagesLoading || chatIsFetching) return (<div className="chat-container"> <LoadingSpinner /> </div>);
     if (chatError) return <div className="chat-error">Ошибка загрузки чата</div>;
     console.log(chatData);
     console.log(messages);
@@ -361,7 +362,7 @@ function Chat({ chatId }) {
                     <div className="chat-empty">Нет сообщений</div>
                 )}
                 
-                {isFetching && offset > 0 && (
+                {messagesIsFetching && offset > 0 && (
                     <div className="chat-loading-more">Загрузка предыдущих сообщений...</div>
                 )}
                 

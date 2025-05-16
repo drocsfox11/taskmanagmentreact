@@ -114,6 +114,7 @@
 }
 
 .login-page-login-form-submit-button{
+    border: none;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -139,6 +140,8 @@
     cursor: pointer;
     font-size: 14px;
     text-decoration: underline;
+    border: none;
+    background-color: #FFFFFF;
 }
 
 .login-page-register-link:hover {

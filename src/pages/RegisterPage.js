@@ -4,6 +4,8 @@ import { useRegisterMutation } from '../services/api';
 import '../styles/pages/RegisterPage.css';
 import LoginFieldIcon from '../assets/icons/login_username_field_icon.svg'
 import PasswordFieldIcon from '../assets/icons/login_password_field_icon.svg'
+import OpenEye from '../assets/icons/open_eye.svg'
+import ClosedEye from '../assets/icons/closed_eye.svg'
 
 function RegisterPage() {
     const navigate = useNavigate();
@@ -13,6 +15,8 @@ function RegisterPage() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [localError, setLocalError] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     let errorMessage = error?.data;
 
@@ -37,6 +41,12 @@ function RegisterPage() {
             }
         } catch (err) {
             console.error('Registration failed:', err);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleRegister(e);
         }
     };
 
@@ -72,6 +82,7 @@ function RegisterPage() {
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
                         disabled={isLoading}
+                        onKeyDown={handleKeyDown}
                     />
                 </div>
 
@@ -82,12 +93,19 @@ function RegisterPage() {
                     <img src={PasswordFieldIcon} alt="PasswordIcon"
                          className='register-page-register-form-password-field-icon'/>
                     <input 
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="password"
                         className='register-page-register-form-password-field-container-input'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={isLoading}
+                        onKeyDown={handleKeyDown}
+                    />
+                    <img
+                        alt={showPassword ? "showPassword" : "hidePassword"}
+                        className="password-eye-icon" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        src={showPassword ? OpenEye : ClosedEye }
                     />
                 </div>
 
@@ -98,29 +116,36 @@ function RegisterPage() {
                     <img src={PasswordFieldIcon} alt="PasswordIcon"
                          className='register-page-register-form-password-field-icon'/>
                     <input 
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder="confirm password"
                         className='register-page-register-form-password-field-container-input'
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         disabled={isLoading}
+                        onKeyDown={handleKeyDown}
+                    />
+                    <img
+                        alt={showPassword ? "showPasswordConfirm" : "hidePasswordConfirm"}
+                        className="password-eye-icon"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        src={showConfirmPassword ? OpenEye : ClosedEye}
                     />
                 </div>
 
 
-                <div 
-                    className='register-page-register-form-submit-button' 
+                <button
+                    className='register-page-register-form-submit-button'
                     onClick={handleRegister}
                     style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
                 >
                     <div className='register-page-register-form-submit-button-text'>
                         {isLoading ? 'Загрузка...' : 'Зарегистрироваться'}
                     </div>
-                </div>
+                </button>
 
-                <div className="register-page-login-link" onClick={() => navigate('/login')}>
+                <button className="register-page-login-link" onClick={() => navigate('/login')}>
                     Уже есть аккаунт? Войти
-                </div>
+                </button>
             </div>
         </div>
     );

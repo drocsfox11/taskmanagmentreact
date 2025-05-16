@@ -52,13 +52,8 @@ function LeftMenuMessenger({ onCreateChat }) {
                         <div className="left-menu-messenger-chat-card-text-container">
                             <div className="left-menu-messenger-chat-card-top-row">
                                 <div className="left-menu-messenger-chat-card-chat-name">{chat.name}</div>
-                                {chat.unreadCount > 0 && (
-                                    <div className="left-menu-messenger-chat-card-unread-badge">
-                                        {chat.unreadCount}
-                                    </div>
-                                )}
                             </div>
-                            <div className="left-menu-messenger-chat-card-chat-message-container">
+                            <div className={`left-menu-messenger-chat-card-chat-message-container ${chat.lastMessage?.senderId === currentUser?.id && chat.lastMessage?.readByIds.length === 0 ? 'sent-unread' : ''}`}>
                                 <div className="left-menu-messenger-chat-card-chat-message">
                                     {chat.lastMessage?.content || 'Нет сообщений'}
                                 </div>

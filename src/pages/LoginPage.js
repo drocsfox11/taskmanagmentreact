@@ -33,6 +33,12 @@ function LoginPage() {
         }
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleLogin(e);
+        }
+    };
+
     useEffect(() => {
         console.log(isSuccess);
         if (isSuccess) {
@@ -62,6 +68,7 @@ function LoginPage() {
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
                         disabled={isLoading}
+                        onKeyDown={handleKeyDown}
                     />
                 </div>
 
@@ -75,10 +82,11 @@ function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={isLoading}
+                        onKeyDown={handleKeyDown}
                     />
                 </div>
 
-                <div
+                <button
                     className="login-page-login-form-submit-button"
                     onClick={handleLogin}
                     style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
@@ -86,11 +94,11 @@ function LoginPage() {
                     <div className="login-page-login-form-submit-button-text">
                         {isLoading ? 'Загрузка...' : 'Войти'}
                     </div>
-                </div>
+                </button>
 
-                <div className="login-page-register-link" onClick={() => navigate('/register')}>
+                <button className="login-page-register-link" onClick={() => navigate('/register')}>
                     Нет аккаунта? Зарегистрироваться
-                </div>
+                </button>
             </div>
         </div>
     );
