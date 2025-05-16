@@ -81,6 +81,8 @@ export {
 
 export {
   useCreateChatMutation,
+  useCreatePersonalChatMutation,
+  useCreateGroupChatMutation,
   useDeleteChatMutation,
   useGetChatDetailsQuery,
   useAddParticipantMutation,

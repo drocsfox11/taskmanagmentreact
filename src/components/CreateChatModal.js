@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/components/CreateChatModal.css';
 import CloseCross from '../assets/icons/close_cross.svg';
 import MessengerAva from '../assets/icons/messenger_ava.svg';
-import { useSearchUsersQuery } from '../services/api';
-import { useCreateChatMutation } from '../services/api';
+import TrashIcon from '../assets/icons/delete.svg';
+import { useSearchUsersQuery, useGetCurrentUserQuery } from '../services/api';
+import { useCreatePersonalChatMutation, useCreateGroupChatMutation } from '../services/api';
 
 function CreateChatModal({ isOpen, onClose, onChatCreated }) {
     const [type, setType] = useState('private');
@@ -11,20 +12,26 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
     const [searchPage, setSearchPage] = useState(0);
     const [selectedUser, setSelectedUser] = useState(null);
     const [groupName, setGroupName] = useState('');
-    const [groupAvatar, setGroupAvatar] = useState(null);
     const [groupUsers, setGroupUsers] = useState([]);
-    const [createChat, { isLoading: isCreating }] = useCreateChatMutation();
+    const [createPersonalChat, { isLoading: isCreatingPersonal }] = useCreatePersonalChatMutation();
+    const [createGroupChat, { isLoading: isCreatingGroup }] = useCreateGroupChatMutation();
+    const { data: currentUser } = useGetCurrentUserQuery();
     const modalRef = useRef(null);
     const usersPerPage = 10;
+    
+    const isCreating = isCreatingPersonal || isCreatingGroup;
 
     const { data: searchData, isLoading: isSearching, isFetching } = useSearchUsersQuery(
         { name: search, page: searchPage, size: usersPerPage },
         { skip: !search }
     );
-    console.log(searchData);
-    const users = searchData?.users || [];
+    
+    const users = searchData?.users?.filter(user => 
+        currentUser ? user.id !== currentUser.id : true
+    ) || [];
+    
     const hasNext = searchData?.hasNext;
-    console.log(users);
+    
     useEffect(() => {
         function handleClickOutside(e) {
             if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -42,7 +49,6 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
             setSearchPage(0);
             setSelectedUser(null);
             setGroupName('');
-            setGroupAvatar(null);
             setGroupUsers([]);
         }
     }, [isOpen]);
@@ -52,43 +58,37 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
             setGroupUsers([...groupUsers, user]);
         }
     };
+    
     const handleRemoveGroupUser = (id) => {
         setGroupUsers(groupUsers.filter(u => u.id !== id));
     };
+    
     const handleScroll = useCallback((e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
         if (scrollTop + clientHeight >= scrollHeight - 40 && hasNext && !isFetching) {
             setSearchPage(p => p + 1);
         }
     }, [hasNext, isFetching]);
-    const handleAvatarChange = (e) => {
-        const file = e.target.files[0];
-        if (file) setGroupAvatar(file);
-    };
+    
     const handleCreate = async (e) => {
         e.preventDefault();
         if (type === 'private' && selectedUser) {
-            await createChat({chat: {
-                name: '',
-                isGroupChat: false,
-                avatarURL: '',
-                participantIds: [selectedUser.id]
-            }, selectedUser});
+            await createPersonalChat({
+                participantId: selectedUser.id,
+                selectedUser
+            });
             onChatCreated();
         } else if (type === 'group' && groupName && groupUsers.length) {
-            let avatarURL = '';
-            if (groupAvatar) {
-                // TODO: upload avatar and get URL
-            }
-            await createChat({chat: {
-                name: groupName,
-                isGroupChat: true,
-                avatarURL,
-                participantIds: groupUsers.map(u => u.id)
-            }, selectedUser: groupUsers});
+            await createGroupChat({
+                chat: {
+                    name: groupName,
+                    participantIds: groupUsers.map(u => u.id)
+                }
+            });
             onChatCreated();
         }
     };
+    
     return (
         <div className="create-chat-modal-overlay">
             <div className="create-chat-modal" ref={modalRef}>
@@ -129,20 +129,6 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
                             />
                         </div>
                     )}
-                    {type === 'group' && (
-                        <div className="create-chat-modal-form-group" style={{marginBottom: 16}}>
-                            <label>Аватарка (необязательно)</label>
-                            <div className="create-chat-modal-avatar-row">
-                                <img
-                                    src={groupAvatar ? URL.createObjectURL(groupAvatar) : MessengerAva}
-                                    alt="Аватарка"
-                                    className="create-chat-modal-avatar-img"
-                                />
-                                <input type="file" accept="image/*" style={{display: 'none'}} id="group-avatar-input" onChange={handleAvatarChange} />
-                                <label htmlFor="group-avatar-input" className="create-chat-modal-avatar-btn">Выбрать</label>
-                            </div>
-                        </div>
-                    )}
                     <div className="create-chat-modal-form-group">
                         
                         {type === 'group' && groupUsers.length > 0 && (
@@ -157,7 +143,13 @@ function CreateChatModal({ isOpen, onClose, onChatCreated }) {
                                         <div className="create-chat-modal-participant-info">
                                             <span className="create-chat-modal-participant-username">{user.name || user.username}</span>
                                         </div>
-                                        <button className="create-chat-modal-remove-participant-btn" type="button" onClick={() => handleRemoveGroupUser(user.id)}>&times;</button>
+                                        <button 
+                                            className="create-chat-modal-remove-participant-btn" 
+                                            type="button" 
+                                            onClick={() => handleRemoveGroupUser(user.id)}
+                                        >
+                                            <img src={TrashIcon} alt="Удалить" className="create-chat-modal-trash-icon" />
+                                        </button>
                                     </div>
                                 ))}
                             </div>

@@ -225,48 +225,42 @@
 }
 
 .create-chat-modal-participants-section {
-    margin-top: 12px;
+    margin-bottom: 16px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    padding: 12px;
 }
 
 .create-chat-modal-participants-title {
-    font-size: 15px;
-    margin: 0 0 8px 0;
-    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    font-family: 'Ruberoid Semi Bold', sans-serif;
+    margin: 0 0 10px 0;
+    color: #333;
 }
 
 .create-chat-modal-participants-list {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-    width: 100%;
-    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
 }
 
 .create-chat-modal-participant-item {
     display: flex;
     align-items: center;
-    padding: 12px;
-    border-radius: 6px;
-    background-color: #F5F5F5;
-    transition: background-color 0.2s;
-    border: 1px solid #DBDBDB;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.create-chat-modal-participant-item:hover {
-    background-color: #ECECEC;
+    background-color: white;
+    border-radius: 20px;
+    padding: 6px 10px 6px 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .create-chat-modal-participant-avatar {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
-    margin-right: 12px;
-    border: 1px solid #DBDBDB;
-    flex-shrink: 0;
+    margin-right: 8px;
 }
 
 .create-chat-modal-participant-avatar img {
@@ -276,40 +270,39 @@
 }
 
 .create-chat-modal-participant-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
+    margin-right: 8px;
 }
 
 .create-chat-modal-participant-username {
-    font-family: 'Ruberoid Medium', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
+    font-family: 'Ruberoid Regular', sans-serif;
     color: #333;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .create-chat-modal-remove-participant-btn {
-    background-color: #f44336;
-    color: white;
+    background: none;
     border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
     cursor: pointer;
-    font-family: 'Ruberoid Medium', sans-serif;
-    font-size: 12px;
-    transition: background-color 0.3s;
-    white-space: nowrap;
-    min-width: 80px;
-    flex-shrink: 0;
-    box-sizing: border-box;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
 }
 
 .create-chat-modal-remove-participant-btn:hover {
-    background-color: #da190b;
+    background-color: #f0f0f0;
+}
+
+.create-chat-modal-trash-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+}
+
+.create-chat-modal-remove-participant-btn:hover .create-chat-modal-trash-icon {
+    opacity: 1;
 }
 
 .create-chat-modal-save-btn {

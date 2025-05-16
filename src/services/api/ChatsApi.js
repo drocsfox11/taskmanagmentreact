@@ -3,11 +3,11 @@ import { subscribeToChatTopic, unsubscribeFromAllChatsExcept, ChatEventTypes } f
 
 export const chatsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createChat: builder.mutation({
-      query: ({chat, selectedUser}) => ({
-        url: 'api/chats',
+    createPersonalChat: builder.mutation({
+      query: ({participantId, selectedUser}) => ({
+        url: 'api/chats/personal',
         method: 'POST',
-        body: chat,
+        body: participantId,
       }),
       async onQueryStarted({chat, selectedUser}, {dispatch, queryFulfilled}) {
         const tempId = Date.now().toString();
@@ -16,18 +16,11 @@ export const chatsApi = baseApi.injectEndpoints({
         const patchResult = dispatch(
           chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
             if (!draft.chats) draft.chats = [];
-            draft.chats.unshift(chat.isGroupChat ? {
-              id: tempId,
-              name: chat.name,
-              avatarURL: chat.avatarURL,
-              isGroupChat: chat.isGroupChat,
-              participantIds: chat.participantIds,
-              lastMessage: null
-            } : {
+            draft.chats.unshift({
               id: tempId,
               name: selectedUser.name,
               avatarURL: selectedUser.avatarURL,
-              isGroupChat: chat.isGroupChat,
+              isGroupChat: false,
               lastMessage: null
             });
           })
@@ -45,11 +38,55 @@ export const chatsApi = baseApi.injectEndpoints({
             })
           );
         } catch (error) {
-          console.error('Failed to create chat:', error);
+          console.error('Failed to create personal chat:', error);
           patchResult.undo();
         }
       }
     }),
+    createGroupChat: builder.mutation({
+      query: ({chat}) => ({
+        url: 'api/chats/group',
+        method: 'POST',
+        body: chat,
+      }),
+      async onQueryStarted({chat}, {dispatch, queryFulfilled}) {
+        const tempId = Date.now().toString();
+        
+        const patchResult = dispatch(
+          chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+            if (!draft.chats) draft.chats = [];
+            draft.chats.unshift({
+              id: tempId,
+              name: chat.name,
+              avatarURL: '', 
+              isGroupChat: true,
+              participantIds: chat.participantIds,
+              lastMessage: null
+            });
+          })
+        );
+        
+        try {
+          const { data } = await queryFulfilled;
+          
+          dispatch(
+            chatsApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+              const chatIndex = draft.chats.findIndex(c => c.id === tempId);
+              if (chatIndex !== -1) {
+                draft.chats[chatIndex].id = data.id;
+                if (data.avatarURL) {
+                  draft.chats[chatIndex].avatarURL = data.avatarURL;
+                }
+              }
+            })
+          );
+        } catch (error) {
+          console.error('Failed to create group chat:', error);
+          patchResult.undo();
+        }
+      }
+    }),
+    
     deleteChat: builder.mutation({
       query: (chatId) => ({
         url: `api/chats/${chatId}`,
@@ -423,6 +460,8 @@ export const chatsApi = baseApi.injectEndpoints({
 
 export const {
   useCreateChatMutation,
+  useCreatePersonalChatMutation,
+  useCreateGroupChatMutation,
   useDeleteChatMutation,
   useGetChatDetailsQuery,
   useAddParticipantMutation,
