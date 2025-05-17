@@ -1,5 +1,6 @@
 import './styles/fonts.css'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import TaskDashboard from "./pages/TaskDashboard";
 import TaskCalendar from "./pages/TaskCalendar";
 import MessengerPage from "./pages/MessengerPage";
@@ -8,7 +9,6 @@ import ProjectDashboard from "./pages/ProjectDashboard";
 import RegisterPage from "./pages/RegisterPage";
 import ProjectDashboardsDashboard from "./pages/ProjectDashboardsDashboard";
 import ContentContainer from "./pages/ContentContainer";
-import { useEffect } from 'react';
 import { markPageLoad, clearPageLoadFlag } from './utils/refreshManager';
 import CallManager from './components/call/CallManager';
 
@@ -49,6 +49,11 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+    // Use state to ensure we only initialize once
+    const [isCallManagerInitialized, setIsCallManagerInitialized] = useState(() => {
+        return !!window.callManagerInitialized;
+    });
+
     useEffect(() => {
         markPageLoad();
         
@@ -69,6 +74,11 @@ function App() {
             <CallManager ref={(ref) => {
                 // Create a global reference to CallManager for direct access
                 window.callManagerRef = ref;
+                // Mark as initialized
+                if (!window.callManagerInitialized) {
+                    window.callManagerInitialized = true;
+                    setIsCallManagerInitialized(true);
+                }
             }} />
         </>
     );

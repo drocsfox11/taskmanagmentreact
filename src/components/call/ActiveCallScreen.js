@@ -400,12 +400,12 @@ const ActiveCallScreen = ({
         {/* Кнопка для ручного запуска аудио если автозапуск не удался */}
         {audioPlaybackFailed && (
           <>
-            <button 
-              className="manual-audio-start-btn"
-              onClick={handleManualAudioStart}
-            >
-              <FontAwesomeIcon icon={faTriangleExclamation} /> Нажмите чтобы включить звук
-            </button>
+          <button 
+            className="manual-audio-start-btn"
+            onClick={handleManualAudioStart}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} /> Нажмите чтобы включить звук
+          </button>
             <button 
               className="manual-audio-start-btn"
               onClick={forceUnmuteAudioTracks}

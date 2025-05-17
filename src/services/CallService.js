@@ -1,7 +1,8 @@
 import { getStompClient } from './api/WebSocketService';
 import { getCurrentUserFromCache } from './api/usersApi';
 
-// Configuration for ICE servers (STUN/TURN)
+let answerApplied = false;   // вне класса (модульная переменная)
+
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -20,23 +21,21 @@ const ICE_SERVERS = {
   ]
 };
 
-// Call types
 export const CALL_TYPE = {
   AUDIO: 'AUDIO',
   VIDEO: 'VIDEO'
 };
 
-// Call message types
 export const CALL_MESSAGE_TYPE = {
   OFFER: 'OFFER',
   ANSWER: 'ANSWER',
   ICE_CANDIDATE: 'ICE_CANDIDATE',
   CALL_ENDED: 'CALL_ENDED',
   MEDIA_STATUS: 'MEDIA_STATUS',
-  CALL_NOTIFICATION: 'CALL_NOTIFICATION'
+  CALL_NOTIFICATION: 'CALL_NOTIFICATION',
+  CALL_ACCEPTED: 'CALL_ACCEPTED'
 };
 
-// Media status types
 export const MEDIA_STATUS_TYPE = {
   TOGGLE_AUDIO: 'TOGGLE_AUDIO',
   TOGGLE_VIDEO: 'TOGGLE_VIDEO'
@@ -54,6 +53,74 @@ class CallService {
     this.onRemoteMediaStatusChange = null;
     this.iceCandidateQueue = [];
     this.pendingIceCandidates = []; // Queue for candidates waiting for callId
+    this.processedIceCandidates = new Set(); // Track processed ICE candidates
+    this.connectionTimeout = null;
+    this.isSubscribed = false;
+    
+    window.testMicrophone = this.testMicrophone.bind(this);
+  }
+
+
+  async testMicrophone() {
+    console.log('Starting microphone test...');
+    
+    try {
+      // Get microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('Microphone access granted:', stream);
+      
+      // Create audio context for analysis
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      console.log('Audio analysis started');
+      
+      // Start checking audio levels
+      const checkAudio = () => {
+        analyser.getByteFrequencyData(dataArray);
+        
+        // Calculate average volume
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / bufferLength;
+        
+        // Log audio level with visual indicator
+        const indicator = '|'.repeat(Math.min(50, Math.floor(average)));
+        console.log(`Microphone level: ${average.toFixed(2)} ${indicator}`);
+        
+        if (average < 1) {
+          console.warn('WARNING: No sound detected from microphone! Please check your microphone.');
+        }
+        
+        setTimeout(checkAudio, 500);
+      };
+      
+      // Start monitoring
+      checkAudio();
+      
+      // Show how to stop the test
+      console.log('Microphone test started. Type window.stopMicrophoneTest() to stop the test.');
+      
+      // Add a method to stop the test
+      window.stopMicrophoneTest = () => {
+        console.log('Stopping microphone test...');
+        stream.getTracks().forEach(track => track.stop());
+        delete window.stopMicrophoneTest;
+        console.log('Microphone test stopped');
+      };
+      
+      return true;
+    } catch (error) {
+      console.error('Error testing microphone:', error);
+      return false;
+    }
   }
 
   /**
@@ -70,12 +137,14 @@ class CallService {
   /**
    * Initialize user media devices (camera and/or microphone)
    */
-  async initializeUserMedia(callType = CALL_TYPE.AUDIO) {
+  async initializeUserMedia(callType) {
     try {
       const constraints = {
         audio: true,
         video: callType === CALL_TYPE.VIDEO
       };
+
+      console.log("ТИП ЗВОНКА", callType)
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       this.localStream = stream;
@@ -147,98 +216,220 @@ class CallService {
    * Initialize peer connection
    */
   initializePeerConnection() {
+    if (this.peerConnection) {
+      console.log('Peer connection already exists, cleaning up first');
+      this.cleanupPeerConnection();
+    }
+
+    console.log('Creating new peer connection');
     this.peerConnection = new RTCPeerConnection(ICE_SERVERS);
-    
-    // Add local tracks to the peer connection
+
+    // Set up event handlers
+    this.peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('New ICE candidate:', event.candidate);
+        this.sendIceCandidate(event.candidate);
+      }
+    };
+
+    this.peerConnection.oniceconnectionstatechange = () => {
+      console.log('ICE connection state changed:', this.peerConnection.iceConnectionState);
+      
+      // Only end call on failed state, not on disconnected
+      if (this.peerConnection.iceConnectionState === 'failed') {
+        console.log('ICE connection failed, ending call');
+        this.endCall();
+      }
+    };
+
+    this.peerConnection.onconnectionstatechange = () => {
+      console.log('Connection state changed:', this.peerConnection.connectionState);
+      
+      // Only end call on failed state
+      if (this.peerConnection.connectionState === 'failed') {
+        console.log('Connection failed, ending call');
+        this.endCall();
+      }
+    };
+
+    this.peerConnection.ontrack = this.handleRemoteTrack.bind(this);
+
+    // Add local tracks if we have them
     if (this.localStream) {
       console.log('Adding local tracks to peer connection:', 
-        this.localStream.getTracks().map(t => `${t.kind}:${t.enabled}:${t.readyState}`).join(', '));
+        `audio:${this.localStream.getAudioTracks().length}:${this.localStream.getAudioTracks()[0]?.readyState}`);
       
       this.localStream.getTracks().forEach(track => {
-        console.log(`Adding ${track.kind} track to peer connection`);
-        this.peerConnection.addTrack(track, this.localStream);
+          this.peerConnection.addTrack(track, this.localStream);
       });
-    } else {
-      console.error('No local stream available when initializing peer connection');
+    }
+
+    // Process any queued ICE candidates
+    this.processIceCandidateQueue();
+
+    // Set connection timeout
+    this.connectionTimeout = setTimeout(() => {
+      if (this.peerConnection && 
+          (this.peerConnection.connectionState !== 'connected' && 
+           this.peerConnection.connectionState !== 'connecting')) {
+        console.log('Connection timeout - no successful connection established');
+        this.endCall();
+      }
+    }, 30000); // 30 second timeout
+  }
+
+  /**
+   * Clean up peer connection and its event handlers
+   */
+  cleanupPeerConnection() {
+    if (this.peerConnection) {
+      // Remove all event handlers
+      this.peerConnection.oniceconnectionstatechange = null;
+      this.peerConnection.onconnectionstatechange = null;
+      this.peerConnection.ontrack = null;
+      this.peerConnection.onicecandidate = null;
+      
+      // Close the connection
+      this.peerConnection.close();
+      this.peerConnection = null;
+    }
+
+    // Clear connection timeout
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+  }
+
+  /**
+   * Clean up call resources
+   */
+  cleanupCall() {
+    console.log('Cleaning up call resources and resetting state');
+    this.stopUserMedia();
+    this.cleanupPeerConnection();
+    
+    this.remoteStream = null;
+    answerApplied = false;
+    this.currentCallData = null;
+    this.iceCandidateQueue = [];
+    this.pendingIceCandidates = []; // Clear pending candidates for the next call
+    this.processedIceCandidates.clear(); // Clear processed candidates set
+    
+    console.log('Call state reset complete');
+  }
+
+  /**
+   * Handle remote track
+   */
+  handleRemoteTrack(event) {
+    // Подробное логирование входящего трека
+    console.log('Track details:', {
+      kind: event.track.kind,
+      id: event.track.id,
+      readyState: event.track.readyState,
+      enabled: event.track.enabled,
+      muted: event.track.muted,
+      hasAudioLevel: typeof event.track.getSettings().audioLevel !== 'undefined',
+      settings: event.track.getSettings(),
+      constraints: event.track.getConstraints()
+    });
+    
+    if (!this.remoteStream) {
+      console.log('Initializing new remote stream');
+      this.remoteStream = new MediaStream();
     }
     
-    // Remote stream handling
-    this.remoteStream = new MediaStream();
-    console.log('Created new empty MediaStream for remote tracks');
-    
-    // Log selected ICE candidate pair
-    const logSelectedCandidatePair = async () => {
-      try {
-        const stats = await this.peerConnection.getStats();
-        stats.forEach(report => {
-          if (report.type === 'transport') {
-            console.log('WebRTC transport:', report);
-          } else if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-            console.log('Selected ICE candidate pair:', report);
-          }
-        });
-      } catch (e) {
-        console.error('Error getting stats:', e);
+    if (event.track.kind === 'audio') {
+      console.log('remote muted?', event.track.muted, 'enabled?', event.track.enabled);
+      event.track.onmute = () => console.log('REMOTE track muted');
+      event.track.onunmute = () => {
+        console.log('REMOTE track un-muted');
+        // Try to re-establish audio when unmuted
+        this.ensureAudioEnabled();
       }
-    };
+    }
     
-    // Monitor ICE connection state
-    this.peerConnection.oniceconnectionstatechange = () => {
-      const state = this.peerConnection.iceConnectionState;
-      console.log(`ICE connection state changed: ${state}`);
-      
-      if (state === 'connected' || state === 'completed') {
-        logSelectedCandidatePair();
-      } else if (state === 'failed') {
-        console.error('ICE connection failed - trying to restart ICE');
-        try {
-          this.peerConnection.restartIce();
-        } catch (e) {
-          console.error('Failed to restart ICE:', e);
-        }
-      }
-    };
+    console.log('Track associated stream info:', {
+      streamId: event.streams[0]?.id || 'no stream',
+      streamTracks: event.streams[0]?.getTracks().length || 0,
+      streamActive: event.streams[0]?.active || false
+    });
     
-    // Важно: используем ontrack вместо устаревших методов
-    this.peerConnection.ontrack = (event) => {
-      console.log(`Received ${event.track.kind} track from remote peer:`, 
-        event.track.readyState, event.track.enabled);
-      
-      // Подробное логирование входящего трека
-      console.log('Track details:', {
-        kind: event.track.kind,
-        id: event.track.id,
-        readyState: event.track.readyState,
-        enabled: event.track.enabled,
-        muted: event.track.muted,
-        hasAudioLevel: typeof event.track.getSettings().audioLevel !== 'undefined',
-        settings: event.track.getSettings(),
-        constraints: event.track.getConstraints()
+    // Немедленно добавляем трек в удаленный поток
+    this.remoteStream.addTrack(event.track);
+    
+    // Логируем обновленный remoteStream
+    console.log('Updated remoteStream:', {
+      id: this.remoteStream.id,
+      active: this.remoteStream.active,
+      tracks: this.remoteStream.getTracks().map(t => ({
+        kind: t.kind,
+        id: t.id,
+        enabled: t.enabled,
+        readyState: t.readyState,
+        muted: t.muted
+      }))
+    });
+    
+    // Check for transceivers and their status
+    const transceivers = this.peerConnection.getTransceivers();
+    console.log('Current transceivers:', transceivers.map(t => ({
+      mid: t.mid,
+      direction: t.direction,
+      currentDirection: t.currentDirection,
+      stopped: t.stopped
+    })));
+    
+    // Обеспечиваем, что у аудиодорожки включен звук
+    if (event.track.kind === 'audio') {
+      event.track.enabled = true;
+      console.log('Ensure audio track is enabled:', event.track.enabled);
+    }
+    
+    // Отправляем обновленный поток в UI
+    if (this.onCallEstablished) {
+      console.log('Calling onCallEstablished with remote stream containing tracks:', 
+        this.remoteStream.getTracks().length);
+      this.onCallEstablished(this.remoteStream);
+    }
+  }
+
+  /**
+   * Log connection details
+   */
+  logConnectionDetails() {
+    if (!this.peerConnection) return;
+    
+    // Подробно логируем состояние соединения
+    console.log('Connection details:', {
+      iceConnectionState: this.peerConnection.iceConnectionState,
+      iceGatheringState: this.peerConnection.iceGatheringState,
+      signalingState: this.peerConnection.signalingState,
+      connectionState: this.peerConnection.connectionState
+    });
+    
+    // Перечисляем все приемники (receivers)
+    const receivers = this.peerConnection.getReceivers();
+    console.log('Active receivers:', receivers.length);
+    receivers.forEach((receiver, idx) => {
+      console.log(`Receiver ${idx}:`, {
+        trackKind: receiver.track?.kind || 'no track',
+        trackId: receiver.track?.id || 'no id',
+        trackEnabled: receiver.track?.enabled || false,
+        params: receiver.getParameters()
       });
-      
-      // Add mute/unmute listeners to the remote track
-      if (event.track.kind === 'audio') {
-        console.log('remote muted?', event.track.muted, 'enabled?', event.track.enabled);
-        event.track.onmute = () => console.log('REMOTE track muted');
-        event.track.onunmute = () => {
-          console.log('REMOTE track un-muted');
-          // Try to re-establish audio when unmuted
-          this.ensureAudioEnabled();
-        }
-      }
-      
-      // Логируем информацию о потоке, к которому относится трек
-      console.log('Track associated stream info:', {
-        streamId: event.streams[0]?.id || 'no stream',
-        streamTracks: event.streams[0]?.getTracks().length || 0,
-        streamActive: event.streams[0]?.active || false
-      });
-      
-      // Немедленно добавляем трек в удаленный поток
-      this.remoteStream.addTrack(event.track);
-      
-      // Логируем обновленный remoteStream
-      console.log('Updated remoteStream:', {
+    });
+    
+    // Проверка локальных треков
+    if (this.localStream) {
+      console.log('Local tracks:', 
+        this.localStream.getTracks().map(t => `${t.kind}:${t.enabled}:${t.id}`).join(', '));
+    }
+    
+    // Проверка удаленных треков
+    if (this.remoteStream) {
+      console.log('Remote stream details:', {
         id: this.remoteStream.id,
         active: this.remoteStream.active,
         tracks: this.remoteStream.getTracks().map(t => ({
@@ -250,124 +441,89 @@ class CallService {
         }))
       });
       
-      // Check for transceivers and their status
-      const transceivers = this.peerConnection.getTransceivers();
-      console.log('Current transceivers:', transceivers.map(t => ({
-        mid: t.mid,
-        direction: t.direction,
-        currentDirection: t.currentDirection,
-        stopped: t.stopped
-      })));
-      
-      // Обеспечиваем, что у аудиодорожки включен звук
-      if (event.track.kind === 'audio') {
-        event.track.enabled = true;
-        console.log('Ensure audio track is enabled:', event.track.enabled);
-      }
-      
-      // Отправляем обновленный поток в UI
-      if (this.onCallEstablished) {
-        console.log('Calling onCallEstablished with remote stream containing tracks:', 
-          this.remoteStream.getTracks().length);
-        this.onCallEstablished(this.remoteStream);
-      }
-    };
-    
-    // ICE candidate handling
-    this.peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.sendIceCandidate(event.candidate);
-      }
-    };
-    
-    // Connection state change
-    this.peerConnection.onconnectionstatechange = () => {
-      console.log(`Connection state changed: ${this.peerConnection.connectionState}`);
-      
-      if (this.peerConnection.connectionState === 'connected') {
-        console.log('Peer connection established - checking streams and tracks');
-        
-        // Подробно логируем состояние соединения
-        console.log('Connection details:', {
-          iceConnectionState: this.peerConnection.iceConnectionState,
-          iceGatheringState: this.peerConnection.iceGatheringState,
-          signalingState: this.peerConnection.signalingState,
-          connectionState: this.peerConnection.connectionState
-        });
-        
-        // Перечисляем все приемники (receivers)
-        const receivers = this.peerConnection.getReceivers();
-        console.log('Active receivers:', receivers.length);
-        receivers.forEach((receiver, idx) => {
-          console.log(`Receiver ${idx}:`, {
-            trackKind: receiver.track?.kind || 'no track',
-            trackId: receiver.track?.id || 'no id',
-            trackEnabled: receiver.track?.enabled || false,
-            params: receiver.getParameters()
-          });
-        });
-        
-        // Проверка локальных треков
-        if (this.localStream) {
-          console.log('Local tracks:', 
-            this.localStream.getTracks().map(t => `${t.kind}:${t.enabled}:${t.id}`).join(', '));
-        }
-        
-        // Проверка удаленных треков
-        if (this.remoteStream) {
-          console.log('Remote stream details:', {
-            id: this.remoteStream.id,
-            active: this.remoteStream.active,
-            tracks: this.remoteStream.getTracks().map(t => ({
-              kind: t.kind,
-              id: t.id,
-              enabled: t.enabled,
-              readyState: t.readyState,
-              muted: t.muted
-            }))
-          });
-          
-          // Попытка реактивировать аудиотреки, если они есть
-          const audioTracks = this.remoteStream.getAudioTracks();
-          if (audioTracks.length > 0) {
-            audioTracks.forEach(track => {
-              if (!track.enabled) {
-                console.log(`Re-enabling audio track ${track.id}`);
-                track.enabled = true;
-              }
-            });
-          } else {
-            console.warn('No audio tracks found in remote stream after connection!');
+      // Попытка реактивировать аудиотреки, если они есть
+      const audioTracks = this.remoteStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        audioTracks.forEach(track => {
+          if (!track.enabled) {
+            console.log(`Re-enabling audio track ${track.id}`);
+            track.enabled = true;
           }
-        } else {
-          console.warn('No remote stream available after connection!');
-        }
+        });
+      } else {
+        console.warn('No audio tracks found in remote stream after connection!');
       }
-      
-      if (this.peerConnection.connectionState === 'disconnected' || 
-          this.peerConnection.connectionState === 'failed') {
-        this.endCall();
-      }
-    };
-    
-    // Process any queued ICE candidates
-    this.processIceCandidateQueue();
-  }
-
-  /**
-   * Process queued ICE candidates
-   */
-  processIceCandidateQueue() {
-    if (this.peerConnection && this.iceCandidateQueue.length > 0) {
-      this.iceCandidateQueue.forEach(candidate => {
-        this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-      });
-      this.iceCandidateQueue = [];
+    } else {
+      console.warn('No remote stream available after connection!');
     }
   }
 
   /**
-   * Start a call
+   * Log selected ICE candidate pair
+   */
+  async logSelectedCandidatePair() {
+    if (!this.peerConnection) return;
+    
+    try {
+      const stats = await this.peerConnection.getStats();
+      stats.forEach(report => {
+        if (report.type === 'transport') {
+          console.log('WebRTC transport:', report);
+        } else if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+          console.log('Selected ICE candidate pair:', report);
+        }
+      });
+    } catch (e) {
+      console.error('Error getting stats:', e);
+    }
+  }
+
+  /**
+   * Process ICE candidate queue
+   */
+  processIceCandidateQueue() {
+    if (!this.peerConnection || !this.peerConnection.remoteDescription) {
+      console.log('Cannot process ICE candidates: no peer connection or remote description');
+      return;
+    }
+
+    console.log(`Processing ${this.iceCandidateQueue.length} queued ICE candidates`);
+    
+    while (this.iceCandidateQueue.length > 0) {
+      const candidate = this.iceCandidateQueue.shift();
+      try {
+        this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+          .then(() => {
+            console.log('Successfully added queued ICE candidate');
+          })
+          .catch(error => {
+            console.error('Error adding queued ICE candidate:', error);
+          });
+      } catch (error) {
+        console.error('Error processing queued ICE candidate:', error);
+      }
+    }
+  }
+
+  /**
+   * Update call ID and process any pending ICE candidates
+   * @param {string} callId - The call ID from the server
+   */
+  updateCallId(callId) {
+    if (!this.currentCallData) {
+      console.warn('Cannot update callId: no current call data');
+      return;
+    }
+    
+    console.log(`Updating call ID from ${this.currentCallData.callId || 'undefined'} to ${callId}`);
+    this.currentCallData.callId = callId;
+    
+    // Now that we have the callId, send any pending ICE candidates
+    this.sendQueuedIceCandidates();
+  }
+
+  /**
+   * Start a call - Phase 1: Signaling only
    */
   async startCall(chatId, callType = CALL_TYPE.AUDIO) {
     try {
@@ -377,120 +533,124 @@ class CallService {
         this.cleanupCall();
       }
       
-      console.log(`Starting new ${callType} call to chat ${chatId}`);
-      await this.initializeUserMedia(callType);
-      this.initializePeerConnection();
+      console.log(`Starting new ${callType} call to chat ${chatId} (Phase 1: Signaling)`);
       
-      // Create offer
-      const offer = await this.peerConnection.createOffer();
-      await this.peerConnection.setLocalDescription(offer);
-      
-      // Save current call data
+      // Save current call data - but without media streams or peer connection yet
       this.currentCallData = {
         chatId,
         callType,
         isInitiator: true,
-        offer // Store the offer in current call data
+        phase: 1, // Track the phase we're in
+        isProcessing: true
       };
       
       console.log('Call initialized with data:', this.currentCallData);
       
-      // Send offer to signaling server
-      this.sendCallOffer(chatId, callType, offer);
+      // Send notification to signaling server - no SDP in Phase 1
+      const stompClient = getStompClient();
+      if (stompClient && stompClient.connected) {
+        stompClient.publish({
+          destination: '/app/call/start',
+          body: JSON.stringify({
+            chatId,
+            callType
+          })
+        });
+        console.log('Sent call start notification (Phase 1)');
+      } else {
+        throw new Error('Cannot send call start: no STOMP connection');
+      }
       
       return true;
     } catch (error) {
-      console.error('Error starting call:', error);
+      console.error('Error starting call (Phase 1):', error);
       this.cleanupCall();
       throw error;
     }
   }
 
   /**
-   * Handle incoming call
+   * Accept incoming call - Phase 2: Call acceptance
+   */
+  async acceptCall() {
+    if (!this.currentCallData) {
+      throw new Error('No call to accept');
+    }
+
+    console.log('Accepting call (Phase 2)');
+    
+    const stompClient = getStompClient();
+    if (stompClient && stompClient.connected) {
+      stompClient.publish({
+        destination: '/app/call/accept',
+        body: JSON.stringify({
+          chatId: this.currentCallData.chatId,
+          callId: this.currentCallData.callId
+        })
+      });
+      console.log('Sent call accept notification (Phase 2)');
+    } else {
+      throw new Error('Cannot send call accept: no STOMP connection');
+    }
+  }
+
+  /**
+   * Handle CALL_ACCEPTED event - initiates Phase 3 (WebRTC exchange)
+   */
+  async handleCallAccepted(acceptData) {
+    try {
+      if (!this.currentCallData) {
+        console.error('Received CALL_ACCEPTED but no current call data');
+        return;
+      }
+      
+      console.log('Call accepted, initiating WebRTC exchange (Phase 3)', acceptData);
+      
+      // Now we can create media and peer connection
+      await this.initializeUserMedia(this.currentCallData.callType);
+      this.initializePeerConnection();
+      
+      // Create and send offer
+      const offer = await this.peerConnection.createOffer();
+      await this.peerConnection.setLocalDescription(offer);
+      
+      // Update call phase
+      this.currentCallData.phase = 3;
+      
+      // Send offer to signaling server
+      this.sendCallOffer(
+        this.currentCallData.chatId, 
+        this.currentCallData.callType, 
+        this.currentCallData.callId, 
+        offer
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Error handling call accepted:', error);
+      this.cleanupCall();
+      throw error;
+    }
+  }
+
+  /**
+   * Handle incoming call notification - Phase 1
    */
   async handleIncomingCall(callData) {
-    console.log('CallService.handleIncomingCall called with:', callData);
+    console.log('Processing incoming call data:', callData);
     
-    // Early validation
-    if (!callData || !callData.chatId) {
-      console.error('Invalid call data received (missing chatId):', callData);
-      return;
-    }
-    
-    // Create caller object if missing but we have senderId/senderName
-    if (!callData.caller && callData.senderId) {
-      callData.caller = {
-        id: callData.senderId,
-        name: callData.senderName || 'Unknown Caller'
-      };
-      console.log('Created caller object in CallService:', callData.caller);
-    }
-    
-    // Still require caller at this point
-    if (!callData.caller) {
-      console.error('Invalid call data received (missing caller and senderId):', callData);
-      return;
-    }
-    
-    // Проверяем, не является ли это собственным вызовом
-    let currentUserId = localStorage.getItem('userId');
-    
-    // Более надежный способ определения текущего пользователя
-    const currentUser = getCurrentUserFromCache();
-    if (currentUser && currentUser.id) {
-      currentUserId = currentUser.id.toString();
-    }
-    
-    // Проверяем ID отправителя против ID текущего пользователя
-    if (callData.senderId && currentUserId && 
-        (callData.senderId.toString() === currentUserId || 
-         callData.senderId === parseInt(currentUserId))) {
-      console.log('Ignoring own call in CallService');
-      return;
-    }
-    
-    // Check if we already have an active call
-    if (this.currentCallData && (this.currentCallData.isActive || this.currentCallData.isProcessing)) {
-      console.log('Already processing a call, ignoring new incoming call');
-      return;
-    }
-    
-    const { chatId, callType = 'AUDIO', offer, caller, sdp, callId } = callData;
-    
-    console.log(`Processing incoming ${callType} call from ${caller.name} in chat ${chatId}, callId: ${callId}`);
-    console.log(`SDP available: ${!!sdp}, length: ${sdp ? sdp.length : 0}`);
-    
-    // Create a proper offer object if we only have SDP string
-    let offerObj = offer;
-    if (!offerObj && sdp) {
-      offerObj = {
-        type: 'offer',
-        sdp: sdp
-      };
-      console.log('Created offer object from SDP string');
-    }
-    
-    // Check if we have an offer to work with
-    if (!offerObj) {
-      console.error('No offer or SDP available for incoming call - cannot establish connection');
-      
-      // We'll still save the call data for the UI, but it won't have an offer
-      console.warn('Call will be displayed but cannot be accepted without an offer');
-    }
-    
-    // Save current call data - handle both formats (OFFER and CALL_NOTIFICATION)
+    // Store the call data
     this.currentCallData = {
-      chatId,
-      callType,
+      ...callData,
       isInitiator: false,
-      caller,
-      offer: offerObj,
-      callId, // Store the callId we received from the server
-      isProcessing: true // Mark as being processed to avoid duplicate notifications
+      phase: 1
     };
     
-    console.log('Saved call data, triggering UI update:', this.currentCallData);
+    // Update current callId if it's included in the event
+    if (callData.callId) {
+      console.log(`Setting callId from incoming call data: ${callData.callId}`);
+      this.currentCallData.callId = callData.callId;
+    }
     
     if (this.onIncomingCall) {
       console.log('Calling onIncomingCall handler with data:', this.currentCallData);
@@ -506,6 +666,11 @@ class CallService {
   async handleRemoteAnswer(answer) {
     if (!this.peerConnection) {
       console.error('No peer connection established');
+      return;
+    }
+
+    if (answerApplied) {
+      console.log('Duplicate ANSWER ignored');
       return;
     }
     
@@ -525,8 +690,15 @@ class CallService {
       console.log('SDP content length:', answer.sdp.length);
       console.log('SDP preview:', answer.sdp.substring(0, 100) + '...');
       
+      // Check if we're in a valid state to set the remote description
+      if (this.peerConnection.signalingState !== 'have-local-offer') {
+        console.warn(`Cannot set remote description in state: ${this.peerConnection.signalingState}`);
+        return;
+      }
+      
       await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
       console.log('Remote description successfully set');
+      answerApplied = true;
       
       // Логируем состояние соединения после установки удаленного описания
       console.log('Connection state after setting remote description:', {
@@ -535,6 +707,9 @@ class CallService {
         signalingState: this.peerConnection.signalingState,
         connectionState: this.peerConnection.connectionState
       });
+      
+      // Process any queued ICE candidates now that we have a remote description
+      this.processIceCandidateQueue();
       
       // Логируем transceiver'ы и их направления
       const transceivers = this.peerConnection.getTransceivers();
@@ -546,8 +721,16 @@ class CallService {
           stopped: t.stopped
         }))
       );
+
+      // Update call phase and state
+      if (this.currentCallData) {
+        this.currentCallData.phase = 3;
+        this.currentCallData.isActive = true;
+      }
+      
     } catch (error) {
       console.error('Error setting remote description:', error);
+      // Don't cleanup here - let the connection state change handler handle failures
     }
   }
 
@@ -555,10 +738,37 @@ class CallService {
    * Handle remote ICE candidate
    */
   handleRemoteIceCandidate(candidate) {
-    if (this.peerConnection && this.peerConnection.remoteDescription) {
-      this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-    } else {
+    if (!this.peerConnection) {
+      console.warn('No peer connection when receiving ICE candidate - queueing');
       this.iceCandidateQueue.push(candidate);
+      return;
+    }
+    
+    if (!this.peerConnection.remoteDescription) {
+      console.log('No remote description when receiving ICE candidate - queueing');
+      this.iceCandidateQueue.push(candidate);
+      return;
+    }
+
+    // Skip дубликаты от двойной подписки
+    const candidateKey = `${candidate.sdpMid}-${candidate.sdpMLineIndex}-${candidate.candidate}`;
+    if (this.processedIceCandidates.has(candidateKey)) {
+      console.log('Skipping duplicate ICE candidate');
+      return;
+    }
+
+    try {
+      console.log('Adding ICE candidate to peer connection');
+      this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+        .then(() => {
+          console.log('Successfully added ICE candidate');
+          this.processedIceCandidates.add(candidateKey);
+        })
+        .catch(error => {
+          console.error('Error adding ICE candidate:', error);
+        });
+    } catch (error) {
+      console.error('Error processing ICE candidate:', error);
     }
   }
 
@@ -619,24 +829,6 @@ class CallService {
   }
 
   /**
-   * Send call offer to signaling server
-   */
-  sendCallOffer(chatId, callType, offer) {
-    const stompClient = getStompClient();
-    if (stompClient && stompClient.connected) {
-      stompClient.publish({
-        destination: '/app/call/start',
-        body: JSON.stringify({
-          chatId,
-          callType,
-          offer,
-          sdp: offer.sdp // Explicitly include the SDP for CALL_NOTIFICATION
-        })
-      });
-    }
-  }
-
-  /**
    * Send call answer to signaling server
    */
   sendCallAnswer(answer) {
@@ -651,7 +843,7 @@ class CallService {
         destination: '/app/call/answer',
         body: JSON.stringify({
           chatId: this.currentCallData.chatId,
-          callId: this.currentCallData.callId, // Include the callId from server
+          callId: this.currentCallData.callId,
           answer
         })
       });
@@ -719,7 +911,18 @@ class CallService {
     const stompClient = getStompClient();
     if (stompClient && stompClient.connected) {
       // Send all queued candidates
-      this.pendingIceCandidates.forEach(candidate => {
+      this.pendingIceCandidates.forEach((candidate, index) => {
+        // Log more details about the candidate
+        console.log(`Sending queued ICE candidate ${index+1}/${this.pendingIceCandidates.length}:`, {
+          type: candidate.type,
+          protocol: candidate.protocol,
+          address: candidate.address || candidate.ip,
+          port: candidate.port,
+          candidateType: candidate.candidateType || candidate.type,
+          sdpMid: candidate.sdpMid,
+          sdpMLineIndex: candidate.sdpMLineIndex
+        });
+        
         stompClient.publish({
           destination: '/app/call/ice-candidate',
           body: JSON.stringify({
@@ -730,7 +933,7 @@ class CallService {
         });
       });
       
-      console.log(`Sent ${this.pendingIceCandidates.length} queued ICE candidates with callId: ${this.currentCallData.callId}`);
+      console.log(`Successfully sent ${this.pendingIceCandidates.length} queued ICE candidates with callId: ${this.currentCallData.callId}`);
       this.pendingIceCandidates = []; // Clear the queue
     } else {
       console.error('Cannot send queued ICE candidates: no STOMP connection');
@@ -800,120 +1003,6 @@ class CallService {
     
     if (this.onCallEnded) {
       this.onCallEnded();
-    }
-  }
-
-  /**
-   * Clean up call resources
-   */
-  cleanupCall() {
-    console.log('Cleaning up call resources and resetting state');
-    this.stopUserMedia();
-    
-    if (this.peerConnection) {
-      this.peerConnection.close();
-      this.peerConnection = null;
-    }
-    
-    this.remoteStream = null;
-    this.currentCallData = null;
-    this.iceCandidateQueue = [];
-    this.pendingIceCandidates = []; // Clear pending candidates for the next call
-    
-    console.log('Call state reset complete');
-  }
-
-  /**
-   * Accept incoming call
-   */
-  async acceptCall() {
-    try {
-      if (!this.currentCallData) {
-        throw new Error('No active incoming call');
-      }
-      
-      console.log('Accepting call with data:', this.currentCallData);
-      
-      // Check if we have an offer to work with
-      if (!this.currentCallData.offer) {
-        console.error('Cannot accept call: No offer or SDP available');
-        throw new Error('Cannot accept call: Missing offer/SDP data required for WebRTC connection');
-      }
-      
-      // Инициализируем медиа устройства перед созданием соединения
-      const stream = await this.initializeUserMedia(this.currentCallData.callType);
-      console.log('Media initialized with tracks:', 
-        stream.getTracks().map(t => `${t.kind}:${t.enabled}`).join(', '));
-      
-      // Подробно логируем полученные треки
-      stream.getTracks().forEach((track, idx) => {
-        console.log(`Local track ${idx} details:`, {
-          kind: track.kind,
-          id: track.id,
-          enabled: track.enabled,
-          readyState: track.readyState,
-          muted: track.muted,
-          constraints: track.getConstraints(),
-          settings: track.getSettings()
-        });
-      });
-        
-      // Проверяем аудиодорожку и явно включаем ее
-      const audioTrack = stream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = true;
-        console.log('Explicitly enabled audio track:', audioTrack.enabled);
-      } else {
-        console.warn('No audio track found in local stream');
-      }
-      
-      // Инициализируем peer connection
-      this.initializePeerConnection();
-      
-      // Логируем содержимое offer SDP
-      console.log('Offer SDP length:', this.currentCallData.offer.sdp.length);
-      console.log('Offer SDP preview:', this.currentCallData.offer.sdp.substring(0, 100) + '...');
-      
-      // Set remote description (offer)
-      if (this.currentCallData.offer) {
-        console.log('Setting remote description with offer:', this.currentCallData.offer);
-        await this.peerConnection.setRemoteDescription(
-          new RTCSessionDescription(this.currentCallData.offer)
-        );
-        console.log('Remote description (offer) set successfully');
-        
-        // Логируем состояние соединения после установки удаленного описания
-        console.log('Connection state after setting remote offer:', {
-          iceConnectionState: this.peerConnection.iceConnectionState,
-          iceGatheringState: this.peerConnection.iceGatheringState,
-          signalingState: this.peerConnection.signalingState
-        });
-        
-        // Create answer
-        const answer = await this.peerConnection.createAnswer();
-        console.log('Created answer:', answer);
-        console.log('Answer SDP length:', answer.sdp.length);
-        console.log('Answer SDP preview:', answer.sdp.substring(0, 100) + '...');
-        
-        await this.peerConnection.setLocalDescription(answer);
-        console.log('Local description (answer) set successfully');
-        
-        // Send answer to signaling server
-        this.sendCallAnswer(answer);
-        
-        // Устанавливаем флаг активного звонка
-        this.currentCallData.isActive = true;
-        this.currentCallData.isProcessing = false;
-      } else {
-        console.error('Cannot accept call without an offer');
-        throw new Error('No offer available in call data');
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error accepting call:', error);
-      this.cleanupCall();
-      throw error;
     }
   }
 
@@ -1002,6 +1091,93 @@ class CallService {
       receivers: this.peerConnection ? this.peerConnection.getReceivers().length : 0
     };
   }
+
+  /**
+   * Send call offer to signaling server
+   */
+  sendCallOffer(chatId, callType, callId, offer) {
+    const stompClient = getStompClient();
+    if (stompClient && stompClient.connected) {
+      stompClient.publish({
+        destination: '/app/call/offer',
+        body: JSON.stringify({
+          chatId,
+          callId,
+          callType,
+          offer,
+          sdp: offer.sdp
+        })
+      });
+      console.log(`Sent call offer with callId: ${callId}`);
+    } else {
+      console.error('Cannot send call offer: no STOMP connection');
+    }
+  }
+
+  /**
+   * Handle incoming offer (Phase 3)
+   */
+  async handleOffer(offerData) {
+    if (!this.currentCallData) {
+      console.error('Received offer but no current call data');
+      return;
+    }
+    
+    console.log('Processing incoming offer (Phase 3):', offerData);
+    
+    try {
+      // Initialize media and peer connection
+      await this.initializeUserMedia(this.currentCallData.callType);
+      this.initializePeerConnection();
+      
+      // Extract SDP from the correct location in the offer data
+      let sdp = null;
+      if (offerData.payload && offerData.payload.sdp) {
+        sdp = offerData.payload.sdp;
+      } else if (offerData.sdp) {
+        sdp = offerData.sdp;
+      }
+      
+      if (!sdp) {
+        console.error('Invalid offer data, missing SDP:', offerData);
+        return;
+      }
+      
+      // Create offer object
+      const offerObj = {
+        type: 'offer',
+        sdp: sdp
+      };
+      
+      console.log('Setting remote description with offer:', offerObj);
+      
+      // Set remote description (offer)
+      await this.peerConnection.setRemoteDescription(
+        new RTCSessionDescription(offerObj)
+      );
+      console.log('Remote description (offer) set successfully');
+      
+      // Create answer
+      const answer = await this.peerConnection.createAnswer();
+      await this.peerConnection.setLocalDescription(answer);
+      
+      // Send answer to signaling server
+      this.sendCallAnswer(answer);
+      
+      // Update call phase
+      this.currentCallData.phase = 3;
+      this.currentCallData.isActive = true;
+      
+      // Process any queued ICE candidates now that we have a remote description
+      this.processIceCandidateQueue();
+      
+      return true;
+    } catch (error) {
+      console.error('Error handling offer:', error);
+      this.cleanupCall();
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
@@ -1010,6 +1186,18 @@ const callServiceInstance = new CallService();
 // Create a global handler to be accessible from anywhere in the app
 window.handleCallNotification = (event) => {
   console.log('Global call notification handler called with event:', event);
+  
+  // First, handle special message types directly
+  if (event.type === CALL_MESSAGE_TYPE.CALL_ACCEPTED) {
+    console.log('Received CALL_ACCEPTED in global handler:', event);
+    // If we're the initiator of the call, start WebRTC process
+    if (callServiceInstance.currentCallData && callServiceInstance.currentCallData.isInitiator) {
+      callServiceInstance.handleCallAccepted(event);
+    }
+    return;
+  }
+  
+  // For other messages, continue with normal processing
   
   // Extract call data from the event - handle different message formats
   // Call messages can come from:
@@ -1026,25 +1214,24 @@ window.handleCallNotification = (event) => {
     callData.senderName = event.senderName;
   }
   
-  // Extract callId immediately if it exists and we have an ongoing call
-  if (callData && callData.callId && callServiceInstance.currentCallData) {
-    const callIdChanged = callServiceInstance.currentCallData.callId !== callData.callId;
+  // Extract callId immediately if it exists
+  if (callData && callData.callId) {
+    console.log(`Received callId: ${callData.callId}`);
     
-    // Save callId to our current call data regardless of who initiated the call
-    // This is critical for ICE candidates to work
-    callServiceInstance.currentCallData.callId = callData.callId;
-    console.log(`Saved callId to current call: ${callData.callId}`);
-    
-    // If we just got the callId OR we have pending candidates, send them
-    // This ensures candidates are sent even during a new call after cleanup
-    if (callIdChanged || callServiceInstance.pendingIceCandidates.length > 0) {
-      console.log(`Checking for pending ICE candidates to send (${callServiceInstance.pendingIceCandidates.length} found)`);
-      callServiceInstance.sendQueuedIceCandidates();
+    // If we have an ongoing call, update its callId
+    if (callServiceInstance.currentCallData) {
+      const callIdChanged = callServiceInstance.currentCallData.callId !== callData.callId;
+      
+      callServiceInstance.currentCallData.callId = callData.callId;
+      console.log(`Saved callId to current call: ${callData.callId}`);
+      
+      // In the two-phase approach, we shouldn't have pending ICE candidates yet
+      // because we don't create WebRTC objects until Phase 3
     }
   }
   
   // Check if this is a self-initiated call (current user is the caller)
-  // We need to ignore notifications for calls we initiated ourselves - but only after saving the callId
+  // We need to ignore UI notifications for calls we initiated ourselves - but STILL EXTRACT THE CALL ID
   
   // Get current user ID from multiple sources to be more reliable
   let currentUserId = localStorage.getItem('userId');
@@ -1085,17 +1272,24 @@ window.handleCallNotification = (event) => {
     }
   }
   
-  // Compare the sender ID with current user ID - only for filtering incoming calls,
-  // not for extracting the callId which we need regardless
+  // Check if this is our own call notification
+  let isOwnCall = false;
   if (callData && callData.senderId && currentUserId &&
       (callData.senderId.toString() === currentUserId || 
        callData.senderId === parseInt(currentUserId))) {
-    console.log(`Ignoring self-initiated call notification UI processing. Current user ID: ${currentUserId}, Sender ID: ${callData.senderId}`);
-    // Note: We already saved the callId above if needed, so returning now is fine
+    console.log(`Detected own call notification. Current user ID: ${currentUserId}, Sender ID: ${callData.senderId}`);
+    isOwnCall = true;
+  }
+  
+  // If it's our own call, we've already extracted and saved the callId above
+  // Just skip showing the incoming call UI
+  if (isOwnCall) {
+    console.log('Not showing UI for own call notification - but callId was processed');
     return;
   }
   
-  console.log(`Processing call notification. Current user ID: ${currentUserId}, Sender ID: ${callData?.senderId}`);
+  // For calls from other users, continue with normal processing
+  console.log(`Processing call notification from another user. Current user ID: ${currentUserId}, Sender ID: ${callData?.senderId}`);
   
   // Ensure caller details for UI are properly set
   if (callData && callData.senderId && !callData.caller) {
@@ -1106,21 +1300,6 @@ window.handleCallNotification = (event) => {
     };
   }
   
-  // Check for SDP in various locations
-  let sdpData = null;
-  if (callData.sdp) {
-    // Direct SDP field
-    sdpData = callData.sdp;
-  } else if (callData.payload && callData.payload.sdp) {
-    // SDP in payload object
-    sdpData = callData.payload.sdp;
-    console.log('Found SDP in payload object');
-  } else if (event.payload && event.payload.sdp) {
-    // SDP in parent's payload
-    sdpData = event.payload.sdp;
-    console.log('Found SDP in parent payload object');
-  }
-  
   // Format the call data to match what handleIncomingCall expects
   const formattedCallData = {
     chatId: callData.chatId,
@@ -1129,19 +1308,9 @@ window.handleCallNotification = (event) => {
       id: callData.senderId,
       name: callData.senderName
     },
-    // Handle offer data prioritizing proper SDP format
-    offer: callData.offer || null,
-    sdp: sdpData,
-    callId: callData.callId
+    callId: callData.callId,
+    phase: 1 // This is Phase 1 notification
   };
-  
-  // Log the SDP information for debugging
-  console.log(`Call notification SDP information:`, {
-    hasSdp: !!formattedCallData.sdp,
-    hasOffer: !!formattedCallData.offer,
-    sdpLength: formattedCallData.sdp ? formattedCallData.sdp.length : 0,
-    hasCallId: !!formattedCallData.callId
-  });
   
   // Process the incoming call
   callServiceInstance.handleIncomingCall(formattedCallData);

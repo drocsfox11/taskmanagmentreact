@@ -15,7 +15,9 @@ const CallManager = forwardRef((props, ref) => {
     callType: null,
     chatId: null,
     chatName: '',
-    caller: null
+    caller: null,
+    isWaitingForOffer: false,
+    phase: 1 // Track the current phase of the call
   });
   
   // Media state
@@ -27,34 +29,35 @@ const CallManager = forwardRef((props, ref) => {
   });
   
   // Create a memoized handler function so it doesn't change on re-renders
-  const handleCallMessage = useCallback((message) => {
+  const handleCallMessage = useCallback(async (message) => {
     if (!message || !message.type) return;
     
     console.log('CallManager received message:', message);
     
     switch (message.type) {
       case CALL_MESSAGE_TYPE.CALL_NOTIFICATION:
-        // Handle call notification (similar to OFFER but without SDP)
         console.log('Received CALL_NOTIFICATION:', message);
         
-        // Extract the payload depending on the message format
-        const callData = message.payload || message;
+        // Extract call data from message
+        const callData = {
+          chatId: message.chatId,
+          callId: message.callId,
+          callType: message.callType || 'AUDIO',
+          senderId: message.senderId,
+          senderName: message.senderName,
+          phase: 1 // Phase 1: Initial notification
+        };
         
-        // If the payload doesn't have the necessary call info but the parent message does
-        if (!callData.chatId && message.chatId) {
-          callData.chatId = message.chatId;
+        // First, update the callId in the CallService
+        if (message.callId) {
+          console.log('Updating callId to:', message.callId);
+          CallService.updateCallId(message.callId);
         }
-        if (!callData.callId && message.callId) {
-          callData.callId = message.callId;
-        }
+        
+        // Make sure we have sender info
         if (!callData.senderId && message.senderId) {
           callData.senderId = message.senderId;
           callData.senderName = message.senderName;
-        }
-        
-        // Check for SDP in different locations
-        if (!callData.sdp && message.payload && message.payload.sdp) {
-          callData.sdp = message.payload.sdp;
         }
         
         // Ensure caller object exists for UI
@@ -69,40 +72,60 @@ const CallManager = forwardRef((props, ref) => {
         CallService.handleIncomingCall(callData);
         break;
         
+      case 'CALL_ACCEPTED':
+        console.log('Received CALL_ACCEPTED:', message);
+        
+        // If we're the call initiator, we need to start the WebRTC process
+        if (callState.isOutgoingCall) {
+          // Phase 3: Start WebRTC exchange
+          CallService.handleCallAccepted(message);
+        }
+        break;
+        
       case CALL_MESSAGE_TYPE.OFFER:
         console.log('Received OFFER:', message);
-        const offerData = message.payload || message;
         
-        // Ensure caller object exists for OFFER messages too
-        if (!offerData.caller && offerData.senderId) {
-          offerData.caller = {
-            id: offerData.senderId,
-            name: offerData.senderName || 'Unknown Caller'
-          };
-          console.log('Created caller object for OFFER:', offerData.caller);
+        try {
+          // Now we're in Phase 3, process the offer to establish WebRTC connection
+          await CallService.handleOffer(message);
+          
+          // Get the local and remote streams from CallService
+          setMediaState({
+            localStream: CallService.localStream,
+            remoteStream: CallService.remoteStream,
+            isAudioMuted: false,
+            isVideoDisabled: false
+          });
+          
+          // Update the call state to active
+          setCallState(prev => ({
+            ...prev,
+            isIncomingCall: false,
+            isWaitingForOffer: false,
+            isCallActive: true,
+            phase: 3
+          }));
+        } catch (error) {
+          console.error('Error handling offer:', error);
+          handleCallEnded();
         }
-        
-        CallService.handleIncomingCall(offerData);
         break;
         
       case CALL_MESSAGE_TYPE.ANSWER:
         console.log('Received ANSWER:', message);
         
-        // Проверяем, есть ли уже предварительно отформатированный объект ответа из usersApi
+        // Check if we have a pre-formatted answer object
         if (message.formattedAnswer) {
           console.log('Using pre-formatted answer object:', message.formattedAnswer);
           CallService.handleRemoteAnswer(message.formattedAnswer);
         } else {
-          // Если нет, создаем его здесь (как запасной вариант)
+          // Create answer object if needed
           const answerData = message.payload || message;
-          
-          // Создаем правильный объект RTCSessionDescription
           const answerObj = {
-            type: 'answer',  // это должно быть строчными буквами для WebRTC
+            type: 'answer',
             sdp: answerData.sdp || (answerData.payload && answerData.payload.sdp)
           };
           
-          // Проверяем наличие SDP
           if (!answerObj.sdp) {
             console.error('No SDP found in ANSWER message:', message);
             break;
@@ -111,12 +134,24 @@ const CallManager = forwardRef((props, ref) => {
           console.log('Formatted answer object:', answerObj);
           CallService.handleRemoteAnswer(answerObj);
         }
-        
+
+        // Don't mark call as active yet! We'll wait for ontrack event
+        // Just mark that we're no longer in outgoing call mode
         setCallState(prev => ({
           ...prev,
           isOutgoingCall: false,
-          isCallActive: true
+          // We'll leave isCallActive as false until we get remote stream
+          phase: 3 // Still update the phase
         }));
+        
+        // Set localStream in the mediaState if it's not already set
+        // This ensures we have the local stream UI when waiting
+        if (CallService.localStream && !mediaState.localStream) {
+          setMediaState(prev => ({
+            ...prev,
+            localStream: CallService.localStream
+          }));
+        }
         break;
         
       case CALL_MESSAGE_TYPE.ICE_CANDIDATE:
@@ -139,7 +174,7 @@ const CallManager = forwardRef((props, ref) => {
       default:
         console.log('Unknown call message type:', message.type);
     }
-  }, []);
+  }, [callState.isOutgoingCall]);
   
   // Expose methods via ref
   useImperativeHandle(ref, () => ({
@@ -171,11 +206,11 @@ const CallManager = forwardRef((props, ref) => {
     // Cleanup on unmount
     return () => {
       console.log('CallManager: cleaning up');
-      
-      // End any active calls when unmounting
-      if (callState.isCallActive || callState.isOutgoingCall) {
-        CallService.endCall();
-      }
+      //
+      // // End any active calls when unmounting
+      // if (callState.isCallActive || callState.isOutgoingCall) {
+      //   CallService.endCall();
+      // }
     };
   }, [handleCallMessage]);
   
@@ -226,6 +261,13 @@ const CallManager = forwardRef((props, ref) => {
       ...prev,
       remoteStream
     }));
+    
+    // Now mark the call as active since we have the remote stream
+    setCallState(prev => ({
+      ...prev,
+      isCallActive: true,
+      isWaitingForOffer: false
+    }));
   };
   
   // Handle call ended
@@ -238,7 +280,9 @@ const CallManager = forwardRef((props, ref) => {
       callType: null,
       chatId: null,
       chatName: '',
-      caller: null
+      caller: null,
+      isWaitingForOffer: false,
+      phase: 1
     });
     
     setMediaState({
@@ -259,14 +303,8 @@ const CallManager = forwardRef((props, ref) => {
   const startCall = async (chatId, chatName, callType) => {
     console.log(`Starting ${callType} call to ${chatName} (${chatId})`);
     try {
-      // Initialize local media before creating peer connection
-      const localStream = await CallService.initializeUserMedia(callType);
-      
-      setMediaState(prev => ({
-        ...prev,
-        localStream
-      }));
-      
+      // In Phase 1, we don't initialize media yet
+      // We just update the UI and send the call start notification
       setCallState({
         isIncomingCall: false,
         isOutgoingCall: true,
@@ -274,9 +312,12 @@ const CallManager = forwardRef((props, ref) => {
         callType,
         chatId,
         chatName,
-        caller: null
+        caller: null,
+        isWaitingForOffer: false,
+        phase: 1
       });
       
+      // This will only send the call notification, not create media streams yet
       await CallService.startCall(chatId, callType);
     } catch (error) {
       console.error('Failed to start call:', error);
@@ -286,23 +327,21 @@ const CallManager = forwardRef((props, ref) => {
   
   // Accept incoming call
   const acceptCall = async () => {
-    console.log('Accepting incoming call');
+    console.log('Accepting incoming call (Phase 2)');
     try {
-      // Initialize local media and accept the call
-      const localStream = await CallService.initializeUserMedia(callState.callType);
-      
-      setMediaState(prev => ({
-        ...prev,
-        localStream
-      }));
-      
+      // In Phase 2, we don't initialize media yet
+      // We just send the accept message
       await CallService.acceptCall();
       
+      // Update UI to show we're waiting for the offer
       setCallState(prev => ({
         ...prev,
         isIncomingCall: false,
-        isCallActive: true
+        isWaitingForOffer: true,
+        phase: 2
       }));
+      
+      // The media will be initialized when we receive the offer (Phase 3)
     } catch (error) {
       console.error('Failed to accept call:', error);
       CallService.rejectCall();
@@ -348,7 +387,8 @@ const CallManager = forwardRef((props, ref) => {
   };
   
   // Render null if no call activity
-  if (!callState.isIncomingCall && !callState.isOutgoingCall && !callState.isCallActive) {
+  if (!callState.isIncomingCall && !callState.isOutgoingCall && !callState.isCallActive && !callState.isWaitingForOffer &&
+      !(callState.phase === 3 && !mediaState.remoteStream)) {
     return null;
   }
   
@@ -371,6 +411,38 @@ const CallManager = forwardRef((props, ref) => {
           callType={callState.callType}
           onCancel={cancelCall}
         />
+      )}
+      
+      {/* Waiting for Offer Screen */}
+      {callState.isWaitingForOffer && (
+        <div className="call-waiting-screen">
+          <div className="call-waiting-container">
+            <div className="call-waiting-status">
+              <span className="call-waiting-spinner"></span>
+              <h3>Connecting call...</h3>
+              <p>Waiting for {callState.chatName} to connect</p>
+            </div>
+            <button className="call-end-button" onClick={endCall}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Connecting Screen (post-ANSWER but pre-remote-track) */}
+      {callState.phase === 3 && !mediaState.remoteStream && !callState.isCallActive && (
+        <div className="call-waiting-screen">
+          <div className="call-waiting-container">
+            <div className="call-waiting-status">
+              <span className="call-waiting-spinner"></span>
+              <h3>Call connecting...</h3>
+              <p>Establishing media connection</p>
+            </div>
+            <button className="call-end-button" onClick={endCall}>
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
       
       {/* Active Call Screen */}

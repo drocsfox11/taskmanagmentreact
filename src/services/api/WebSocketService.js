@@ -6,6 +6,7 @@ const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost:8080';
 
 let globalStompClient = null;
 const subscriptions = {};
+let privateQueueSub = null;
 const messageHandlers = {};
 
 const connectionCallbacks = [];
@@ -34,6 +35,17 @@ export const BoardEventTypes = {
   TASK_UPDATED: 'TASK_UPDATED',
   TASK_DELETED: 'TASK_DELETED',
   TASK_MOVED: 'TASK_MOVED'
+};
+
+export const CALL_MESSAGE_TYPE = {
+  CALL_NOTIFICATION: 'CALL_NOTIFICATION',
+  CALL_ACCEPTED: 'CALL_ACCEPTED',
+  CALL_REJECTED: 'CALL_REJECTED',
+  CALL_ENDED: 'CALL_ENDED',
+  OFFER: 'OFFER',
+  ANSWER: 'ANSWER',
+  ICE_CANDIDATE: 'ICE_CANDIDATE',
+  MEDIA_STATUS: 'MEDIA_STATUS'
 };
 
 /**
@@ -189,41 +201,89 @@ export const subscribeToBoardTopic = (boardId, handler) => {
 
 /**
  * Subscribe to user's private message queue
- * @param {function} handler - The message handler function
- * @returns {boolean} - Whether the subscription was successful
+ * @param {function} callback - The message handler function
+ * @returns {Object} - The subscription object
  */
-export const subscribeToUserPrivateQueue = (handler) => {
-  if (!globalStompClient || !globalStompClient.connected) {
-    console.warn('Cannot subscribe to private queue, client not connected');
-    return false;
+export const subscribeToUserPrivateQueue = (callback) => {
+  const stompClient = getStompClient();
+  if (!stompClient) {
+    console.error('Cannot subscribe to private queue: no STOMP client');
+    return null;
   }
 
-  const subscriptionKey = 'user-private';
-  if (!subscriptions[subscriptionKey]) {
-    console.log('Subscribing to user private queue');
-    subscriptions[subscriptionKey] = globalStompClient.subscribe(
-      '/user/queue/private',
-      (message) => {
-        try {
-          const event = JSON.parse(message.body);
-          console.log('Received private user event:', event);
-          
-          if (messageHandlers[subscriptionKey]) {
-            messageHandlers[subscriptionKey](event);
+  if (privateQueueSub) {
+    if (callback) privateQueueSub.callback = callback;
+    console.log('Private queue already subscribed');
+    return privateQueueSub;
+  }
+
+  const subscription = stompClient.subscribe('/user/queue/private', (message) => {
+    try {
+      const event = JSON.parse(message.body);
+      console.log('Received private queue message:', event);
+
+      if (event.type && event.type.startsWith('CALL_')) {
+        console.log(`Processing call message: ${event.type}`);
+        
+        const callEvent = {
+          type: event.type,
+          chatId: event.chatId,
+          callId: event.callId,
+          callType: event.callType,
+          senderId: event.senderId,
+          senderName: event.senderName,
+          payload: event.payload || event
+        };
+
+        if (event.type === CALL_MESSAGE_TYPE.CALL_ACCEPTED) {
+          console.log('Processing CALL_ACCEPTED event:', event);
+          if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+            window.callManagerRef._handleCallMessage(callEvent);
           }
-        } catch (error) {
-          console.error('STOMP private message error:', error);
+          return;
         }
-      }
-    );
-    
-    messageHandlers[subscriptionKey] = handler;
-  } else if (handler) {
-    // Update handler if subscription already exists
-    messageHandlers[subscriptionKey] = handler;
-  }
 
-  return true;
+        if (event.type === CALL_MESSAGE_TYPE.ANSWER) {
+          console.log('Processing ANSWER event:', event);
+          if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+            const answerData = event.payload || event;
+            const answerObj = {
+              type: 'answer',
+              sdp: answerData.sdp || (answerData.payload && answerData.payload.sdp)
+            };
+            
+            if (!answerObj.sdp) {
+              console.error('No SDP found in ANSWER message:', event);
+              return;
+            }
+            
+            const modifiedEvent = {
+              ...callEvent,
+              formattedAnswer: answerObj
+            };
+            
+            window.callManagerRef._handleCallMessage(modifiedEvent);
+          }
+          return;
+        }
+
+        if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
+          window.callManagerRef._handleCallMessage(callEvent);
+        }
+        return;
+      }
+
+      if (callback) {
+        callback(event);
+      }
+    } catch (error) {
+      console.error('Error processing private queue message:', error);
+    }
+  });
+
+  privateQueueSub = subscription;
+  privateQueueSub.callback = callback;
+  return privateQueueSub;
 };
 
 /**
