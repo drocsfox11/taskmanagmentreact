@@ -24,9 +24,12 @@ export const projectsApi = baseApi.injectEndpoints({
         method: 'POST',
         body: project,
       }),
-      async onQueryStarted(projectData, { dispatch, queryFulfilled }) {
+      async onQueryStarted(projectData, { dispatch,getState, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
-        
+        const state = getState();
+        const currentUser = state.api.queries['getCurrentUser(undefined)']?.data;
+
+
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
             const optimisticProject = {
@@ -34,6 +37,7 @@ export const projectsApi = baseApi.injectEndpoints({
               ...projectData,
               participants: [],
               owner: {
+                id: currentUser.id,
                 username: 'me'
               },
               createdAt: new Date().toISOString(),
@@ -52,9 +56,15 @@ export const projectsApi = baseApi.injectEndpoints({
               const tempIndex = draft.findIndex(p => p.id === tempId);
               if (tempIndex !== -1) {
                 draft.splice(tempIndex, 1);
+                draft[tempIndex] = {
+                  ...createdProject,
+                  owner:{
+                    id: currentUser.id,
+                    username:'me'
+                  }
+                }
               }
-              
-              draft.unshift(createdProject);
+
             })
           );
         } catch (error) {
@@ -123,7 +133,7 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       async onQueryStarted({ projectId, userId, rightName }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          baseApi.util.updateQueryData('getAllUserRights', userId, (draft) => {
+          baseApi.util.updateQueryData('getCurrentUserRights', undefined, (draft) => {
             if (!draft[projectId]) {
               draft[projectId] = [];
             }
@@ -150,7 +160,7 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       async onQueryStarted({ projectId, userId, rightName }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          baseApi.util.updateQueryData('getAllUserRights', userId, (draft) => {
+          baseApi.util.updateQueryData('getCurrentUserRights', undefined, (draft) => {
             if (draft[projectId]) {
               draft[projectId] = draft[projectId].filter(right => right !== rightName);
             }

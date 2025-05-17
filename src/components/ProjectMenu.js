@@ -145,18 +145,7 @@ function ProjectMenu() {
                                     {project.title}
                                 </div>
                             </div>
-                            <div 
-                                className='project-menu-project-list-item-options dropdown-container' 
-                                onClick={(e) => toggleDropdown(project.id, e)}
-                            >
-                                <img src={project.id === currentProjectId ? OptionsActive : OptionsPassive} alt="Options" />
-                                {openDropdownId === project.id && (
-                                    <div className="dropdown-menu">
-                                        <div className="dropdown-item" onClick={(e) => handleProjectTasksClick(project.id, e)}>Задачи</div>
-                                        <div className="dropdown-item" onClick={(e) => handleProjectCalendarClick(project.id, e)}>Календарь</div>
-                                    </div>
-                                )}
-                            </div>
+
                         </div>
                     ))}
 
@@ -194,25 +183,22 @@ function ProjectMenu() {
                                         <div className='project-menu-people-list-item-label-group-label-username'>
                                             {user.name || user.username}
                                         </div>
-                                        <div className='project-menu-people-list-item-label-group-label-status-container'>
-                                            <div className='project-menu-people-list-item-label-group-label-status-color-active'></div>
-                                            <div className='project-menu-people-list-item-label-group-label-status-text'>Онлайн</div>
-                                        </div>
+
                                     </div>
                                 </div>
 
-                                <div 
-                                    className='project-menu-people-list-item-options dropdown-container'
-                                    onClick={(e) => toggleDropdown(`user-${user.username}`, e)}
-                                >
-                                    <img src={OptionsPassive} alt="Options"/>
-                                    {openDropdownId === `user-${user.username}` && (
-                                        <div className="dropdown-menu">
-                                            <div className="dropdown-item" onClick={(e) => handleUserMessageClick(user.username, e)}>Сообщение</div>
-                                            <div className="dropdown-item" onClick={(e) => handleUserProfileClick(user.username, e)}>Профиль</div>
-                                        </div>
-                                    )}
-                                </div>
+                                {/*<div */}
+                                {/*    className='project-menu-people-list-item-options dropdown-container'*/}
+                                {/*    onClick={(e) => toggleDropdown(`user-${user.username}`, e)}*/}
+                                {/*>*/}
+                                {/*    <img src={OptionsPassive} alt="Options"/>*/}
+                                {/*    {openDropdownId === `user-${user.username}` && (*/}
+                                {/*        <div className="dropdown-menu">*/}
+                                {/*            <div className="dropdown-item" onClick={(e) => handleUserMessageClick(user.username, e)}>Сообщение</div>*/}
+                                {/*            <div className="dropdown-item" onClick={(e) => handleUserProfileClick(user.username, e)}>Профиль</div>*/}
+                                {/*        </div>*/}
+                                {/*    )}*/}
+                                {/*</div>*/}
                             </div>
                         ))}
 

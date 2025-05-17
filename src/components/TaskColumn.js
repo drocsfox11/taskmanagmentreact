@@ -220,16 +220,7 @@ function TaskColumn({ column, onAddTask, onTaskClick, updateColumn, deleteColumn
                             placeholder="Введите название раздела"
                         />
                         
-                        <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center' }}>
-                            <input 
-                                type="checkbox" 
-                                id="completionColumnCheckbox"
-                                checked={isCompletionColumn} 
-                                onChange={(e) => setIsCompletionColumn(e.target.checked)}
-                                style={{ marginRight: '8px' }}
-                            />
-                            <label htmlFor="completionColumnCheckbox">Колонка завершения (задачи в этой колонке считаются выполненными)</label>
-                        </div>
+
                         
                         <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                             <button 

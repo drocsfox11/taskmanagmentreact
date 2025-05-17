@@ -14,17 +14,8 @@ function UserProfileModal({ onClose }) {
                     <>
                         <div className="user-profile-modal-avatar-section">
                             <img src={user.avatarURL} alt="avatar" className="user-profile-modal-avatar"/>
-                            <button className="user-profile-modal-edit-button">Редактировать</button>
-                            <button className="user-profile-modal-delete-button">Удалить</button>
                         </div>
-                        <div className="user-profile-modal-field">
-                            <div className="user-profile-modal-label">Имя пользователя</div>
-                            <input value={user.username || ''} disabled className="user-profile-modal-input"/>
-                        </div>
-                        <div className="user-profile-modal-field">
-                            <div className="user-profile-modal-label">Почтовый адрес</div>
-                            <input value={user.email || ''} disabled className="user-profile-modal-input"/>
-                        </div>
+
                         {user.name && (
                             <div className="user-profile-modal-field">
                                 <div className="user-profile-modal-label">Имя</div>

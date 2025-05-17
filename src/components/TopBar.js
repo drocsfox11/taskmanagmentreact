@@ -14,8 +14,6 @@ function TopBar() {
     return (
         <div className='top-bar-container'>
             <div className='top-bar-profile-container'>
-                <img src={Settings} className='top-bar-profile-settings'/>
-                <img src={Notifications} className='top-bar-profile-notifications'/>
                 <div className='top-bar-profile-field-container'>
                     <div className='top-bar-profile-icon-container' onClick={() => setIsProfileOpen(true)} style={{cursor:'pointer'}}>
                         <img src={avatar} className='top-bar-profile-icon'/>

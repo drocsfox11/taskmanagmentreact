@@ -27,8 +27,9 @@ function ProjectCard({ project, onClick }) {
     
     const canEditProject = hasRight(PROJECT_RIGHTS.EDIT_PROJECT);
     
-    const isProjectOwner = (currentUser && project.owner && currentUser.id === project.owner.id)
-    
+    const isProjectOwner = (currentUser && project.owner && (Number(currentUser.id) === Number(project.owner.id)))
+
+    console.log("Пришел проект", project)
     const showOptionsIcon = canEditProject || isProjectOwner;
 
     // Отладочная информация

@@ -12,7 +12,7 @@ import { useBoardRights } from './permissions';
 import { BOARD_RIGHTS, PROJECT_RIGHTS } from '../constants/rights';
 import { BoardRightGuard } from './permissions';
 import { useGetCurrentUserRightsQuery, useGetProjectQuery } from '../services/api/projectsApi';
-import { useSearchUsersQuery, useGetCurrentUserQuery } from '../services/api/usersApi';
+import { useGetCurrentUserQuery } from '../services/api/usersApi';
 import EmojiPicker from './EmojiPicker';
 import { EmojiProvider, Emoji } from "react-apple-emojis";
 import emojiData from "react-apple-emojis/src/data.json";
@@ -27,6 +27,7 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         tags: board?.tags || [],
         emoji: board?.emoji || 'clipboard'
     });
+    const [boardParticipants, setBoardParticipants] = useState(board?.participants || []);
     const [tagName, setTagName] = useState('');
     const [tagColor, setTagColor] = useState('#FFD700');
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -95,32 +96,8 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     
     const [activeTab, setActiveTab] = useState(() => getInitialActiveTab());
     
-    const queryArg = {
-        name: searchParams.query,
-        page: searchParams.page,
-        size: usersOnPage
-    };
-
-    const { 
-        data: searchData, 
-        isLoading: isSearching, 
-        isFetching 
-    } = useSearchUsersQuery(
-        queryArg,
-        { 
-            skip: !searchParams.query || activeTab !== 'participants',
-            refetchOnMountOrArgChange: true,
-            refetchOnFocus: false
-        }
-    );
-
-    const users = searchData ? searchData.users : [];
-    const hasNextPage = searchData ? searchData.hasNext : true;
-
-    const filteredUsers = users.filter(user => 
-        !board?.participants?.some(participant => participant.id === user.id) &&
-        (currentUser ? user.id !== currentUser.id : true)
-    );
+    // Фильтрованный список участников проекта по введенному поисковому запросу
+    const [filteredProjectParticipants, setFilteredProjectParticipants] = useState([]);
     
     useEffect(() => {
         setForm({
@@ -165,82 +142,33 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         canManageRights
     ]);
 
-    const loadNextPage = useCallback(() => {
-        if (hasNextPage && !isFetching) {
-            setSearchParams(prev => ({
-                ...prev,
-                page: prev.page + 1
-            }));
-        }
-    }, [hasNextPage, isFetching]);
-
-    const handleScroll = useCallback(() => {
-        if (!scrollableResultsRef.current || !hasNextPage || isFetching || isScrollLoading) {
-            return;
-        }
-
-        const { scrollTop, scrollHeight, clientHeight } = scrollableResultsRef.current;
-        
-        if (scrollTop + clientHeight >= scrollHeight * 0.8) {
-            setIsScrollLoading(true);
-            loadNextPage();
-        }
-    }, [hasNextPage, isFetching, isScrollLoading, loadNextPage]);
-
+    // Обновляем локальное состояние boardParticipants при изменении board.participants
     useEffect(() => {
-        const scrollableElement = scrollableResultsRef.current;
-        if (scrollableElement) {
-            scrollableElement.addEventListener('scroll', handleScroll);
-            return () => {
-                scrollableElement.removeEventListener('scroll', handleScroll);
-            };
+        if (board && board.participants) {
+            setBoardParticipants(board.participants);
         }
-    }, [handleScroll]);
+    }, [board]);
 
+    // Обновляем фильтрованный список участников при изменении поискового запроса или данных проекта
     useEffect(() => {
-        if (!isFetching) {
-            setIsScrollLoading(false);
-        }
-    }, [isFetching]);
-
-    useEffect(() => {
-        if (searchParams.query && 
-            !isSearching && 
-            !isFetching && 
-            filteredUsers.length < usersOnPage &&
-            hasNextPage && 
-            !isScrollLoading) {
-            setIsScrollLoading(true);
-            loadNextPage();
-        }
-    }, [filteredUsers, searchParams.query, isSearching, isFetching, hasNextPage, isScrollLoading, usersOnPage, loadNextPage]);
-
-    const setSearchQuery = useCallback((query) => {
-        setSearchParams({
-            query,
-            page: 0
-        });
-    }, []);
-
-    useEffect(() => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-        
-        if (inputValue) {
-            timeoutRef.current = setTimeout(() => {
-                setSearchQuery(inputValue);
-            }, 1000);
+        if (projectData && projectData.participants && inputValue) {
+            // Фильтруем участников проекта, которые еще не добавлены на доску
+            const searchLower = inputValue.toLowerCase();
+            const filteredUsers = projectData.participants.filter(user => 
+                // Проверяем содержит ли имя пользователя или username поисковой запрос
+                (user.name?.toLowerCase().includes(searchLower) || 
+                 user.username?.toLowerCase().includes(searchLower)) && 
+                // Проверяем не добавлен ли уже пользователь на доску
+                !boardParticipants.some(participant => participant.id === user.id) &&
+                // Исключаем текущего пользователя
+                (currentUser ? user.id !== currentUser.id : true)
+            );
+            
+            setFilteredProjectParticipants(filteredUsers);
         } else {
-            setSearchQuery('');
+            setFilteredProjectParticipants([]);
         }
-        
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, [inputValue, setSearchQuery]);
+    }, [inputValue, projectData, boardParticipants, currentUser]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -335,26 +263,50 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
 
     const handleAddUser = async (user) => {
         try {
+            // Оптимистично добавляем пользователя в UI через локальное состояние
+            const userToAdd = {
+                id: user.id,
+                name: user.name || user.username,
+                username: user.username,
+                avatarURL: user.avatarURL
+            };
+            
+            // Обновляем локальное состояние участников
+            setBoardParticipants(prev => [...prev, userToAdd]);
+            
+            setInputValue('');
+            setShowSearchResults(false);
+            
+            // Отправляем запрос на сервер
             await addUserToBoard({
                 boardId: board.id,
                 userId: user.id
             }).unwrap();
             
-            setInputValue('');
-            setShowSearchResults(false);
         } catch (error) {
             console.error('Failed to add user:', error);
+            // В случае ошибки восстанавливаем исходное состояние списка участников
+            setBoardParticipants(prev => prev.filter(p => p.id !== user.id));
         }
     };
 
     const handleRemoveUser = async (userId) => {
         try {
+            // Оптимистично удаляем пользователя из UI
+            setBoardParticipants(prev => prev.filter(p => p.id !== userId));
+            
+            // Отправляем запрос на сервер
             await removeUserFromBoard({
                 boardId: board.id,
                 userId: userId
             }).unwrap();
         } catch (error) {
             console.error('Failed to remove user:', error);
+            // В случае ошибки возвращаем пользователя в список
+            const removedUser = board.participants.find(p => p.id === userId);
+            if (removedUser) {
+                setBoardParticipants(prev => [...prev, removedUser]);
+            }
         }
     };
 
@@ -527,47 +479,38 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                                 <input
                                     type="text"
                                     className="project-management-modal-input-participant"
-                                    placeholder="Поиск пользователей..."
+                                    placeholder="Поиск участников проекта..."
                                     value={inputValue}
                                     onChange={handleSearchChange}
                                 />
                                 {showSearchResults && inputValue && (
                                     <div className="search-results" ref={scrollableResultsRef}>
-                                        {isSearching && searchParams.page === 0 ? (
-                                            <div className="search-loading">Поиск...</div>
-                                        ) : filteredUsers.length > 0 ? (
+                                        {!projectData ? (
+                                            <div className="search-loading">Загрузка данных проекта...</div>
+                                        ) : filteredProjectParticipants.length > 0 ? (
                                             <>
-                                                {filteredUsers.map((user) => (
+                                                {filteredProjectParticipants.map((user) => (
                                                     <div
                                                         key={user.id}
                                                         className="search-result-item"
                                                         onClick={() => handleAddUser(user)}
                                                     >
-                                                        <img src={user.avatarURL || Girl} alt={user.name} />
-                                                        <span>{user.name}</span>
+                                                        <img src={user.avatarURL || Girl} alt={user.name || user.username} />
+                                                        <span>{user.name || user.username}</span>
                                                     </div>
                                                 ))}
-                                                {(isFetching || isScrollLoading) && hasNextPage && (
-                                                    <div className="search-loading search-loading-more">
-                                                        Загрузка...
-                                                    </div>
-                                                )}
                                             </>
-                                        ) : searchParams.query && !isFetching ? (
-                                            <div className="search-no-results">
-                                                Пользователи не найдены
-                                            </div>
                                         ) : (
-                                            <div className="search-loading">
-                                                {isFetching ? "Загрузка пользователей..." : "Введите имя для поиска"}
+                                            <div className="search-no-results">
+                                                {inputValue ? "Участники не найдены или уже добавлены на доску" : "Введите имя для поиска"}
                                             </div>
                                         )}
                                     </div>
                                 )}
                             </div>
                             <div className="project-management-participants">
-                                {board?.participants && board.participants.length > 0 ? (
-                                    board.participants.map((participant) => (
+                                {boardParticipants.length > 0 ? (
+                                    boardParticipants.map((participant) => (
                                         <div key={participant.id || participant.username} className="participant-item">
                                             <div className="participant-info">
                                                 <img src={participant.avatarURL || Girl} alt={participant.name || participant.username} />
