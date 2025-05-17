@@ -12,11 +12,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
 
 function TaskCalendar() {
-    const [selectedDate, setSelectedDate] = useState(new Date());
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
-    const [viewMode, setViewMode] = useState('week'); // 'week', 'twoWeek', 'month' or 'columns'
-    const [columnSize, setColumnSize] = useState('day'); // 'day', 'week', or 'month'
+    const [viewMode, setViewMode] = useState('week');
+    const [columnSize, setColumnSize] = useState('day');
     const [searchParams, setSearchParams] = useState({
         searchText: "",
         projectId: null,
@@ -27,13 +26,12 @@ function TaskCalendar() {
         isTitleSearch: true,
         isDescriptionSearch: true
     });
-    const [searchIn, setSearchIn] = useState("both"); // "title", "description", or "both"
+    const [searchIn, setSearchIn] = useState("both");
     const [filtersVisible, setFiltersVisible] = useState(false);
     const [searchError, setSearchError] = useState(null);
     
     const { projectId } = useParams();
-    const navigate = useNavigate();
-    
+
     const { data: projects = [], isLoading: isProjectsLoading } = useGetProjectsQuery();
     const { data: boards = [], isLoading: isBoardsLoading } = useGetBoardsQuery(
         searchParams.projectId, 
@@ -45,10 +43,9 @@ function TaskCalendar() {
         error: searchApiError
     }] = useSearchTasksMutation();
     
-    const [calendarTasks, setCalendarTasks] = useState([]);
+    const calendarTasks = searchResults || [];
     const debouncedSearchText = useDebounce(searchParams.searchText, 500);
     
-    // Initialize calendar view based on view mode
     useEffect(() => {
         if (viewMode === 'week') {
             initializeWeekView();
@@ -61,7 +58,6 @@ function TaskCalendar() {
         }
     }, [viewMode, columnSize]);
     
-    // Initialize week view
     const initializeWeekView = () => {
         const currentDate = new Date();
         const firstDayOfWeek = new Date(currentDate);
@@ -76,7 +72,6 @@ function TaskCalendar() {
         setEndDate(lastDayOfWeek);
     };
     
-    // Initialize two-week view
     const initializeTwoWeekView = () => {
         const currentDate = new Date();
         const firstDayOfWeek = new Date(currentDate);
@@ -91,36 +86,32 @@ function TaskCalendar() {
         setEndDate(lastDayOfNextWeek);
     };
     
-    // Initialize month view
     const initializeMonthView = () => {
         const currentDate = new Date();
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         
-        // Adjust to show previous month days if first day is not Monday
+
         const dayOfWeek = firstDay.getDay();
         const adjustedFirstDay = new Date(firstDay);
-        if (dayOfWeek !== 1) { // Not Monday
+        if (dayOfWeek !== 1) {
             const daysToAdjust = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
             adjustedFirstDay.setDate(adjustedFirstDay.getDate() - daysToAdjust);
         }
-        
-        // Last day is first day + days to show (up to 35 days to show a complete month grid)
+
         const lastDay = new Date(adjustedFirstDay);
-        lastDay.setDate(adjustedFirstDay.getDate() + 34); // 5 weeks (35 days) to ensure full month is visible
+        lastDay.setDate(adjustedFirstDay.getDate() + 34);
         
         setStartDate(adjustedFirstDay);
         setEndDate(lastDay);
     };
     
-    // Add initialization function for columns view
     const initializeColumnsView = () => {
         const currentDate = new Date();
         
-        // Start from today
+
         const startingDate = new Date(currentDate);
         startingDate.setHours(0, 0, 0, 0);
-        
-        // Set end date based on column size and number of columns to show (6 columns)
+
         const lastDate = new Date(startingDate);
         
         if (columnSize === 'day') {
@@ -135,8 +126,7 @@ function TaskCalendar() {
         setStartDate(startingDate);
         setEndDate(lastDate);
     };
-    
-    // Set initial projectId from route params
+
     useEffect(() => {
         if (projectId) {
             setSearchParams(prev => ({
@@ -145,40 +135,20 @@ function TaskCalendar() {
             }));
         }
     }, [projectId]);
-    
-    // Effect to perform search when parameters change
+
+
     useEffect(() => {
         performSearch();
     }, [debouncedSearchText, searchParams.projectId, searchParams.boardId, 
         searchParams.tagId, searchParams.isCompleted, searchParams.sortDirection,
         searchParams.isTitleSearch, searchParams.isDescriptionSearch]);
     
-    useEffect(() => {
-        if (searchResults) {
-            setCalendarTasks(searchResults);
-        }
-    }, [searchResults]);
-    
-    // Effect to handle search API errors
-    useEffect(() => {
-        if (searchApiError) {
-            if (searchApiError.status === 401) {
-                setSearchError('Необходима авторизация. Перенаправление на страницу входа...');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
-            } else {
-                setSearchError(`Ошибка поиска: ${searchApiError.data || 'Неизвестная ошибка'}`);
-            }
-        } else {
-            setSearchError(null);
-        }
-    }, [searchApiError]);
-    
+
+
+
     const performSearch = async () => {
         setSearchError(null);
         
-        // Filter out null/undefined values and empty arrays
         const filteredParams = Object.entries(searchParams).reduce((acc, [key, value]) => {
             if (value !== null && value !== undefined) {
                 if (Array.isArray(value) && value.length === 0) {
@@ -189,7 +159,6 @@ function TaskCalendar() {
             return acc;
         }, {});
         
-        // Call search API
         try {
             await searchTasks(filteredParams);
         } catch (error) {
@@ -216,8 +185,8 @@ function TaskCalendar() {
         setSearchParams(prev => ({
             ...prev,
             projectId: projectId,
-            boardId: null, // Reset board when project changes
-            tagId: null // Reset tag when project changes
+            boardId: null,
+            tagId: null
         }));
     };
     
@@ -225,7 +194,7 @@ function TaskCalendar() {
         setSearchParams(prev => ({
             ...prev,
             boardId: boardId,
-            tagId: null // Reset tag when board changes
+            tagId: null
         }));
     };
     
@@ -253,14 +222,12 @@ function TaskCalendar() {
     const handleSearchInChange = (searchInValue) => {
         setSearchIn(searchInValue);
         
-        // Update search parameters based on searchInValue
         setSearchParams(prev => ({
             ...prev,
             isTitleSearch: searchInValue === 'title' || searchInValue === 'both',
             isDescriptionSearch: searchInValue === 'description' || searchInValue === 'both'
         }));
         
-        // Trigger a new search when the search target changes
         performSearch();
     };
     
@@ -301,9 +268,11 @@ function TaskCalendar() {
     const mapTasksToCalendar = () => {
         const calendarDates = getDatesArray();
         const mappedTasks = [];
-        
+        console.log("Маппинг задач");
         calendarTasks.forEach(task => {
+            console.log(task);
             if (!task.startDate && !task.endDate) {
+                console.log("Пропускаю")
                 return;
             }
             
@@ -412,7 +381,6 @@ function TaskCalendar() {
             setStartDate(newStartDate);
             setEndDate(newEndDate);
         } else if (viewMode === 'month') {
-            // First, find the primary month being displayed
             const monthCounts = {};
             const dates = getDatesArray();
             
@@ -426,22 +394,18 @@ function TaskCalendar() {
             
             const [primaryMonth, primaryYear] = primaryMonthKey.split('-').map(Number);
             
-            // Calculate previous month
             const newMonth = primaryMonth - 1;
             const newYear = primaryYear + (newMonth < 0 ? -1 : 0);
             const newMonthAdjusted = newMonth < 0 ? 11 : newMonth;
             
-            // Create a date for the first day of the previous month
             const newStartDate = new Date(newYear, newMonthAdjusted, 1);
             
-            // Adjust to show days starting from Monday
             const dayOfWeek = newStartDate.getDay();
-            if (dayOfWeek !== 1) { // Not Monday
+            if (dayOfWeek !== 1) {
                 const daysToAdjust = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
                 newStartDate.setDate(newStartDate.getDate() - daysToAdjust);
             }
             
-            // End date is 35 days (5 weeks) from start date
             const newEndDate = new Date(newStartDate);
             newEndDate.setDate(newStartDate.getDate() + 34);
             
@@ -475,7 +439,6 @@ function TaskCalendar() {
             setStartDate(newStartDate);
             setEndDate(newEndDate);
         } else if (viewMode === 'month') {
-            // First, find the primary month being displayed
             const monthCounts = {};
             const dates = getDatesArray();
             
@@ -488,23 +451,19 @@ function TaskCalendar() {
                 monthCounts[a] > monthCounts[b] ? a : b);
             
             const [primaryMonth, primaryYear] = primaryMonthKey.split('-').map(Number);
-            
-            // Calculate next month
+
             const newMonth = primaryMonth + 1;
             const newYear = primaryYear + (newMonth > 11 ? 1 : 0);
             const newMonthAdjusted = newMonth > 11 ? 0 : newMonth;
             
-            // Create a date for the first day of the next month
             const newStartDate = new Date(newYear, newMonthAdjusted, 1);
             
-            // Adjust to show days starting from Monday
             const dayOfWeek = newStartDate.getDay();
             if (dayOfWeek !== 1) { // Not Monday
                 const daysToAdjust = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
                 newStartDate.setDate(newStartDate.getDate() - daysToAdjust);
             }
             
-            // End date is 35 days (5 weeks) from start date
             const newEndDate = new Date(newStartDate);
             newEndDate.setDate(newStartDate.getDate() + 34);
             
@@ -520,8 +479,6 @@ function TaskCalendar() {
         const endYear = endDate.getFullYear();
         
         if (viewMode === 'month') {
-            // For month view, show the primary month being displayed
-            // Get the month that has the most days in the current view
             const monthCounts = {};
             const dates = getDatesArray();
             
@@ -538,7 +495,6 @@ function TaskCalendar() {
             
             return primaryMonthDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
         } else {
-            // For two-week view
             if (startMonth === endMonth && startYear === endYear) {
                 return `${startMonth} ${startYear}`;
             } else if (startYear === endYear) {
@@ -553,7 +509,6 @@ function TaskCalendar() {
         const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
         
         if (viewMode === 'month' || viewMode === 'week') {
-            // For month and week views, just show day names
             return dayNames.map((day, index) => {
                 const isWeekend = index >= 5; // Saturday and Sunday
                 
@@ -564,7 +519,6 @@ function TaskCalendar() {
                 );
             });
         } else {
-            // For two-week view, show day name + date
             const datesArray = getDatesArray();
             return datesArray.map((date, index) => {
                 const dayName = date.toLocaleString('ru-RU', { weekday: 'short' }).toLowerCase();
@@ -703,8 +657,8 @@ function TaskCalendar() {
             );
         }
         
-        // For two-week view, just return an empty container to be filled by the task cards
-        return <div className="calendar-body-container"></div>;
+        // For other views, return an empty container that will be filled separately
+        return null;
     };
     
     const isLoading = isProjectsLoading || isSearchLoading || isBoardsLoading;
@@ -1100,14 +1054,22 @@ function TaskCalendar() {
                     </div>
                 </div>
 
-                <div className={`custom-calendar-grid ${viewMode === 'month' ? 'month-view' : viewMode === 'week' ? 'week-view' : 'two-week-view'}`}>
-                    <div className={`custom-calendar-grid-header ${viewMode === 'month' ? 'month-header' : viewMode === 'week' ? 'week-header' : ''}`}>
-                        {renderCalendarHeader()}
+                {viewMode === 'month' ? (
+                    <div className="custom-calendar-grid month-view" key="month-view">
+                        <div className="custom-calendar-grid-header month-header">
+                            {renderCalendarHeader()}
+                        </div>
+                        {renderCalendarBody()}
                     </div>
-
-                    {viewMode === 'month' ? (
-                        renderCalendarBody()
-                    ) : viewMode === 'week' ? (
+                ) : viewMode === 'columns' ? (
+                    <div className="custom-calendar-grid columns-view" key="columns-view">
+                        {renderColumnsView()}
+                    </div>
+                ) : (
+                    <div className={`custom-calendar-grid ${viewMode === 'week' ? 'week-view' : 'two-week-view'}`} key={viewMode === 'week' ? 'week-view' : 'two-week-view'}>
+                        <div className="custom-calendar-grid-header">
+                            {renderCalendarHeader()}
+                        </div>
                         <div className="calendar-body">
                             {mappedTasks.length > 0 ? (
                                 mappedTasks.map((task, index) => (
@@ -1126,29 +1088,8 @@ function TaskCalendar() {
                                 </div>
                             )}
                         </div>
-                    ) : viewMode === 'columns' ? (
-                        renderColumnsView()
-                    ) : (
-                        <div className="calendar-body">
-                            {mappedTasks.length > 0 ? (
-                                mappedTasks.map((task, index) => (
-                                    <CalendarCard
-                                        key={task.id || index}
-                                        task={task}
-                                        startDate={task.startDate}
-                                        endDate={task.endDate}
-                                        boardTitle={task.boardTitle}
-                                        style={{gridColumn: `${task.startCol} / ${task.endCol}`}}
-                                    />
-                                ))
-                            ) : (
-                                <div className="no-tasks-message">
-                                    {searchParams.searchText || filtersVisible ? 'Нет задач, соответствующих критериям поиска' : 'Нет задач с датами для отображения в календаре'}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -89,30 +89,18 @@ export const useBoardRights = (boardId, options = {}) => {
     }
   }, [error, shouldSkip]);
   
-  /**
-   * Проверяет наличие указанного права у пользователя
-   * @param {string} rightName - Имя права для проверки
-   * @returns {boolean} true, если пользователь имеет указанное право
-   */
+
   const hasRight = (rightName) => {
     return userRights && userRights.includes && userRights.includes(rightName);
   };
   
-  /**
-   * Проверяет наличие хотя бы одного из указанных прав у пользователя
-   * @param {string[]} rightNames - Массив прав для проверки
-   * @returns {boolean} true, если пользователь имеет хотя бы одно из указанных прав
-   */
+
   const hasAnyRight = (rightNames) => {
     if (!userRights || isLoading) return false;
     return rightNames.some(right => userRights.includes(right));
   };
   
-  /**
-   * Проверяет наличие всех указанных прав у пользователя
-   * @param {string[]} rightNames - Массив прав для проверки
-   * @returns {boolean} true, если пользователь имеет все указанные права
-   */
+
   const hasAllRights = (rightNames) => {
     if (!userRights || isLoading) return false;
     return rightNames.every(right => userRights.includes(right));

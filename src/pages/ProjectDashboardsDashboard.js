@@ -18,8 +18,8 @@ function ProjectDashBoardsDashboard() {
     const { projectId } = useParams();
     const numericProjectId = Number(projectId);
     
-    const { data: project, isLoading: isProjectLoading } = useGetProjectQuery(numericProjectId);
-    const { data: boards = [], isLoading: isBoardsLoading } = useGetBoardsQuery(numericProjectId);
+    const { data: project, isLoading: isProjectLoading, isFetching: isProjectFetching} = useGetProjectQuery(numericProjectId);
+    const { data: boards = [], isLoading: isBoardsLoading, isFetching: isBoardsFetching } = useGetBoardsQuery(numericProjectId);
     const [createBoard] = useCreateBoardMutation();
     
     const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
@@ -30,7 +30,7 @@ function ProjectDashBoardsDashboard() {
     const modalRef = useRef(null);
     const navigate = useNavigate();
     
-    const isLoading = isProjectLoading || isBoardsLoading;
+    const isLoading = isProjectLoading || isBoardsLoading || isProjectFetching || isBoardsFetching;
 
     const handleOpenBoardModal = () => {
         setBoardForm({ title: '', description: '', tags: [], emoji: 'clipboard' });
@@ -55,7 +55,6 @@ function ProjectDashBoardsDashboard() {
     };
     
     const handleBoardClick = (boardId) => {
-        // Prevent navigation for temporary boards (optimistic updates)
         if (boardId.toString().includes('temp-')) {
             console.log("Cannot navigate to a temporary board that's still being created");
             return;
@@ -211,8 +210,7 @@ function ProjectDashBoardsDashboard() {
                 </div>
             )}
 
-            {/* Emoji Picker */}
-            <EmojiPicker 
+            <EmojiPicker
                 isOpen={isEmojiPickerOpen} 
                 onClose={() => setIsEmojiPickerOpen(false)}
                 selectedEmoji={boardForm.emoji}

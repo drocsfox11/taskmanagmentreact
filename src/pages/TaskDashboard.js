@@ -4,8 +4,6 @@ import ProjectMenu from "../components/ProjectMenu";
 import { Emoji, EmojiProvider } from "react-apple-emojis";
 import emojiData from "react-apple-emojis/src/data.json";
 import Girl from "../assets/icons/profile_picture.svg";
-import TaskCard from "../components/TaskCard";
-import OptionsPassive from "../assets/icons/options_passive.svg";
 import CloseCross from "../assets/icons/cross for task.svg";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useParams, useNavigate } from "react-router-dom";
@@ -18,7 +16,6 @@ import { useBoardRights } from "../components/permissions";
 import { BOARD_RIGHTS } from "../constants/rights";
 import { BoardRightGuard } from "../components/permissions";
 import TaskColumn from "../components/TaskColumn";
-import { useDispatch, useSelector } from "react-redux";
 
 
 import { 
@@ -42,17 +39,17 @@ function TaskDashboard() {
     const [isTaskInfoOpen, setIsTaskInfoOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
-    
+
     const boardIdNum = Number(boardId);
-    
-    const { 
-        data: boardWithData, 
+
+    const {
+        data: boardWithData,
         isLoading: isLoadingBoardData,
-        error: boardError 
+        error: boardError
     } = useGetBoardWithDataQuery(boardIdNum, {
         skip: isNaN(boardIdNum)
     });
-    
+
     const {
         data: tasksHistory,
         isLoading: isLoadingTasksHistory,
@@ -66,13 +63,13 @@ function TaskDashboard() {
     const [deleteColumn] = useDeleteColumnMutation();
     const [reorderColumns] = useReorderColumnsMutation();
     const [moveTask] = useMoveTaskMutation();
-    const [uploadTaskAttachment] = useUploadTaskAttachmentMutation();
-    
+    // const [uploadTaskAttachment] = useUploadTaskAttachmentMutation();
+
     const columns = useMemo(() => {
         if (!boardWithData?.columns) return [];
-        
+
         const columnMap = new Map();
-        
+
         boardWithData.columns.forEach(column => {
             const id = column.id || column.columnId;
             if (id) {
@@ -81,7 +78,7 @@ function TaskDashboard() {
                     const posB = typeof b.position === 'number' ? b.position : Number.MAX_SAFE_INTEGER;
                     return posA - posB;
                 });
-                
+
                 columnMap.set(id, {
                     ...column,
                     id: id,
@@ -89,41 +86,41 @@ function TaskDashboard() {
                 });
             }
         });
-        
+
         return Array.from(columnMap.values())
             .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }, [boardWithData?.columns]);
-    
+
     // Calculate completion percentage
     const calculateCompletionPercentage = useMemo(() => {
         if (!columns || columns.length === 0) return 0;
-        
+
         let totalTasks = 0;
         let completedTasks = 0;
-        
+
         columns.forEach(column => {
             const tasksInColumn = column.tasks ? column.tasks.length : 0;
             totalTasks += tasksInColumn;
-            
+
             if (column.completionColumn) {
                 completedTasks += tasksInColumn;
             }
         });
-        
+
         if (totalTasks === 0) return 0;
         return Math.round((completedTasks / totalTasks) * 100);
     }, [columns]);
-    
+
     const board = boardWithData;
     const isLoading = isLoadingBoardData;
-    
-    const boardParticipants = board?.participants || [];
-    
-    
-    const { hasRight } = useBoardRights(boardIdNum);
-    
 
-    
+    const boardParticipants = board?.participants || [];
+
+
+    const { hasRight } = useBoardRights(boardIdNum);
+
+
+
     useEffect(() => {
         if (tasksHistoryError) {
             console.error('Error loading tasks history:', tasksHistoryError);
@@ -133,7 +130,7 @@ function TaskDashboard() {
     const [loadAttempts, setLoadAttempts] = useState(0);
     const maxLoadAttempts = 3;
 
-    
+
     useEffect(() => {
         if (boardIdNum && !isLoadingBoardData) {
             setLoadAttempts(prev => prev + 1);
@@ -158,10 +155,10 @@ function TaskDashboard() {
                 boardId: Number(boardId),
                 projectId: Number(projectId)
             };
-            
+
             console.log('Creating task with data:', newTask);
             console.log('Files to upload:', newTask.files?.length || 0, 'files');
-            
+
             createTask(newTask)
                 .unwrap()
                 .then(createdTask => {
@@ -193,29 +190,29 @@ function TaskDashboard() {
     const onDragEnd = (result) => {
         const { source, destination, draggableId, type } = result;
         if (!destination) return;
-        
+
         if (type === 'column') {
             if (!hasRight(BOARD_RIGHTS.MOVE_COLUMNS)) {
                 console.log('У пользователя нет прав на перемещение колонок');
                 return;
             }
-            
+
             const sourceIndex = source.index;
             const destIndex = destination.index;
             if (sourceIndex === destIndex) return;
             const newColumns = Array.from(columns);
             const [removed] = newColumns.splice(sourceIndex, 1);
             newColumns.splice(destIndex, 0, removed);
-            
+
             const updatedColumns = newColumns.map((col, index) => ({
                 id: col.id || col.columnId,
                 position: index
             }));
-            
+
             console.log('Переупорядочивание колонок:', { columns: updatedColumns, boardId: boardIdNum });
-            
-            reorderColumns({ 
-                boardId: boardIdNum, 
+
+            reorderColumns({
+                boardId: boardIdNum,
                 columns: updatedColumns
             })
                 .unwrap()
@@ -224,32 +221,32 @@ function TaskDashboard() {
                 });
             return;
         }
-        
+
         if (type === 'task') {
             if (!hasRight(BOARD_RIGHTS.MOVE_TASKS)) {
                 console.log('У пользователя нет прав на перемещение задач');
                 return;
             }
-            
+
             const sourceColumnId = Number(source.droppableId);
             const targetColumnId = Number(destination.droppableId);
             const sourceIndex = source.index;
             const newPosition = destination.index;
             const taskId = Number(draggableId);
-            
-            console.log('Перемещение задачи:', { 
-                taskId, 
-                sourceColumnId, 
-                targetColumnId, 
-                sourceIndex, 
+
+            console.log('Перемещение задачи:', {
+                taskId,
+                sourceColumnId,
+                targetColumnId,
+                sourceIndex,
                 newPosition,
                 boardId: boardIdNum
             });
-            
+
             moveTask({
-                taskId, 
-                sourceColumnId, 
-                targetColumnId, 
+                taskId,
+                sourceColumnId,
+                targetColumnId,
                 newPosition,
                 boardId: boardIdNum
             }).unwrap()
@@ -267,7 +264,7 @@ function TaskDashboard() {
             <div style={{ textAlign: 'center', padding: '50px 20px' }}>
                 <h2>Доска не найдена</h2>
                 <p>Возможно, она была удалена или у вас нет прав доступа.</p>
-                <button 
+                <button
                     onClick={() => navigate('/system/project')}
                     style={{
                         padding: '10px 20px',
@@ -293,7 +290,7 @@ function TaskDashboard() {
                 <div style={{ margin: '20px', padding: '10px', background: '#f8d7da', color: '#721c24', borderRadius: '4px' }}>
                     {JSON.stringify(boardError)}
                 </div>
-                <button 
+                <button
                     onClick={() => navigate('/system/project')}
                     style={{
                         padding: '10px 20px',
@@ -321,7 +318,7 @@ function TaskDashboard() {
             <div className='task-dashboard-container'>
                 <TopBar />
                 {isLoading && <LoadingSpinner />}
-                
+
                 <div className='task-dashboard-add-bar-container'>
                     <div className='task-dashboard-icon-row-container'>
                         <div className='task-dashboard-icon-container'>
@@ -335,7 +332,7 @@ function TaskDashboard() {
                                 {board?.title || 'Загрузка...'}
                             </div>
                             <div className='task-dashboard-progress-container'>
-                                <div 
+                                <div
                                     className='task-dashboard-progress-bar'
                                     style={{
                                         background: `linear-gradient(270deg, #ECECEC ${100 - calculateCompletionPercentage}%, #5558FF ${100 - calculateCompletionPercentage}%)`
@@ -349,19 +346,19 @@ function TaskDashboard() {
                     </div>
 
                     <div className="task-dashboard-button-and-people-container">
-                        <div 
-                            className="task-dashboard-people" 
+                        <div
+                            className="task-dashboard-people"
                             onClick={() => setIsParticipantsModalOpen(true)}
                             style={{ cursor: 'pointer' }}
                         >
                             {boardParticipants.slice(0, 4).map((participant, index) => {
 
-                                
+
                                 return (
                                     <div className="task-dashboard-people-item" key={index} title={participant.name || ''}>
-                                        <img 
-                                            src={participant.avatarURL || Girl} 
-                                            alt={participant.name || ''} 
+                                        <img
+                                            src={participant.avatarURL || Girl}
+                                            alt={participant.name || ''}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                             onError={(e) => { e.target.src = Girl; }}
                                         />
@@ -395,10 +392,10 @@ function TaskDashboard() {
                         {(provided) => (
                             <div className='task-dashboard-cards-containeres' ref={provided.innerRef} {...provided.droppableProps}>
                                 {columns.map((column, index) => (
-                                    <Draggable 
-                                        key={column.id} 
-                                        draggableId={String(column.id)} 
-                                        index={index} 
+                                    <Draggable
+                                        key={column.id}
+                                        draggableId={String(column.id)}
+                                        index={index}
                                         type="column"
                                         isDragDisabled={!hasRight(BOARD_RIGHTS.MOVE_COLUMNS)}
                                     >
@@ -412,9 +409,9 @@ function TaskDashboard() {
                                                     opacity: snapshot.isDragging ? 0.7 : 1
                                                 }}
                                             >
-                                                <TaskColumn 
-                                                    column={column} 
-                                                    onAddTask={() => handleOpenTaskModal(column.id)} 
+                                                <TaskColumn
+                                                    column={column}
+                                                    onAddTask={() => handleOpenTaskModal(column.id)}
                                                     onTaskClick={task => { setSelectedTask(task); setIsTaskInfoOpen(true); }}
                                                     updateColumn={updateColumn}
                                                     deleteColumn={deleteColumn}
@@ -429,66 +426,62 @@ function TaskDashboard() {
                     </Droppable>
                 </DragDropContext>
             </div>
-            
-            {/* Task Creation Modal */}
-            <CreateTaskModal 
-                isOpen={isTaskModalOpen} 
-                onClose={handleCloseTaskModal} 
-                onSubmit={handleCreateTask} 
+
+            <CreateTaskModal
+                isOpen={isTaskModalOpen}
+                onClose={handleCloseTaskModal}
+                onSubmit={handleCreateTask}
                 boardId={Number(boardId)}
             />
-            
-            {/* Add Section Modal */}
-            <AddSectionModal 
+
+            <AddSectionModal
                 isOpen={isAddSectionModalOpen}
                 onClose={() => setIsAddSectionModalOpen(false)}
                 onAddSection={handleAddSection}
             />
 
-            {/* Task Info Modal */}
-            <TaskInfoModal 
-                isOpen={isTaskInfoOpen} 
-                onClose={() => setIsTaskInfoOpen(false)} 
-                task={selectedTask} 
+            <TaskInfoModal
+                isOpen={isTaskInfoOpen}
+                onClose={() => setIsTaskInfoOpen(false)}
+                task={selectedTask}
             />
-            
-            {/* Participants Modal */}
+
             {isParticipantsModalOpen && (
                 <div className="create-project-modal-overlay">
                     <div className="create-project-modal" style={{ maxWidth: '400px' }}>
                         <div className="create-task-modal-header">
                             <div className="create-project-modal-title">Участники доски</div>
-                            <img 
-                                src={CloseCross} 
-                                alt="Close" 
+                            <img
+                                src={CloseCross}
+                                alt="Close"
                                 className="create-task-modal-close"
                                 onClick={() => setIsParticipantsModalOpen(false)}
                             />
                         </div>
-                        
+
                         <div style={{ marginTop: '20px' }}>
                             {boardParticipants.length > 0 ? (
                                 boardParticipants.map((participant, index) => {
 
-                                    
+
                                     return (
-                                        <div key={index} style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
+                                        <div key={index} style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
                                             padding: '10px 0',
                                             borderBottom: index < boardParticipants.length - 1 ? '1px solid #eee' : 'none'
                                         }}>
-                                            <div style={{ 
-                                                width: '40px', 
-                                                height: '40px', 
-                                                borderRadius: '50%', 
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '50%',
                                                 overflow: 'hidden',
                                                 marginRight: '15px',
                                                 background: '#FED9D9'
                                             }}>
-                                                <img 
-                                                    src={participant.avatarURL || Girl} 
-                                                    alt={participant.name || ''} 
+                                                <img
+                                                    src={participant.avatarURL || Girl}
+                                                    alt={participant.name || ''}
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     onError={(e) => { e.target.src = Girl; }}
                                                 />

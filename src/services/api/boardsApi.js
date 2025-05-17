@@ -14,6 +14,7 @@ export const boardsApi = baseApi.injectEndpoints({
       query: (projectId) => ({url:`${apiPrefix}/project/${projectId}`}),
       providesTags: ['Boards'],
     }),
+    keepUnusedDataFor: 5,
     getBoardWithData: builder.query({
       query: (boardId) => ({url:`${apiPrefix}/${boardId}`}),
       providesTags: (result, error, id) => [

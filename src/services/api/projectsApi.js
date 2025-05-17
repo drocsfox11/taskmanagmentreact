@@ -16,7 +16,7 @@ export const projectsApi = baseApi.injectEndpoints({
     getProject: builder.query({
       query: (id) => ({url:`${apiPrefix}/${id}`}),
       providesTags: (result, error, id) => [{ type: 'Projects', id }],
-      keepUnusedDataFor: 2,
+      keepUnusedDataFor: 0,
     }),
     createProject: builder.mutation({
       query: (project) => ({
