@@ -8,6 +8,7 @@ import {
 } from './WebSocketService';
 import {showNewChatNotification, showNewMessageNotification} from '../NotificationService';
 import CallService, { CALL_MESSAGE_TYPE } from '../../services/CallService';
+import * as currentUser from "date-fns/locale";
 
 const apiPrefix = 'api/users';
 
@@ -178,6 +179,9 @@ export const usersApi = baseApi.injectEndpoints({
                                         break;
 
                                     case "CHAT_CREATED":
+                                        if (event.initiatorId === currentUser.id) {
+                                            return;
+                                        }
                                         if (!window.location.pathname.includes('messenger')) {
                                             showNewChatNotification(event.payload)
                                             return;
@@ -189,7 +193,55 @@ export const usersApi = baseApi.injectEndpoints({
                                                 }
                                             )
                                         );
-                                        break
+                                        break;
+                                        
+                                    case "CHAT_DELETED":
+                                        if (!window.location.pathname.includes('messenger')) {
+                                            return;
+                                        }
+
+                                        if (window.location.pathname.includes(`/messenger/${event.chatId}`)) {
+                                            window.location.href = '/system/messenger';
+                                        }
+                                        dispatch(
+                                            usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                                                draft.chats = draft.chats.filter(chat => chat.id !== event.chatId);
+                                            })
+                                        );
+                                        break;
+                                    
+                                    case "USER_ADDED":
+                                        // Событие придет только если нас добавили
+                                        if (!window.location.pathname.includes('messenger')) {
+                                            return;
+                                        }
+                                        console.log("Новый чат!!");
+                                        dispatch(
+                                            usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                                                    draft.chats = [...draft.chats, event.payload];
+                                                }
+                                            )
+                                        );
+                                        break;
+                                        
+                                    case "USER_REMOVED":
+                                        // Событие придет только если нас выгнали
+                                        console.log("Удален из чата1:", event.payload);
+
+                                        if (!window.location.pathname.includes('messenger')) {
+                                            return;
+                                        }
+                                        console.log("Удален из чата2:", event.payload);
+                                        dispatch(
+                                            usersApi.util.updateQueryData('getPagedChats', {}, (draft) => {
+                                                draft.chats = draft.chats.filter(chat => chat.id !== event.chatId);
+                                            })
+                                        );
+
+                                        if (window.location.pathname.includes(`/messenger/${event.chatId}`)) {
+                                            window.location.href = '/system/messenger';
+                                        }
+                                        break;
                                 }
                             });
                         });

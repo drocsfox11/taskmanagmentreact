@@ -1,0 +1,297 @@
+.chat-participants-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: all;
+}
+
+.chat-participants-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.chat-participants-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #DBDBDB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-participants-modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-family: 'Ruberoid Bold', sans-serif;
+    color: #000000;
+}
+
+.chat-participants-modal-close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-participants-modal-tabs {
+    display: flex;
+    border-bottom: 1px solid #DBDBDB;
+    position: relative;
+}
+
+.chat-participants-modal-tab-button {
+    flex: 1;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    color: #666;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.chat-participants-modal-tab-button.active {
+    color: #5558FF;
+}
+
+.chat-participants-modal-tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background-color: #5558FF;
+}
+
+.chat-participants-modal-content {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 60vh;
+}
+
+.chat-participants-tab, .chat-settings-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chat-participants-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.chat-add-participant-button {
+    background-color: #5558FF;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    transition: background-color 0.3s;
+}
+
+.chat-add-participant-button:hover {
+    background-color: #4245cc;
+}
+
+.chat-add-participant-section {
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.chat-add-participant-section input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #DBDBDB;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    box-sizing: border-box;
+}
+
+.chat-participants-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #DBDBDB;
+    border-radius: 5px;
+    margin-top: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-participants-search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chat-participants-search-result-item:hover {
+    background-color: #F0F4FF;
+}
+
+.chat-participants-search-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+}
+
+.chat-participants-search-loading, 
+.chat-participants-search-loading-more {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    font-family: "Ruberoid Regular", sans-serif;
+    font-size: 14px;
+}
+
+.chat-participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-participant {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #F5F5F5;
+}
+
+.chat-participant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+}
+
+.chat-participant-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.chat-participant-name {
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-participant-role {
+    font-family: 'Ruberoid Regular', sans-serif;
+    font-size: 12px;
+    color: #666;
+}
+
+.chat-participant-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-participant-role-select {
+    padding: 6px;
+    border: 1px solid #DBDBDB;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    background-color: white;
+}
+
+.chat-remove-participant-button {
+    background-color: #ff5f5f;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.chat-remove-participant-button img {
+    width: 14px;
+    height: 14px;
+    filter: brightness(0) invert(1);
+}
+
+.chat-remove-participant-button:hover {
+    background-color: #e04949;
+}
+
+.chat-danger-zone {
+    background-color: #FFF5F5;
+    border: 1px solid #FFD7D7;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.chat-danger-zone h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-family: 'Ruberoid Medium', sans-serif;
+    color: #E53935;
+}
+
+.modal-chat-delete-button {
+    background-color: #E53935;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    margin-bottom: 8px;
+}
+
+.chat-delete-button:hover {
+    background-color: #C62828;
+}
+
+.chat-danger-warning {
+    margin: 0;
+    font-size: 12px;
+    font-family: 'Ruberoid Regular', sans-serif;
+    color: #666;
+} 

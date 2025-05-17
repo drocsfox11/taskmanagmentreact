@@ -12,7 +12,6 @@ import {
   BoardEventTypes
 } from './WebSocketService';
 
-// Export WebSocket service
 export {
   initializeWebSocketConnection, 
   disconnectWebSocket,
@@ -80,7 +79,6 @@ export {
 } from './attachmentsApi';
 
 export {
-  useCreateChatMutation,
   useCreatePersonalChatMutation,
   useCreateGroupChatMutation,
   useDeleteChatMutation,

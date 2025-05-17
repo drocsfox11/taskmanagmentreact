@@ -20,6 +20,7 @@ export const ChatEventTypes = {
   MESSAGE_EDITED: 'MESSAGE_EDITED',
   MESSAGE_READED: 'MESSAGE_READED',
   CALL_NOTIFICATION: 'CALL_NOTIFICATION',
+  CHAT_DELETED: 'CHAT_DELETED',
 };
 
 export const BoardEventTypes = {

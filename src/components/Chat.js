@@ -20,8 +20,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import '../styles/components/Chat.css';
 import { v4 as uuidv4 } from 'uuid';
 import ImageModal from './ImageModal';
-import CallManager from './call/CallManager';
 import CallService, { CALL_TYPE } from '../services/CallService';
+import ChatParticipantsModal from './ChatParticipantsModal';
 
 
 function formatTime(dateString) {
@@ -339,12 +339,17 @@ function Chat({ chatId }) {
             <div className="chat-header">
                 <div className="chat-header-user">
                     <div className="chat-header-avatar">
-                        <img 
-                            src={chatAvatar || ProfileIcon} 
-                            alt="avatar" 
+                        {chatData?.isGroupChat ? (<img
+                            src={chatAvatar || ProfileIcon}
+                            alt="avatar"
                             className="chat-avatar"
                             onClick={() => setShowParticipants(!showParticipants)}
-                        />
+                        />) :
+                            (<img
+                                src={chatAvatar || ProfileIcon}
+                                alt="avatar"
+                                className="chat-avatar"
+                            />)}
                     </div>
                     <div className="chat-header-info">
                         <div className="chat-header-name">{chatName}</div>
@@ -373,32 +378,12 @@ function Chat({ chatId }) {
             </div>
             
             {showParticipants && (
-                <div className="chat-participants">
-                    <div className="chat-participants-header">
-                        <h3>Участники чата</h3>
-                        <button 
-                            className="chat-participants-close"
-                            onClick={() => setShowParticipants(false)}
-                        >
-                            ×
-                        </button>
-                    </div>
-                    <div className="chat-participants-list">
-                        {chatData?.participants.map(participant => (
-                            <div key={participant.id} className="chat-participant">
-                                <img 
-                                    src={participant.avatarURL} 
-                                    alt="avatar" 
-                                    className="chat-participant-avatar"
-                                />
-                                <div className="chat-participant-info">
-                                    <div className="chat-participant-name">{participant.name}</div>
-                                    <div className="chat-participant-role">{participant.role}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <ChatParticipantsModal
+                    chatId={chatId}
+                    chat={chatData}
+                    onClose={() => setShowParticipants(false)}
+                    isOpen={showParticipants}
+                />
             )}
             
             {/* Image Modal */}
