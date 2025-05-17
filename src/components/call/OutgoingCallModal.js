@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPhoneSlash } from '@fortawesome/free-solid-svg-icons';
 import '../../styles/components/call/OutgoingCallModal.css';
 
-const OutgoingCallModal = ({ chatName, callType, onCancel }) => {
+const OutgoingCallModal = ({ chatName, callType, onCancel, isBusy }) => {
   return (
     <div className="outgoing-call-modal-overlay">
       <div className="outgoing-call-modal">
@@ -13,8 +13,17 @@ const OutgoingCallModal = ({ chatName, callType, onCancel }) => {
         
         <div className="outgoing-call-body">
           <div className="outgoing-call-info">
-            <h4>{chatName}</h4>
-            <p>Вызов...</p>
+            {isBusy ? (
+              <>
+                <h4>{chatName}</h4>
+                <p>{chatName} is currently on another call</p>
+              </>
+            ) : (
+              <>
+                <h4>{chatName}</h4>
+                <p>Waiting for {chatName} to answer</p>
+              </>
+            )}
           </div>
           
           <div className="outgoing-call-animation">
@@ -30,9 +39,9 @@ const OutgoingCallModal = ({ chatName, callType, onCancel }) => {
           <button 
             className="outgoing-call-cancel-btn" 
             onClick={onCancel}
-            title="Отменить"
+            title={isBusy ? 'Close' : 'Cancel'}
           >
-            <FontAwesomeIcon icon={faPhoneSlash} />
+           <FontAwesomeIcon icon={faPhoneSlash} />
           </button>
         </div>
       </div>

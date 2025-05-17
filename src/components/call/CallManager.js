@@ -17,7 +17,8 @@ const CallManager = forwardRef((props, ref) => {
     chatName: '',
     caller: null,
     isWaitingForOffer: false,
-    phase: 1 // Track the current phase of the call
+    phase: 1, // Track the current phase of the call
+    isBusy: false // Add new state for busy status
   });
   
   // Media state
@@ -171,6 +172,19 @@ const CallManager = forwardRef((props, ref) => {
         CallService.handleMediaStatusChange(mediaData);
         break;
         
+      case 'CALL_BUSY':
+        console.log('Received CALL_BUSY:', message);
+        // Update call state to show busy status
+        setCallState(prev => ({
+          ...prev,
+          isBusy: true
+        }));
+        // End call after a short delay to show the busy message
+        setTimeout(() => {
+          handleCallEnded();
+        }, 2000);
+        break;
+        
       default:
         console.log('Unknown call message type:', message.type);
     }
@@ -282,7 +296,8 @@ const CallManager = forwardRef((props, ref) => {
       chatName: '',
       caller: null,
       isWaitingForOffer: false,
-      phase: 1
+      phase: 1,
+      isBusy: false
     });
     
     setMediaState({
@@ -314,7 +329,8 @@ const CallManager = forwardRef((props, ref) => {
         chatName,
         caller: null,
         isWaitingForOffer: false,
-        phase: 1
+        phase: 1,
+        isBusy: false
       });
       
       // This will only send the call notification, not create media streams yet
@@ -410,6 +426,7 @@ const CallManager = forwardRef((props, ref) => {
           chatName={callState.chatName}
           callType={callState.callType}
           onCancel={cancelCall}
+          isBusy={callState.isBusy}
         />
       )}
       
