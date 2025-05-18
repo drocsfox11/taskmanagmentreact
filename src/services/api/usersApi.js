@@ -291,12 +291,33 @@ export const usersApi = baseApi.injectEndpoints({
             keepUnusedDataFor: 2,
 
         }),
-    }),
+        updateUserName: builder.mutation({
+            query: ({name}) => ({
+                url: `${apiPrefix}/me`,
+                method: 'PUT',
+                body: {name: name},
+            }),
+            async onQueryStarted({ name }, { dispatch, getState, queryFulfilled }) {
+              const result = dispatch(
+                  usersApi.util.updateQueryData('getCurrentUser', undefined, (draft) => {
+                      draft.name = name;
+                  })
+              );
+              try {
+                  await queryFulfilled;
+              } catch (error) {
+                  result.undo();
+                  console.error("ошибка обновления имени пользователя", error);
+              }
+          }
+        }),
+  }),
 });
 
 export const {
     useGetUsersQuery,
     useGetUserQuery,
+    useUpdateUserNameMutation,
     useGetCurrentUserQuery,
     useUpdateUserMutation,
     useSearchUsersQuery,

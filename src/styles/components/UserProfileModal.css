@@ -170,9 +170,51 @@
     box-sizing: border-box;
 }
 
+.user-profile-modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.user-profile-modal-save-button,
+.user-profile-modal-cancel-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Ruberoid Medium', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.user-profile-modal-save-button {
+    background-color: #5558FF;
+    color: white;
+}
+
+.user-profile-modal-save-button:hover {
+    background-color: #4245cc;
+}
+
+.user-profile-modal-cancel-button {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #DBDBDB;
+}
+
+.user-profile-modal-cancel-button:hover {
+    background-color: #e8e8e8;
+}
+
 @media (max-width: 768px) {
     .user-profile-modal {
         width: 95%;
         max-height: 90vh;
     }
-} 
+}
+
+.user-profile-error-message {
+    color: #ff4d4f;
+    font-size: 14px;
+    margin-bottom: 10px;
+}

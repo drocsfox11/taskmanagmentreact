@@ -1,12 +1,52 @@
 import React, { useState } from 'react';
 import InvitationsTab from './InvitationsTab'
 import '../styles/components/UserProfileModal.css'
-import { useGetCurrentUserQuery } from '../services/api/usersApi';
+import { useGetCurrentUserQuery, useUpdateUserNameMutation } from '../services/api/usersApi';
+
 function UserProfileModal({ onClose }) {
     const [activeTab, setActiveTab] = useState('profile');
     const { data: user, isLoading } = useGetCurrentUserQuery();
+    const [updateUser, {error: updateError}] = useUpdateUserNameMutation();
+    const [editedName, setEditedName] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    console.log("Error", updateError);
+    const [errorMessage, setErrorMessage] = useState(null);
+    if (updateError?.data && updateError.data !== errorMessage) {
+        setErrorMessage(updateError.data);
+    }
     if (!user) return null;
-    console.log(user);
+
+    const handleNameChange = (e) => {
+        setEditedName(e.target.value);
+    };
+
+    const startEditing = () => {
+        setEditedName(user.name || '');
+        setIsEditing(true);
+    };
+
+    const cancelEditing = () => {
+        setIsEditing(false);
+    };
+
+    const saveNameChanges = async () => {
+        try {
+            if (editedName === user.name) {
+                return;
+            }
+            if (!editedName) {
+                setErrorMessage("Имя не может быть пустым");
+                return;
+            }
+            await updateUser({
+                name: editedName
+            });
+            setIsEditing(false);
+        } catch (error) {
+            console.error('Error updating user name:', error);
+        }
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'profile':
@@ -16,10 +56,44 @@ function UserProfileModal({ onClose }) {
                             <img src={user.avatarURL} alt="avatar" className="user-profile-modal-avatar"/>
                         </div>
 
-                        {user.name && (
+                        {user.name !== undefined && (
                             <div className="user-profile-modal-field">
                                 <div className="user-profile-modal-label">Имя</div>
-                                <input value={user.name} disabled className="user-profile-modal-input"/>
+                                {errorMessage && (
+                                    <div className="user-profile-error-message">{errorMessage}</div>
+                                )}
+                                {isEditing ? (
+                                    <>
+                                        <input 
+                                            value={editedName}
+                                            onChange={handleNameChange}
+                                            className="user-profile-modal-input"
+                                            autoFocus
+                                        />
+                                        <div className="user-profile-modal-buttons">
+                                            <button 
+                                                className="user-profile-modal-save-button"
+                                                onClick={saveNameChanges}
+                                            >
+                                                Сохранить
+                                            </button>
+                                            <button 
+                                                className="user-profile-modal-cancel-button"
+                                                onClick={cancelEditing}
+                                            >
+                                                Отменить
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <input 
+                                        value={user.name || ''} 
+                                        className="user-profile-modal-input" 
+                                        readOnly
+                                        onClick={startEditing}
+                                        style={{cursor: 'pointer'}}
+                                    />
+                                )}
                             </div>
                         )}
                     </>

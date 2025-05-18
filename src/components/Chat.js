@@ -1,4 +1,4 @@
-import ProfileIcon from '../assets/icons/messenger_ava.svg';
+import ProfileIcon from '../assets/icons/messenger_ava.png';
 import CameraIcon from '../assets/icons/video(1) 1.svg';
 import PhoneIcon from '../assets/icons/phone(1) 1.svg';
 import ClipIcon from '../assets/icons/clip 1.svg';
@@ -66,7 +66,8 @@ function Chat({ chatId }) {
     const [editingMessage, setEditingMessage] = useState(null);
     const [editText, setEditText] = useState('');
     const [selectedMessageId, setSelectedMessageId] = useState(null);
-    
+    const previousScrollHeight = useRef(0);
+    const wasAutoScrolled = useRef(false);
     const MAX_FILES = 6;
     const MAX_TOTAL_SIZE = 100 * 1024 * 1024; 
     const MAX_FILE_SIZE = 50 * 1024 * 1024; 
@@ -141,30 +142,32 @@ function Chat({ chatId }) {
     };
 
     useEffect(() => {
-        if (messagesContainerRef.current && offset === 0 && messages.length > 0) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        const container = messagesContainerRef.current;
+
+        if (offset === 0 && messages.length > 0 && container && !wasAutoScrolled.current) {
+            container.scrollTop = container.scrollHeight;
+            wasAutoScrolled.current = true;
         }
     }, [messagesData, offset]);
 
     useEffect(() => {
-        if (messages.length > 0 && messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        if (offset > 0 && previousScrollHeight.current && messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            container.scrollTop = container.scrollHeight - previousScrollHeight.current;
         }
-    }, [messages, currentUser, chatId]);
+    }, [messagesData]);
+
 
     
 
     useEffect(() => {
         if (messages.length > 0 && currentUser?.id) {
-            console.log("Думаю читать")
-            console.log(messages)
             const unreadMessages = messages.filter(msg =>
                 !msg.readByIds.includes(currentUser.id) &&
                 msg.senderId !== currentUser.id
             );
             
             if (unreadMessages.length > 0) {
-                console.log("Читаю")
                 const unreadMessageIds = unreadMessages.map(msg => msg.id);
                 markMultipleMessagesAsRead({ chatId, messageIds: unreadMessageIds });
             }
@@ -172,9 +175,10 @@ function Chat({ chatId }) {
     }, [messages, markMultipleMessagesAsRead, chatId, currentUser]);
 
     const handleScroll = (e) => {
-        const { scrollTop } = e.target;
-        
+        const { scrollTop, scrollHeight } = e.target;
         if (scrollTop < 100 && hasNext && !messagesIsFetching) {
+            previousScrollHeight.current = scrollHeight;
+            wasAutoScrolled.current = false;
             setOffset(offset + messages.length);
         }
     };
@@ -261,14 +265,12 @@ function Chat({ chatId }) {
     const handleMessageClick = (e) => {
         if (!chatData?.isGroupChat) return;
         
-        // Check if clicked on the container itself
         if (e.target.classList.contains('chat-messages')) {
             console.log("chat-messages")
             setSelectedMessageId(null);
             return;
         }
         
-        // Skip if clicked on interactive elements
         const interactiveElements = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'IMG'];
         if (interactiveElements.includes(e.target.tagName) || 
             e.target.closest('.chat-action-button') || 
@@ -294,7 +296,7 @@ function Chat({ chatId }) {
 
     const handleStartCall = (callType) => {
         if (!chatData) {
-            console.error('No chat data available, cannot start call');
+            console.error('Нету чата, не могу начать звонок');
             return;
         }
         
@@ -311,12 +313,10 @@ function Chat({ chatId }) {
                 callManagerHasStartCall: !!(window.callManagerRef && typeof window.callManagerRef.startCall === 'function')
             });
                 
-            // Use the global CallManager reference to start the call with UI
             if (window.callManagerRef && typeof window.callManagerRef.startCall === 'function') {
                 console.log('Starting call using CallManager reference');
                 window.callManagerRef.startCall(chatId, recipientName, callType);
             } else {
-                // Fallback to direct CallService usage if the CallManager reference isn't available
                 console.warn('CallManager reference not available, falling back to direct service call');
                 CallService.startCall(chatId, callType);
             }
@@ -332,8 +332,6 @@ function Chat({ chatId }) {
 
     if (isChatLoading || isMessagesLoading) return <LoadingSpinner />;
     if (chatError) return <div className="chat-error">Ошибка загрузки чата</div>;
-    console.log(chatData);
-    console.log(messages);
     return (
         <div className="chat-container">
             <div className="chat-header">

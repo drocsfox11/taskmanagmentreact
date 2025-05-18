@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/components/CreateChatModal.css';
 import CloseCross from '../assets/icons/close_cross.svg';
-import MessengerAva from '../assets/icons/messenger_ava.svg';
+import MessengerAva from '../assets/icons/messenger_ava.png';
 import TrashIcon from '../assets/icons/delete.svg';
 import { useSearchUsersQuery, useGetCurrentUserQuery } from '../services/api';
 import { useCreatePersonalChatMutation, useCreateGroupChatMutation } from '../services/api';

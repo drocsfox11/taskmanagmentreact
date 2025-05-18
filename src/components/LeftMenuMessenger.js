@@ -1,5 +1,5 @@
 import '../styles/components/LeftMenuMessenger.css';
-import MessengerAva from '../assets/icons/messenger_ava.svg';
+import MessengerAva from '../assets/icons/messenger_ava.png';
 import Search from "../assets/icons/search.svg";
 import { useGetPagedChatsQuery, useGetCurrentUserQuery } from '../services/api';
 import { useNavigate, useParams } from 'react-router-dom';
