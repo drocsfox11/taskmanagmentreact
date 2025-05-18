@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import '../styles/components/CreateTaskModal.css';
 import CloseCross from "../assets/icons/cross for task.svg";
 import CalendarIcon from "../assets/icons/calender_for_task.svg";
@@ -9,6 +10,7 @@ import Girl from "../assets/icons/profile_picture.svg";
 
 function TaskInfoModal({ isOpen, onClose, task }) {
     const usersByUsername = useSelector(state => state.users?.byUsername || {});
+    const navigate = useNavigate();
 
     const extractUsername = (participant) => {
         if (typeof participant === 'string') {
@@ -17,6 +19,13 @@ function TaskInfoModal({ isOpen, onClose, task }) {
             return participant.username || participant.name || '';
         }
         return '';
+    };
+
+    const handleGoToChat = () => {
+        if (task && task.chatId) {
+            navigate(`/system/messenger/${task.chatId}`);
+            onClose();
+        }
     };
 
     if (!isOpen || !task) return null;
@@ -37,6 +46,32 @@ function TaskInfoModal({ isOpen, onClose, task }) {
                 <div className="create-task-modal-input" style={{ background: 'none', border: 'none', padding: 0 }}>{task.title}</div>
                 <div className="create-task-modal-label">Описание</div>
                 <div className="create-task-modal-textarea" style={{ background: 'none', border: 'none', padding: 0 }}>{task.description || '-'}</div>
+                
+                {/* Go to Chat button */}
+                {task.chatId && (
+                    <button 
+                        onClick={handleGoToChat}
+                        style={{
+                            backgroundColor: '#4A85F6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '10px 16px',
+                            cursor: 'pointer',
+                            fontFamily: 'Ruberoid Medium, sans-serif',
+                            fontSize: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: '8px',
+                            marginBottom: '8px',
+                            width: 'fit-content'
+                        }}
+                    >
+                        Перейти в чат
+                    </button>
+                )}
+                
                 <div className="create-task-modal-label">Чеклист</div>
                 <div className="create-task-modal-checklist-items">
                     {task.checklist && task.checklist.length > 0 ? task.checklist.map((item, index) => (

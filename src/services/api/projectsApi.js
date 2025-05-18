@@ -55,7 +55,6 @@ export const projectsApi = baseApi.injectEndpoints({
             baseApi.util.updateQueryData('getProjects', undefined, (draft) => {
               const tempIndex = draft.findIndex(p => p.id === tempId);
               if (tempIndex !== -1) {
-                draft.splice(tempIndex, 1);
                 draft[tempIndex] = {
                   ...createdProject,
                   owner:{
