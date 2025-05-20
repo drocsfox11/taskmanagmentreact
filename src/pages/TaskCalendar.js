@@ -292,12 +292,10 @@ function TaskCalendar() {
                 const taskStartDayOfMonth = taskStartDate.getDate();
                 const taskEndDayOfMonth = taskEndDate.getDate();
                 
-                // Calculate grid columns based on view mode
                 let gridColumns = viewMode === 'twoWeek' ? 14 : viewMode === 'week' ? 7 : 7;
                 let startCol = 1;
                 let endCol = gridColumns;
                 
-                // Find the starting column based on the position in the dates array
                 for (let i = 0; i < calendarDates.length; i++) {
                     if (calendarDates[i].getDate() === taskStartDayOfMonth &&
                         calendarDates[i].getMonth() === taskStartDate.getMonth() &&
@@ -538,14 +536,11 @@ function TaskCalendar() {
         const dates = getDatesArray();
         
         if (viewMode === 'month') {
-            // For month view, render grid cells for dates
             const weeks = [];
             const numWeeks = Math.ceil(dates.length / 7);
             
-            // Prepare a map of tasks by date for easy lookup
             const tasksByDate = {};
             
-            // Preprocess tasks to organize them by date
             calendarTasks.forEach(task => {
                 if (!task.startDate && !task.endDate) {
                     return;
@@ -554,7 +549,6 @@ function TaskCalendar() {
                 const taskStartDate = task.startDate ? new Date(task.startDate) : new Date(task.endDate);
                 const taskEndDate = task.endDate ? new Date(task.endDate) : new Date(task.startDate);
                 
-                // Create a list of dates that this task spans
                 const taskDates = [];
                 const currentDate = new Date(taskStartDate);
                 currentDate.setHours(0, 0, 0, 0);
@@ -567,14 +561,12 @@ function TaskCalendar() {
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
                 
-                // For each date, add the task to the tasksByDate map
                 taskDates.forEach(date => {
                     const dateKey = date.toISOString().split('T')[0];
                     if (!tasksByDate[dateKey]) {
                         tasksByDate[dateKey] = [];
                     }
                     
-                    // Add task if not already in the array
                     if (!tasksByDate[dateKey].some(t => t.id === task.id)) {
                         tasksByDate[dateKey].push(task);
                     }
@@ -589,7 +581,6 @@ function TaskCalendar() {
                         {weekDates.map((date, dayIndex) => {
                             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                             
-                            // Get the primary month being displayed
                             const monthCounts = {};
                             dates.forEach(d => {
                                 const monthKey = `${d.getMonth()}-${d.getFullYear()}`;
@@ -607,7 +598,6 @@ function TaskCalendar() {
                                 
                             const isOtherMonth = !isCurrentMonth;
                             
-                            // Get tasks for this date
                             const dateKey = date.toISOString().split('T')[0];
                             const dayTasks = tasksByDate[dateKey] || [];
                             
@@ -657,7 +647,6 @@ function TaskCalendar() {
             );
         }
         
-        // For other views, return an empty container that will be filled separately
         return null;
     };
     
@@ -665,25 +654,19 @@ function TaskCalendar() {
     
     const mappedTasks = mapTasksToCalendar();
     
-    // Get all available tags for the selected board
     const availableTags = boards.find(board => board.id === searchParams.boardId)?.tags || [];
 
     const handleTaskClick = (task) => {
-        // You would typically show a task details modal here
         console.log('Task clicked:', task);
-        // If you have a task details modal, you would open it here
-        // For example: setSelectedTask(task); setTaskModalOpen(true);
+
         
-        // For now, we'll just show an alert with task details
         alert(`Task: ${task.title}\nDescription: ${task.description || 'No description'}`);
     };
 
-    // Add a column size change handler
     const handleColumnSizeChange = (size) => {
         setColumnSize(size);
     };
 
-    // Add functions to navigate in columns view
     const navigatePreviousPeriodColumns = () => {
         const newStartDate = new Date(startDate);
         const newEndDate = new Date(endDate);
@@ -722,14 +705,12 @@ function TaskCalendar() {
         setEndDate(newEndDate);
     };
 
-    // Add a function to get time period for columns view
     const getColumnPeriods = () => {
         const periods = [];
         const currentDate = new Date(startDate);
         
         while (currentDate <= endDate) {
             if (columnSize === 'day') {
-                // Add one day at a time
                 periods.push({
                     start: new Date(currentDate),
                     end: new Date(currentDate),
@@ -737,7 +718,6 @@ function TaskCalendar() {
                 });
                 currentDate.setDate(currentDate.getDate() + 1);
             } else if (columnSize === 'week') {
-                // Add one week at a time
                 const weekStart = new Date(currentDate);
                 const weekEnd = new Date(currentDate);
                 weekEnd.setDate(weekStart.getDate() + 6);
@@ -750,7 +730,6 @@ function TaskCalendar() {
                 
                 currentDate.setDate(currentDate.getDate() + 7);
             } else if (columnSize === 'month') {
-                // Add one month at a time
                 const monthStart = new Date(currentDate);
                 const monthEnd = new Date(
                     currentDate.getFullYear(),
@@ -772,19 +751,15 @@ function TaskCalendar() {
         return periods;
     };
 
-    // Add a function to render columns view
     const renderColumnsView = () => {
         const periods = getColumnPeriods();
         
-        // Group tasks by period
         const tasksByPeriod = {};
         
-        // Initialize tasksByPeriod with empty arrays for each period
         periods.forEach((period, index) => {
             tasksByPeriod[index] = [];
         });
         
-        // Assign tasks to periods
         calendarTasks.forEach(task => {
             if (!task.startDate && !task.endDate) {
                 return;
@@ -793,9 +768,7 @@ function TaskCalendar() {
             const taskStartDate = task.startDate ? new Date(task.startDate) : new Date(task.endDate);
             const taskEndDate = task.endDate ? new Date(task.endDate) : new Date(task.startDate);
             
-            // Find the period(s) this task belongs to
             periods.forEach((period, index) => {
-                // Check if the task overlaps with this period
                 if (
                     (taskStartDate <= period.end && taskEndDate >= period.start) || 
                     (taskStartDate >= period.start && taskStartDate <= period.end) ||

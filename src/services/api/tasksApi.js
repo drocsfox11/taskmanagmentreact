@@ -2,11 +2,6 @@ import { baseApi } from './baseApi';
 
 
 
-/**
- * @deprecated Используйте вместо этого соответствующие хуки из boardsApi.js
- * ВАЖНО: Эти хуки теперь экспортируются из boardsApi.js и не должны использоваться напрямую отсюда
- * Для получения задач используйте результат из запроса board/full
- */
 export const tasksApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTasks: builder.query({
@@ -45,7 +40,6 @@ export const tasksApi = baseApi.injectEndpoints({
       query: (task) => {
         const { files, ...taskData } = task;
         
-        // Если нет файлов, используем обычный JSON
         if (!files || files.length === 0) {
           return {
             url: 'api/tasks',
@@ -54,13 +48,10 @@ export const tasksApi = baseApi.injectEndpoints({
           };
         }
         
-        // Если есть файлы, используем FormData
         const formData = new FormData();
         
-        // Добавляем данные задачи как JSON-строку в поле payload
         formData.append('payload', JSON.stringify(taskData));
         
-        // Добавляем файлы
         if (Array.isArray(files)) {
           files.forEach((file, index) => {
             formData.append(`files`, file);
@@ -103,7 +94,6 @@ export const tasksApi = baseApi.injectEndpoints({
       query: ({ id, ...updates }) => {
         const { files, attachmentsToDelete, ...taskData } = updates;
         
-        // Если нет файлов и нет attachmentsToDelete, используем обычный JSON
         if ((!files || files.length === 0) && !attachmentsToDelete) {
           return {
             url: `api/tasks/${id}`,
@@ -112,28 +102,22 @@ export const tasksApi = baseApi.injectEndpoints({
           };
         }
         
-        // Если есть файлы или attachmentsToDelete, используем FormData
         const formData = new FormData();
         
-        // Добавляем данные задачи как JSON-строку в поле payload
         formData.append('payload', JSON.stringify(taskData));
         
-        // Добавляем файлы
         if (Array.isArray(files)) {
           files.forEach((file, index) => {
-            // Добавляем только новые файлы (File объекты)
             if (file instanceof File) {
               formData.append(`files`, file);
             }
           });
         }
         
-        // Добавляем ID существующих вложений, которые нужно сохранить
         if (taskData.attachments && Array.isArray(taskData.attachments)) {
           formData.append('attachments', JSON.stringify(taskData.attachments));
         }
         
-        // Добавляем информацию о вложениях, которые нужно удалить
         if (attachmentsToDelete) {
           formData.append('attachmentsToDelete', JSON.stringify(attachmentsToDelete));
         }
@@ -228,7 +212,6 @@ export const tasksApi = baseApi.injectEndpoints({
           console.error(`Error deleting task ${id}:`, error);
           patchResult.undo();
           
-          // Показать более понятное сообщение об ошибке для ограничения внешнего ключа
           if (error.error && error.error.status === 500) {
             const errorMessage = error.error?.data?.message || '';
             if (errorMessage.includes('foreign key constraint') || 

@@ -82,7 +82,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS) || 
         hasProjectRight(PROJECT_RIGHTS.MANAGE_BOARD_RIGHTS);
     
-    // Определение начальной активной вкладки в зависимости от прав пользователя
     const getInitialActiveTab = () => {
         if (canEditBoard) {
             return 'info';
@@ -91,12 +90,11 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         } else if (canManageRights) {
             return 'permissions';
         }
-        return 'info'; // Fallback, хотя в идеале модалка не должна открываться без прав
+        return 'info';
     };
     
     const [activeTab, setActiveTab] = useState(() => getInitialActiveTab());
     
-    // Фильтрованный список участников проекта по введенному поисковому запросу
     const [filteredProjectParticipants, setFilteredProjectParticipants] = useState([]);
     
     useEffect(() => {
@@ -142,25 +140,19 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         canManageRights
     ]);
 
-    // Обновляем локальное состояние boardParticipants при изменении board.participants
     useEffect(() => {
         if (board && board.participants) {
             setBoardParticipants(board.participants);
         }
     }, [board]);
 
-    // Обновляем фильтрованный список участников при изменении поискового запроса или данных проекта
     useEffect(() => {
         if (projectData && projectData.participants && inputValue) {
-            // Фильтруем участников проекта, которые еще не добавлены на доску
             const searchLower = inputValue.toLowerCase();
             const filteredUsers = projectData.participants.filter(user => 
-                // Проверяем содержит ли имя пользователя или username поисковой запрос
-                (user.name?.toLowerCase().includes(searchLower) || 
+                (user.name?.toLowerCase().includes(searchLower) ||
                  user.username?.toLowerCase().includes(searchLower)) && 
-                // Проверяем не добавлен ли уже пользователь на доску
                 !boardParticipants.some(participant => participant.id === user.id) &&
-                // Исключаем текущего пользователя
                 (currentUser ? user.id !== currentUser.id : true)
             );
             
@@ -214,12 +206,11 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
     };
 
     const handleEmojiSelect = (emoji) => {
-        // Optimistically update the emoji in the form
+
         setForm({
             ...form,
             emoji
         });
-        // Close the emoji picker
         setIsEmojiPickerOpen(false);
     };
 
@@ -231,7 +222,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
         e.preventDefault();
         
         try {
-            // Optimistically update the form immediately
             const updatedForm = {
                 title: form.title,
                 description: form.description,
@@ -239,17 +229,14 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                 emoji: form.emoji
             };
             
-            // Send update to API
             await updateBoard({
                 id: board.id,
                 ...form
             }).unwrap();
             
-            // Only close modal after successful update
             onClose();
         } catch (error) {
             console.error('Error updating board:', error);
-            // If update fails, revert to original board data
             if (board) {
                 setForm({
                     title: board.title || '',
@@ -263,7 +250,6 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
 
     const handleAddUser = async (user) => {
         try {
-            // Оптимистично добавляем пользователя в UI через локальное состояние
             const userToAdd = {
                 id: user.id,
                 name: user.name || user.username,
@@ -271,13 +257,11 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
                 avatarURL: user.avatarURL
             };
             
-            // Обновляем локальное состояние участников
             setBoardParticipants(prev => [...prev, userToAdd]);
             
             setInputValue('');
             setShowSearchResults(false);
             
-            // Отправляем запрос на сервер
             await addUserToBoard({
                 boardId: board.id,
                 userId: user.id
@@ -285,24 +269,20 @@ function BoardManagementModal({ board, onClose, isOpen = true }) {
             
         } catch (error) {
             console.error('Failed to add user:', error);
-            // В случае ошибки восстанавливаем исходное состояние списка участников
             setBoardParticipants(prev => prev.filter(p => p.id !== user.id));
         }
     };
 
     const handleRemoveUser = async (userId) => {
         try {
-            // Оптимистично удаляем пользователя из UI
             setBoardParticipants(prev => prev.filter(p => p.id !== userId));
             
-            // Отправляем запрос на сервер
             await removeUserFromBoard({
                 boardId: board.id,
                 userId: userId
             }).unwrap();
         } catch (error) {
             console.error('Failed to remove user:', error);
-            // В случае ошибки возвращаем пользователя в список
             const removedUser = board.participants.find(p => p.id === userId);
             if (removedUser) {
                 setBoardParticipants(prev => [...prev, removedUser]);

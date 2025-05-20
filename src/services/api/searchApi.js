@@ -10,7 +10,6 @@ export const searchApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       invalidatesTags: (result, error, arg) => {
-        // Don't invalidate cache as this is just a search operation
         return [];
       }
     }),

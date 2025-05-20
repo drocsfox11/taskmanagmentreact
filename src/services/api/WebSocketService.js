@@ -1,6 +1,5 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import {wait} from "@testing-library/user-event/dist/utils";
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost:8080';
 
@@ -49,11 +48,7 @@ export const CALL_MESSAGE_TYPE = {
   MEDIA_STATUS: 'MEDIA_STATUS'
 };
 
-/**
- * Initialize the global STOMP client
- * @param {string} userId - The current user ID
- * @returns {Object} - The STOMP client instance
- */
+
 export const initializeWebSocketConnection = (userId) => {
 
   if (!userId) {
@@ -82,7 +77,6 @@ export const initializeWebSocketConnection = (userId) => {
     client.onConnect = (frame) => {
       console.log(`WebSocket connection established for user ${userId}:`, frame);
       
-      // Call any registered connection callbacks
       connectionCallbacks.forEach(callback => callback(globalStompClient));
     };
     
@@ -110,20 +104,12 @@ export const initializeWebSocketConnection = (userId) => {
   return globalStompClient;
 };
 
-/**
- * Get the global STOMP client
- * @returns {Object} - The STOMP client instance
- */
+
 export const getStompClient = () => {
   return globalStompClient;
 };
 
-/**
- * Subscribe to a chat topic
- * @param {string} chatId - The ID of the chat to subscribe to
- * @param {function} handler - The message handler function
- * @returns {boolean} - Whether the subscription was successful
- */
+
 export const subscribeToChatTopic = (chatId, handler) => {
   console.log(`Оформляем подписку на чат ${chatId}`);
   if (!globalStompClient || !globalStompClient.connected) {
@@ -161,12 +147,7 @@ export const subscribeToChatTopic = (chatId, handler) => {
   return true;
 };
 
-/**
- * Subscribe to a board topic
- * @param {string} boardId - The ID of the board to subscribe to
- * @param {function} handler - The message handler function
- * @returns {boolean} - Whether the subscription was successful
- */
+
 export const subscribeToBoardTopic = (boardId, handler) => {
   if (!globalStompClient || !globalStompClient.connected) {
     console.warn(`Cannot subscribe to board ${boardId}, client not connected`);
@@ -200,11 +181,7 @@ export const subscribeToBoardTopic = (boardId, handler) => {
   return true;
 };
 
-/**
- * Subscribe to user's private message queue
- * @param {function} callback - The message handler function
- * @returns {Object} - The subscription object
- */
+
 export const subscribeToUserPrivateQueue = (callback) => {
   const stompClient = getStompClient();
   if (!stompClient) {
@@ -287,11 +264,7 @@ export const subscribeToUserPrivateQueue = (callback) => {
   return privateQueueSub;
 };
 
-/**
- * Unsubscribe from a specific topic
- * @param {string} topicKey - The topic key to unsubscribe from (e.g., 'chat-123' or 'board-456')
- * @returns {boolean} - Whether the unsubscription was successful
- */
+
 export const unsubscribeFromTopic = async (topicKey) => {
   if (subscriptions[topicKey]) {
     console.log(`Unsubscribing from ${topicKey}`);
@@ -303,10 +276,7 @@ export const unsubscribeFromTopic = async (topicKey) => {
   return false;
 };
 
-/**
- * Unsubscribe from all chat topics except the specified one
- * @param {string} activeChatId - The ID of the chat to keep subscribed
- */
+
 export const unsubscribeFromAllChatsExcept = (activeChatId) => {
   Object.keys(subscriptions).forEach(subscriptionKey => {
     if (subscriptionKey.startsWith('chat-') && subscriptionKey !== `chat-${activeChatId}`) {
@@ -315,10 +285,7 @@ export const unsubscribeFromAllChatsExcept = (activeChatId) => {
   });
 };
 
-/**
- * Unsubscribe from all board topics except the specified one
- * @param {string} activeBoardId - The ID of the board to keep subscribed
- */
+
 export const unsubscribeFromAllBoardsExcept = (activeBoardId) => {
   Object.keys(subscriptions).forEach(subscriptionKey => {
     if (subscriptionKey.startsWith('board-') && subscriptionKey !== `board-${activeBoardId}`) {
@@ -327,13 +294,7 @@ export const unsubscribeFromAllBoardsExcept = (activeBoardId) => {
   });
 };
 
-/**
- * Send a message to a board topic
- * @param {string} boardId - The ID of the board to send to
- * @param {string} action - The action type
- * @param {object} payload - The payload to send
- * @returns {boolean} - Whether the message was sent successfully
- */
+
 export const sendBoardAction = (boardId, action, payload) => {
   if (!globalStompClient || !globalStompClient.connected) {
     console.error(`Cannot send board action, client not connected`);
@@ -352,26 +313,18 @@ export const sendBoardAction = (boardId, action, payload) => {
   return true;
 };
 
-/**
- * Register a callback to be executed when connection is established
- * @param {function} callback - Function to call when connection is ready
- */
+
 export const onConnect = (callback) => {
   if (globalStompClient && globalStompClient.connected) {
-    // If already connected, execute immediately
     callback(globalStompClient);
   } else {
-    // Otherwise, store for later execution
     connectionCallbacks.push(callback);
   }
 };
 
-/**
- * Clear connection callbacks when disconnecting
- */
+
 export const disconnectWebSocket = () => {
   if (globalStompClient && globalStompClient.connected) {
-    // Unsubscribe from all subscriptions
     Object.values(subscriptions).forEach(subscription => {
       if (subscription && subscription.unsubscribe) {
         subscription.unsubscribe();
@@ -381,11 +334,9 @@ export const disconnectWebSocket = () => {
     globalStompClient.deactivate();
     globalStompClient = null;
     
-    // Clear subscriptions and handlers
     Object.keys(subscriptions).forEach(key => delete subscriptions[key]);
     Object.keys(messageHandlers).forEach(key => delete messageHandlers[key]);
     
-    // Clear connection callbacks
     connectionCallbacks.length = 0;
     
     console.log('WebSocket disconnected');

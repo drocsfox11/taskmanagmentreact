@@ -11,18 +11,15 @@ const NotificationsContainer = () => {
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
 
-  // Функция для добавления нового уведомления
   const addNotification = (notification) => {
-    // Создаем уникальный ID для уведомления, если он не был предоставлен
+
     const id = notification.id || `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // Добавляем новое уведомление в конец массива
     setNotifications(prevNotifications => [
       ...prevNotifications,
       { ...notification, id }
     ]);
 
-    // Играем звук уведомления, если он задан
     if (notification.sound) {
       try {
         const audio = new Audio(notification.sound);
@@ -34,14 +31,12 @@ const NotificationsContainer = () => {
     }
   };
 
-  // Функция для удаления уведомления по ID
   const removeNotification = (id) => {
     setNotifications(prevNotifications => 
       prevNotifications.filter(notification => notification.id !== id)
     );
   };
 
-  // Подписываемся на глобальные события уведомлений
   useEffect(() => {
     const handleCustomNotification = (event) => {
       if (event.detail) {
@@ -49,16 +44,13 @@ const NotificationsContainer = () => {
       }
     };
 
-    // Добавляем слушатель событий для custom event 'showNotification'
     window.addEventListener('showNotification', handleCustomNotification);
 
     return () => {
-      // Удаляем слушатель при размонтировании компонента
       window.removeEventListener('showNotification', handleCustomNotification);
     };
-  }, [location.pathname]); // Re-subscribe when pathname changes
+  }, [location.pathname]);
 
-  // Если нет уведомлений, не рендерим контейнер
   if (notifications.length === 0) {
     return null;
   }

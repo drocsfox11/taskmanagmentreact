@@ -12,7 +12,6 @@ const MicrophoneTest = () => {
   const streamRef = useRef(null);
   const animationFrameRef = useRef(null);
   
-  // Load audio devices
   useEffect(() => {
     async function loadDevices() {
       try {
@@ -30,20 +29,16 @@ const MicrophoneTest = () => {
     loadDevices();
   }, []);
   
-  // Start audio recording and analysis
   const startRecording = async () => {
     try {
-      // Stop any existing stream
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       
-      // Cancel any animation frame
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
       
-      // Get user media with selected device
       const constraints = {
         audio: selectedDevice 
           ? { deviceId: { exact: selectedDevice } } 
@@ -53,7 +48,6 @@ const MicrophoneTest = () => {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
-      // Create audio context and analyser
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
@@ -61,22 +55,18 @@ const MicrophoneTest = () => {
       const analyser = audioContext.createAnalyser();
       analyserRef.current = analyser;
       
-      // Connect the stream to the analyser
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
       
-      // Configure analyser
       analyser.fftSize = 256;
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
       
-      // Start animation loop to measure audio levels
       const updateAudioLevel = () => {
         if (!analyserRef.current) return;
         
         analyser.getByteFrequencyData(dataArray);
         
-        // Calculate average level
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) {
           sum += dataArray[i];
@@ -97,7 +87,6 @@ const MicrophoneTest = () => {
     }
   };
   
-  // Stop recording
   const stopRecording = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -119,7 +108,6 @@ const MicrophoneTest = () => {
     setAudioLevel(0);
   };
   
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {

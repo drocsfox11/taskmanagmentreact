@@ -18,7 +18,6 @@ function ProjectCard({ project, onClick }) {
     const optionsRef = useRef(null);
     const [deleteProject] = useDeleteProjectMutation();
     
-    // Get completion percentage from project data with fallback to 0
     const completionPercentage = project?.completionPercentage ?? 0;
     
     const { data: currentUser } = useGetCurrentUserQuery();
@@ -32,7 +31,6 @@ function ProjectCard({ project, onClick }) {
     console.log("Пришел проект", project)
     const showOptionsIcon = canEditProject || isProjectOwner;
 
-    // Отладочная информация
     useEffect(() => {
         console.log(`ProjectCard ${project.id} (${project.title}):`);
         console.log('project.owner:', project.owner);
@@ -85,7 +83,6 @@ function ProjectCard({ project, onClick }) {
 
     if (isDeleted || !project) return null;
     
-    // Format percentage number to integer
     const formattedPercentage = Math.round(completionPercentage);
     
     return (

@@ -49,7 +49,6 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-    // Use state to ensure we only initialize once
     const [isCallManagerInitialized, setIsCallManagerInitialized] = useState(() => {
         return !!window.callManagerInitialized;
     });
@@ -57,10 +56,8 @@ function App() {
     useEffect(() => {
         markPageLoad();
         
-        // Log audio debugging help message for developers
         console.log('🎧 Audio Debugger loaded. Run window.audioDebugger.help() for assistance with audio issues.');
         
-        // Debug message for call system
         console.log('📞 Call system initialized. Call notifications now handled by usersApi.');
         
         return () => {
@@ -72,9 +69,7 @@ function App() {
         <>
             <RouterProvider router={router} />
             <CallManager ref={(ref) => {
-                // Create a global reference to CallManager for direct access
                 window.callManagerRef = ref;
-                // Mark as initialized
                 if (!window.callManagerInitialized) {
                     window.callManagerInitialized = true;
                     setIsCallManagerInitialized(true);

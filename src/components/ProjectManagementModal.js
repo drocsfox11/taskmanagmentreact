@@ -222,14 +222,12 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
         e.preventDefault();
         
         try {
-            // Optimistically update the form immediately
             const updatedForm = {
                 title: form.title,
                 description: form.description,
                 emoji: form.emoji
             };
             
-            // Send update to API
             await updateProject({
                 id: projectId,
                 title: form.title,
@@ -237,10 +235,8 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
                 emoji: form.emoji
             }).unwrap();
             
-            // Form is already updated due to optimistic update, no need to set it again
         } catch (error) {
             console.error('Failed to update project:', error);
-            // If the update fails, revert to the original project data
             if (project) {
                 setForm({
                     title: project.title || '',
@@ -400,9 +396,7 @@ function ProjectManagementModal({ projectId, onClose, isOpen = true }) {
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
     const handleEmojiSelect = (emojiName) => {
-        // Optimistically update the emoji in the form
         setForm({ ...form, emoji: emojiName });
-        // Close the emoji picker
         setIsEmojiPickerOpen(false);
     };
 

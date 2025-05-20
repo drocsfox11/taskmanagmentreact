@@ -342,12 +342,10 @@ export const boardsApi = baseApi.injectEndpoints({
       async onQueryStarted(board, { dispatch, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
         
-        // Optimistically add the board to the project's boards list
         const patchResult = dispatch(
           baseApi.util.updateQueryData('getBoards', board.projectId, (draft) => {
             if (Array.isArray(draft)) {
-              // Only add if not already present (prevent duplicates)
-              const alreadyExists = draft.some(existingBoard => 
+              const alreadyExists = draft.some(existingBoard =>
                 existingBoard.title === board.title && 
                 existingBoard.tempId === tempId
               );
@@ -367,22 +365,18 @@ export const boardsApi = baseApi.injectEndpoints({
         try {
           const { data: createdBoard } = await queryFulfilled;
           
-          // Update the optimistic entry with the real data
           dispatch(
             baseApi.util.updateQueryData('getBoards', board.projectId, (draft) => {
               if (Array.isArray(draft)) {
-                // Remove the temporary entry
                 const tempIndex = draft.findIndex(b => b.tempId === tempId);
                 if (tempIndex !== -1) {
                   draft.splice(tempIndex, 1);
                 }
                 
-                // Add the real board with server data
                 const existingIndex = draft.findIndex(b => b.id === createdBoard.id);
                 if (existingIndex === -1) {
                   draft.push(createdBoard);
                 } else {
-                  // Update existing entry if somehow it exists
                   draft[existingIndex] = {
                     ...draft[existingIndex],
                     ...createdBoard
@@ -489,14 +483,11 @@ export const boardsApi = baseApi.injectEndpoints({
           const state = getState();
           const boardData = state.api.queries[`getBoardWithData(${id})`]?.data;
           
-          // Get projectId from boardData or try to find it in boardsData
           let projectId = boardData?.projectId;
           
-          // If projectId is not available from getBoardWithData, try to find it in getBoards queries
           if (!projectId) {
             console.log(`No boardData found for board ${id}, searching in existing board lists...`);
             
-            // Look through all queries to find the board in a project's boards list
             const queryKeys = Object.keys(state.api.queries);
             const boardsQueries = queryKeys.filter(key => key.startsWith('getBoards('));
             

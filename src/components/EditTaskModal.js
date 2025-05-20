@@ -292,19 +292,15 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
             return;
         }
         
-        // Расчет текущего размера файлов
         const currentFilesSize = form.files
             .filter(file => file instanceof File) // Только новые файлы
             .reduce((total, file) => total + file.size, 0);
             
-        // Размер локальных прикрепленных файлов
         const localAttachmentsSize = localAttachments
             .reduce((total, attachment) => total + (attachment.fileSize || 0), 0);
             
-        // Новый размер файлов для загрузки
         const newFilesSize = newFiles.reduce((total, file) => total + file.size, 0);
         
-        // Проверка общего размера всех файлов (максимум 100 МБ)
         const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100 МБ в байтах
         
         if (currentFilesSize + localAttachmentsSize + newFilesSize > MAX_TOTAL_SIZE) {
@@ -382,25 +378,22 @@ function EditTaskModal({ isOpen, onClose, onSubmit, task, boardId: propBoardId }
                 taskData.endDate = null;
             }
             
-            // Объединяем существующие файлы и новые загружаемые файлы
             const combinedFiles = [...filesToUpload];
             
-            // Подготавливаем полные данные задачи для API
             const updatedPayload = {
                 ...taskData, 
                 id: task.id,
                 boardId: task.boardId,
                 columnId: task.columnId,
-                attachments: oldAttachmentIds, // ID сохраняемых вложений
-                attachmentsToDelete: attachmentsToDelete, // ID вложений для удаления или ["DELETE_ALL"]
+                attachments: oldAttachmentIds,
+                attachmentsToDelete: attachmentsToDelete,
             };
             
             onClose();
             
-            // Отправляем данные задачи вместе с файлами
             onSubmit({
                 ...updatedPayload,
-                files: combinedFiles, // Новые файлы для загрузки
+                files: combinedFiles,
             });
         } catch (error) {
             console.error('Error submitting task:', error);

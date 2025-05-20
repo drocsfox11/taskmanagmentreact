@@ -12,11 +12,9 @@ import * as currentUser from "date-fns/locale";
 
 const apiPrefix = 'api/users';
 
-// Helper function to access current user data globally
 export const getCurrentUserFromCache = () => {
   if (window.store && window.store.getState) {
     const state = window.store.getState();
-    // Find current user query in the API cache
     if (state.api && state.api.queries) {
       const currentUserQuery = Object.entries(state.api.queries)
         .find(([key, value]) => 
@@ -65,23 +63,18 @@ export const usersApi = baseApi.injectEndpoints({
 
                 console.log('Received private user event:', event);
 
-                // Обработка событий звонков
                 if (Object.values(CALL_MESSAGE_TYPE).includes(event.type)) {
-                  // Получаем ID текущего пользователя
                   const currentUserId = userData.id.toString();
                   
-                  // Проверяем, является ли текущий пользователь отправителем события
-                  const isOwnEvent = event.senderId && 
+                  const isOwnEvent = event.senderId &&
                     (event.senderId.toString() === currentUserId || 
                      event.senderId === parseInt(currentUserId));
                   
-                  // Игнорируем CALL_NOTIFICATION от самого себя
                   if (event.type === CALL_MESSAGE_TYPE.CALL_NOTIFICATION && isOwnEvent) {
                     console.log('Ignoring own CALL_NOTIFICATION event');
                     return;
                   }
                   
-                  // Обработка различных типов звонков
                   switch (event.type) {
                     case CALL_MESSAGE_TYPE.CALL_NOTIFICATION:
                       console.log('Received CALL_NOTIFICATION in usersApi:', event);
@@ -95,20 +88,16 @@ export const usersApi = baseApi.injectEndpoints({
                     case CALL_MESSAGE_TYPE.ANSWER:
                       console.log('Received ANSWER in usersApi:', event);
                       if (window.callManagerRef && typeof window.callManagerRef._handleCallMessage === 'function') {
-                        // Создаем правильный объект ответа для WebRTC
                         const answerData = event.payload || event;
                         const answerObj = {
-                          type: 'answer',  // это должно быть строчными буквами для WebRTC
                           sdp: answerData.sdp || (answerData.payload && answerData.payload.sdp)
                         };
                         
-                        // Проверяем наличие SDP
                         if (!answerObj.sdp) {
                           console.error('No SDP found in ANSWER message:', event);
                           break;
                         }
                         
-                        // Вместо прямой передачи события создаем модифицированное событие
                         const modifiedEvent = {
                           ...event,
                           formattedAnswer: answerObj
@@ -132,10 +121,9 @@ export const usersApi = baseApi.injectEndpoints({
                       console.log('Unknown call event type:', event.type);
                   }
                   
-                  return; // Прекращаем обработку после событий звонков
+                  return;
                 }
 
-                // Обработка остальных типов событий
                                 switch (event.type) {
                                     case 'NEW_MESSAGE':
                                         if (event.payload.sender.id === userData.id) {
@@ -211,7 +199,6 @@ export const usersApi = baseApi.injectEndpoints({
                                         break;
                                     
                                     case "USER_ADDED":
-                                        // Событие придет только если нас добавили
                                         if (!window.location.pathname.includes('messenger')) {
                                             return;
                                         }
@@ -225,7 +212,6 @@ export const usersApi = baseApi.injectEndpoints({
                                         break;
                                         
                                     case "USER_REMOVED":
-                                        // Событие придет только если нас выгнали
                                         console.log("Удален из чата1:", event.payload);
 
                                         if (!window.location.pathname.includes('messenger')) {

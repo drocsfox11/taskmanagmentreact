@@ -91,7 +91,6 @@ function TaskDashboard() {
             .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }, [boardWithData?.columns]);
 
-    // Calculate completion percentage
     const calculateCompletionPercentage = useMemo(() => {
         if (!columns || columns.length === 0) return 0;
 

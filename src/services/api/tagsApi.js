@@ -1,10 +1,6 @@
 import { baseApi } from './baseApi';
 
-/**
- * @deprecated Используйте вместо этого соответствующие хуки из boardsApi.js
- * ВАЖНО: Эти хуки теперь экспортируются из boardsApi.js и не должны использоваться напрямую отсюда
- * Для получения тегов используйте результат из запроса board/full
- */
+
 export const tagsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTags: builder.query({

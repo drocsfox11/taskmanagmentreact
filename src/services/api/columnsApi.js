@@ -2,11 +2,7 @@ import { baseApi } from './baseApi';
 
 const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
 
-/**
- * @deprecated Используйте вместо этого соответствующие хуки из boardsApi.js
- * ВАЖНО: Эти хуки теперь экспортируются из boardsApi.js и не должны использоваться напрямую отсюда
- * Для получения колонок используйте результат из запроса board/full
- */
+
 export const columnsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getColumns: builder.query({

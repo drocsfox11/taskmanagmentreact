@@ -24,9 +24,7 @@ function DashboardCard({ board, onClick }) {
     const projectId = board?.projectId;
     const title = board?.title;
     const description = board?.description;
-    // Get completion percentage from board data with fallback to 0
     const completionPercentage = board?.completionPercentage ?? 0;
-    // Check if this is a temporary board (optimistic update)
     const isTemporary = board?.tempId !== undefined;
     
     const { data: currentUser } = useGetCurrentUserQuery();
@@ -36,7 +34,6 @@ function DashboardCard({ board, onClick }) {
         { skip: !userId }
     );
     
-    // Project level rights
     const checkProjectRights = (rightName) => {
         if (projectId && allProjectRights && !isRightsLoading) {
             const projectRights = allProjectRights[projectId];
@@ -48,13 +45,11 @@ function DashboardCard({ board, onClick }) {
     const canEditBoard = checkProjectRights(PROJECT_RIGHTS.EDIT_BOARDS);
     const canDeleteBoard = checkProjectRights(PROJECT_RIGHTS.DELETE_BOARDS);
     
-    // Board level rights
     const { hasRight: hasBoardRight, isLoading: isBoardRightsLoading } = useBoardRights(boardId);
     
     const canManageMembers = hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_MEMBERS);
     const canManageRights = hasBoardRight && hasBoardRight(BOARD_RIGHTS.MANAGE_RIGHTS);
     
-    // Show options if user has any of the required rights
     const showOptionsIcon = canEditBoard || canDeleteBoard || canManageMembers || canManageRights;
     
     useEffect(() => {
@@ -98,7 +93,6 @@ function DashboardCard({ board, onClick }) {
     const handleDelete = async (e) => {
         e.stopPropagation();
         
-        // Optimistically update UI
         setIsDeleted(true);
         setIsModalOpen(false);
         
@@ -106,7 +100,6 @@ function DashboardCard({ board, onClick }) {
             await deleteBoard(boardId);
             console.log(`Board ${boardId} successfully deleted`);
         } catch (error) {
-            // If deletion fails, revert the optimistic update
             setIsDeleted(false);
             console.error('Error deleting board:', error);
             alert('Не удалось удалить доску. Пожалуйста, попробуйте снова.');
@@ -128,7 +121,6 @@ function DashboardCard({ board, onClick }) {
 
     if (isDeleted || !board) return null;
 
-    // Format percentage number to integer
     const formattedPercentage = Math.round(completionPercentage);
 
     return (

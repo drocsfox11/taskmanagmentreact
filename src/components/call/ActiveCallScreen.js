@@ -44,7 +44,6 @@ const ActiveCallScreen = ({
     audioTrackMuted: false
   });
 
-  // Проверяем наличие аудиотреков каждую секунду
   useEffect(() => {
     const checkAudioInterval = setInterval(() => {
       if (remoteStream) {
@@ -60,21 +59,17 @@ const ActiveCallScreen = ({
           audioTrackMuted: audioTrack ? audioTrack.muted : false
         });
         
-        // Пытаемся включить аудиотрек, если он существует
         if (audioTrack && !audioTrack.enabled) {
           console.log('Enabling disabled audio track');
           audioTrack.enabled = true;
         }
         
-        // Check if track is muted - this is different from enabled
         if (audioTrack && audioTrack.muted) {
           console.log('Audio track is muted - this may prevent sound from playing');
           
-          // Add onunmute listener if not already added
           if (!audioTrack._hasUnmuteListener) {
             audioTrack.onunmute = () => {
               console.log('Audio track unmuted event triggered');
-              // Force audio element to re-evaluate
               if (remoteAudioRef.current) {
                 console.log('Re-applying srcObject after unmute');
                 const currentStream = remoteAudioRef.current.srcObject;
@@ -94,9 +89,7 @@ const ActiveCallScreen = ({
     return () => clearInterval(checkAudioInterval);
   }, [remoteStream, localStream]);
 
-  // Set up video and audio streams
   useEffect(() => {
-    // Подробно логируем remoteStream при каждом его изменении
     if (remoteStream) {
       const tracks = remoteStream.getTracks();
       console.log('ActiveCallScreen received remoteStream:', {
@@ -107,7 +100,6 @@ const ActiveCallScreen = ({
         videoTracks: tracks.filter(t => t.kind === 'video').length
       });
       
-      // Подробная информация о каждом треке
       tracks.forEach((track, idx) => {
         console.log(`Track ${idx} details:`, {
           kind: track.kind,
@@ -123,12 +115,10 @@ const ActiveCallScreen = ({
       console.warn('ActiveCallScreen: remoteStream is null or undefined');
     }
     
-    // Set up video elements
     if (remoteVideoRef.current && remoteStream) {
       console.log('Setting remote video stream with ID:', remoteStream.id);
       remoteVideoRef.current.srcObject = remoteStream;
       
-      // Логируем состояние видео элемента
       console.log('Remote video element state:', {
         readyState: remoteVideoRef.current.readyState,
         networkState: remoteVideoRef.current.networkState,
@@ -144,11 +134,9 @@ const ActiveCallScreen = ({
       localVideoRef.current.srcObject = localStream;
     }
     
-    // Set up audio element - only one time when remoteStream changes
     if (remoteAudioRef.current && remoteStream) {
       console.log('Setting up audio with remoteStream ID:', remoteStream.id);
       
-      // Проверка на аудиотреки и их статус
       const audioTracks = remoteStream.getAudioTracks();
       console.log('Audio tracks in remoteStream:', audioTracks.map(track => ({
         id: track.id,
@@ -157,17 +145,14 @@ const ActiveCallScreen = ({
         readyState: track.readyState
       })));
       
-      // Параметры аудио
       remoteAudioRef.current.autoplay = true;
       remoteAudioRef.current.volume = audioVolume;
       remoteAudioRef.current.muted = false;
       
-      // Важно: устанавливаем srcObject только один раз
       if (remoteAudioRef.current.srcObject !== remoteStream) {
         console.log('Setting new audio srcObject');
         remoteAudioRef.current.srcObject = remoteStream;
         
-        // После установки нового srcObject, пробуем воспроизвести после короткой задержки
         setTimeout(() => {
           const playPromise = remoteAudioRef.current.play();
           
@@ -179,7 +164,6 @@ const ActiveCallScreen = ({
               console.error('Failed to play audio after delay:', err);
               setAudioPlaybackFailed(true);
               
-              // Try with muted first if autoplay was blocked
               if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
                 console.log('Trying with muted first...');
                 remoteAudioRef.current.muted = true;
@@ -202,7 +186,6 @@ const ActiveCallScreen = ({
         }, 100);
       }
       
-      // Логируем состояние аудио элемента
       console.log('Remote audio element state:', {
         readyState: remoteAudioRef.current.readyState,
         networkState: remoteAudioRef.current.networkState,
@@ -214,7 +197,6 @@ const ActiveCallScreen = ({
     }
   }, [remoteStream, localStream, audioVolume]);
   
-  // Ручной запуск аудио при нажатии на кнопку
   const handleManualAudioStart = () => {
     if (!remoteAudioRef.current || !remoteStream) return;
     
@@ -232,7 +214,6 @@ const ActiveCallScreen = ({
       });
   };
   
-  // Toggle remote audio volume on/off
   const toggleRemoteAudio = () => {
     setIsAudioEnabled(!isAudioEnabled);
     setAudioVolume(isAudioEnabled ? 0 : 1.0);
@@ -242,7 +223,6 @@ const ActiveCallScreen = ({
     }
   };
 
-  // Add stats monitoring effect
   useEffect(() => {
     if (!callService || !callService.peerConnection) return;
     
@@ -265,7 +245,6 @@ const ActiveCallScreen = ({
           }
         });
         
-        // Log comprehensive diagnostics
         console.log('WebRTC Stats Summary:', {
           inbound: inboundAudioStats ? {
             bytesReceived: inboundAudioStats.bytesReceived,
@@ -297,12 +276,10 @@ const ActiveCallScreen = ({
           });
         }
         
-        // Warning for no audio transmission
         if (outboundAudioStats && outboundAudioStats.bytesSent === 0) {
           console.warn('WARNING: No audio data is being sent! Check microphone.');
         }
         
-        // Check for ICE connection issues
         if (!candidatePairStats && callService.peerConnection.iceConnectionState !== 'checking') {
           console.warn('WARNING: No active ICE candidate pair found.');
         }
@@ -314,24 +291,20 @@ const ActiveCallScreen = ({
     return () => clearInterval(statsInterval);
   }, [callService]);
 
-  // Add a function to try forcing audio to play when needed
   const forceAudioPlay = useCallback(() => {
     if (!remoteAudioRef.current || !remoteStream) return;
     
     console.log('Attempting to force audio playback');
     
-    // Make sure audio is not muted in the HTML element
     remoteAudioRef.current.muted = false;
     remoteAudioRef.current.volume = 1.0;
     
-    // Try a trick to "wake up" the browser audio system
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioContext.createMediaStreamSource(remoteStream);
     const destination = audioContext.createMediaStreamDestination();
     source.connect(destination);
     source.disconnect();
     
-    // Try to play the audio element
     remoteAudioRef.current.play()
       .then(() => {
         console.log('Forced audio playback successful');
@@ -343,7 +316,6 @@ const ActiveCallScreen = ({
       });
   }, [remoteStream]);
   
-  // Add a button to manually try to force unmute tracks
   const forceUnmuteAudioTracks = useCallback(() => {
     if (!remoteStream) return;
     
@@ -351,7 +323,6 @@ const ActiveCallScreen = ({
     console.log('Attempting to force unmute audio tracks:', audioTracks.length);
     
     if (audioTracks.length > 0) {
-      // Try various techniques to unmute the track
       audioTracks.forEach(track => {
         console.log('Track before force:', {
           enabled: track.enabled,
@@ -359,10 +330,8 @@ const ActiveCallScreen = ({
           readyState: track.readyState
         });
         
-        // Explicitly enable the track
         track.enabled = true;
         
-        // Some implementations respond to this alternating pattern
         if (track.muted) {
           const origEnabled = track.enabled;
           track.enabled = false;
@@ -372,7 +341,6 @@ const ActiveCallScreen = ({
         }
       });
       
-      // After trying to unmute tracks, try to restart audio playback
       forceAudioPlay();
     }
   }, [remoteStream, forceAudioPlay]);
@@ -397,7 +365,6 @@ const ActiveCallScreen = ({
           </small>
         </div>
         
-        {/* Кнопка для ручного запуска аудио если автозапуск не удался */}
         {audioPlaybackFailed && (
           <>
           <button 
@@ -417,14 +384,13 @@ const ActiveCallScreen = ({
         )}
       </div>
       
-      {/* Выделенный аудио элемент для удаленного потока */}
-      <audio 
+      <audio
         ref={remoteAudioRef}
         autoPlay
         playsInline
         muted={false} 
-        controls  // Add controls for debugging
-        style={{ display: 'none' }} // Hide the controls in production
+        controls
+        style={{ display: 'none' }}
       />
       
       <div className="active-call-content">
@@ -439,7 +405,6 @@ const ActiveCallScreen = ({
                 playsInline
               />
               
-              {/* Display user name when video is disabled */}
               <div className="remote-user-info">
                 <div className="remote-user-avatar">
                   {chatName.charAt(0).toUpperCase()}
@@ -448,7 +413,6 @@ const ActiveCallScreen = ({
               </div>
             </div>
             
-            {/* Local Video (Small pip) */}
             <div className="local-video-container">
               <video 
                 ref={localVideoRef} 

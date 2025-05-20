@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import '../styles/components/ImageModal.css';
 
 function ImageModal({ image, onClose }) {
-    // Close modal when Escape key is pressed
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -16,7 +15,6 @@ function ImageModal({ image, onClose }) {
         };
     }, [onClose]);
 
-    // Prevent scrolling of background content when modal is open
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => {
