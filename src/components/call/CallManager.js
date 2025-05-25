@@ -105,7 +105,12 @@ const CallManager = forwardRef((props, ref) => {
         
         if (message.formattedAnswer) {
           console.log('Using pre-formatted answer object:', message.formattedAnswer);
-          CallService.handleRemoteAnswer(message.formattedAnswer);
+          const formattedAnswer = {
+            type: 'answer',
+            sdp: message.formattedAnswer.sdp
+          };
+          console.log('Updated formatted answer object:', formattedAnswer);
+          CallService.handleRemoteAnswer(formattedAnswer);
         } else {
           const answerData = message.payload || message;
           const answerObj = {
